@@ -11,3 +11,4 @@ tools/calculix/
 spooles.out
 job_fine.*
 *.log
+.setup.log

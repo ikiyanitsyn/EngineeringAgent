@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Launcher: runs the engagent CLI from the project environment on any OS (Git Bash, Linux, macOS).
+DIR="$(cd "$(dirname "$0")" && pwd)"
+if [ -x "$DIR/.venv/Scripts/engagent.exe" ]; then exec "$DIR/.venv/Scripts/engagent.exe" "$@"; fi
+if [ -x "$DIR/.venv/bin/engagent" ]; then exec "$DIR/.venv/bin/engagent" "$@"; fi
+echo "EngineeringAgent is not installed here. Run: powershell -ExecutionPolicy Bypass -File scripts\\setup.ps1  (Windows)  or  bash scripts/setup.sh" >&2
+exit 127

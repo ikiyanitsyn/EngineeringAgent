@@ -15,6 +15,11 @@ from . import __version__, config
 from . import units as U
 
 
+def _read_json(path):
+    from .fea.job import read_json
+    return read_json(path)
+
+
 def _out(args, data, text_lines=None):
     if getattr(args, "json", False):
         print(json.dumps(data, indent=1, default=str))
@@ -364,7 +369,7 @@ def cmd_gdt_frame(a):
 
 def cmd_gdt_stack(a):
     from .gdt import stackup
-    spec = json.loads(Path(a.file).read_text(encoding="utf-8"))
+    spec = _read_json(a.file)
     s = stackup.stack(spec["contributors"], limits=spec.get("limits"),
                       monte_carlo=int(spec.get("monte_carlo", a.monte_carlo)))
     _out(a, s, [spec.get("name", "Tolerance stack")] + _kv(stackup.describe(s)))
@@ -373,7 +378,7 @@ def cmd_gdt_stack(a):
 
 def cmd_gdt_review(a):
     from .gdt import review
-    spec = json.loads(Path(a.file).read_text(encoding="utf-8"))
+    spec = _read_json(a.file)
     spec = spec.get("gdt", spec)
     r = review(spec)
     lines = [f"Tolerancing review [{r['standard_name']}]  ->  {r['status']}"]

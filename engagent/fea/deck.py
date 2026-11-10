@@ -251,6 +251,22 @@ def write_deck(job: Job, mesh: Mesh, path: Path) -> dict:
                 info["print_sets"].append(on)
         if bc_lines:
             f.write("*BOUNDARY\n" + "\n".join(bc_lines) + "\n")
+        # which translational dofs are held (to account for load applied directly on supports)
+        held = np.zeros((mesh.n_nodes, 3), bool)
+        for c in job.constraints:
+            t = c["type"]
+            if not mech or t in ("temperature", "minimal"):
+                continue
+            idx = mesh.node_sets[c["on"]] - 1
+            if t in ("fixed", "pinned"):
+                held[idx] = True
+            elif t == "symmetry":
+                held[idx, AXES[str(c.get("normal", "x")).lower()]] = True
+            elif t == "displacement":
+                for ax, d in (("x", 0), ("y", 1), ("z", 2)):
+                    if ax in c and c[ax] is not None:
+                        held[idx, d] = True
+        on_supports = np.zeros(3)
 
         # ---- step
         a = job.analysis
@@ -354,6 +370,10 @@ def write_deck(job: Job, mesh: Mesh, path: Path) -> dict:
                     flip = np.einsum("ij,ij->i", nA, pc.mean(axis=1) - cen) < 0
                     nA[flip] *= -1
                 applied += -p * nA.sum(axis=0)
+                ld = fs.tris[:, 3:] if mesh.order == 2 else fs.tris       # consistent nodal loads
+                share = -p * nA / 3.0
+                for col in range(ld.shape[1]):
+                    on_supports += (share * held[ld[:, col] - 1]).sum(axis=0)
                 info["load_summary"].append(f"Pressure {U.fmt(p, 'pressure', sysname)} on '{l['on']}' "
                                             f"(area {U.fmt(fs.area, 'area', sysname)})")
             elif t == "gravity":
@@ -365,6 +385,14 @@ def write_deck(job: Job, mesh: Mesh, path: Path) -> dict:
                     mass = sum((p.material.get("density") or 0.0) * _part_volume(mesh, p.name)
                                for p in job.parts)
                     applied += mass * G0 * g
+                    wts = np.array([-0.05] * 4 + [0.2] * 6) if mesh.order == 2 else np.full(4, 0.25)
+                    pe = mesh.nodes[mesh.elems[:, :4] - 1]
+                    ev = np.abs(np.einsum("ij,ij->i", pe[:, 1] - pe[:, 0],
+                                          np.cross(pe[:, 2] - pe[:, 0], pe[:, 3] - pe[:, 0]))) / 6
+                    rho = np.array([p.material.get("density") or 0.0 for p in job.parts])[mesh.elem_part]
+                    ew = (ev * rho)[:, None] * G0 * g[None, :]                # element weight vector
+                    for col in range(mesh.elems.shape[1]):
+                        on_supports += (wts[col] * ew * held[mesh.elems[:, col] - 1]).sum(axis=0)
                     info["load_summary"].append(f"Gravity {mag:g} g along ({d[0]:g}, {d[1]:g}, {d[2]:g})")
             elif t == "centrifugal":
                 om = U.to_internal(l.get("speed", l.get("rpm", 0)), "angular_velocity", sysname)
@@ -374,6 +402,7 @@ def write_deck(job: Job, mesh: Mesh, path: Path) -> dict:
                 dload.append(f"EALL, CENTRIF, {om * om:.8g}, {pt[0]:.8g}, {pt[1]:.8g}, {pt[2]:.8g}, "
                              f"{d[0]:.8g}, {d[1]:.8g}, {d[2]:.8g}")
                 info["load_summary"].append(f"Centrifugal load, {om:.4g} rad/s")
+                info["unsummed_load"] = "centrifugal"
             elif t == "temperature_change":
                 T = job.q(l["value"], "temperature")
                 temp_lines.append(f"NALL, {T:.8g}")
@@ -432,7 +461,10 @@ def write_deck(job: Job, mesh: Mesh, path: Path) -> dict:
             f.write("\n".join(line for a_, line in film if a_ == amp) + "\n")
         if radiate:
             f.write("*RADIATE\n" + "\n".join(radiate) + "\n")
+        for nid, v in cload.items():                       # point forces on held dofs
+            on_supports += v * held[nid - 1]
         info["applied_force"] = applied.tolist()
+        info["applied_on_supports"] = on_supports.tolist()
 
         # ---- output requests
         fq = f", FREQUENCY={out_freq}" if out_freq != 1 else ""

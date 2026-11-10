@@ -37,10 +37,13 @@ def run_ccx(inp: Path, timeout: float = 3600.0, serial_solver: bool = False) -> 
             "scripts/setup.sh (Linux/macOS), or set ENGAGENT_CCX to the executable path.")
     inp = Path(inp)
     env = dict(os.environ)
-    env["OMP_NUM_THREADS"] = str(config.threads())
-    # CalculiX 2.21 + multithreaded SPOOLES returns wrong, run-to-run varying eigenvalues in
-    # *BUCKLE / *FREQUENCY steps, so eigenvalue jobs always use the serial equation solver.
-    env["CCX_NPROC_EQUATION_SOLVER"] = "1" if serial_solver else str(config.threads())
+    # Serial by default (see config.threads): multithreaded CalculiX 2.21 was not reliable.
+    # Eigenvalue steps always use the serial equation solver.
+    n = config.threads()
+    env["OMP_NUM_THREADS"] = str(n)
+    env["CCX_NPROC_EQUATION_SOLVER"] = "1" if serial_solver else str(n)
+    for var in ("CCX_NPROC_RESULTS", "CCX_NPROC_STIFFNESS", "NUMBER_OF_CPUS"):
+        env[var] = str(n)
     for ext in (".frd", ".dat", ".sta", ".cvg", ".12d"):
         p = inp.with_suffix(ext)
         if p.exists():

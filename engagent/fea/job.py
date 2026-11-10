@@ -82,7 +82,8 @@ class Job:
     @property
     def transient(self) -> bool:
         return self.analysis == "thermal_transient" or \
-            (self.analysis == "thermal_stress" and bool(self.opts.get("transient")))
+            (self.analysis == "thermal_stress" and bool(
+                self.opts.get("transient") or (self.opts.get("thermal") or {}).get("transient")))
 
     def L(self, v) -> float:
         return U.to_internal(v, "length", self.system)
@@ -115,6 +116,39 @@ def _resolve_geometry(spec: Any, folder: Path, name: str, rebuild: bool = False,
     raise ValueError("geometry needs 'step', 'script' or 'template'")
 
 
+def read_json(path: str | Path) -> dict:
+    """Read JSON, allowing // line comments and trailing commas (people edit job files by hand)."""
+    import re
+    text = Path(path).read_text(encoding="utf-8-sig")
+    out: list[str] = []
+    i, n, in_str = 0, len(text), False
+    while i < n:
+        ch = text[i]
+        if in_str:
+            out.append(ch)
+            if ch == "\\" and i + 1 < n:          # keep the escaped character verbatim
+                out.append(text[i + 1])
+                i += 2
+                continue
+            if ch == '"':
+                in_str = False
+        elif ch == '"':
+            in_str = True
+            out.append(ch)
+        elif ch == "/" and text[i:i + 2] == "//":
+            while i < n and text[i] != "\n":
+                i += 1
+            continue
+        else:
+            out.append(ch)
+        i += 1
+    cleaned = re.sub(r",(\s*[}\]])", r"\1", "".join(out))
+    try:
+        return json.loads(cleaned)
+    except ValueError as e:
+        raise ValueError(f"{path}: not valid JSON ({e})") from e
+
+
 def load_job(spec: dict | str | Path, folder: str | Path | None = None,
              rebuild_geometry: bool = False) -> Job:
     """Read a job dict or job.json file and convert every quantity to internal units."""
@@ -123,7 +157,7 @@ def load_job(spec: dict | str | Path, folder: str | Path | None = None,
         if path.is_dir():
             path = path / "job.json"
         folder = folder or path.parent
-        spec = json.loads(path.read_text(encoding="utf-8"))
+        spec = read_json(path)
     raw = dict(spec)
     folder = Path(folder or ".").resolve()
     system = U.normalize_system(raw.get("units"))

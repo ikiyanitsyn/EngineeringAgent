@@ -179,12 +179,19 @@ def _checks(job: Job, mesh: Mesh, log: RunLog, metrics: dict, info: dict, hand: 
         app = np.array(info.get("applied_force", [0, 0, 0]))
         rt = np.array(metrics["reaction_total"]["vector"])
         scale = max(np.linalg.norm(app), 1e-9)
-        if np.linalg.norm(app) > 0 and not info.get("partial_reactions"):
-            err = np.linalg.norm(rt + app) / scale
+        direct = np.array(info.get("applied_on_supports", [0, 0, 0]))
+        if np.linalg.norm(app) > 0 and not info.get("partial_reactions") and not info.get("unsummed_load"):
+            err = np.linalg.norm(rt + app - direct) / scale
             add("equilibrium", "Reactions balance the applied load",
                 PASS if err <= 1e-3 else (WARN if err <= 1e-2 else FAIL),
                 f"applied {U.fmt_vec(app, 'force', s)}, reactions {U.fmt_vec(rt, 'force', s)}, "
-                f"imbalance {err * 100:.3g} %")
+                f"imbalance {err * 100:.3g} %"
+                + (f" ({U.fmt(np.linalg.norm(direct), 'force', s)} of the load acts directly on "
+                   f"supported nodes and is not part of the reactions)" if np.linalg.norm(direct) > 1e-6 * scale else ""))
+        elif info.get("unsummed_load"):
+            add("equilibrium", "Reactions balance the applied load", INFO,
+                f"net reaction {U.fmt_vec(rt, 'force', s)}; the {info['unsummed_load']} load is not "
+                f"totalled by the tool - compare the reaction with m * r * omega^2 by hand")
         else:
             add("equilibrium", "Reactions balance the applied load", INFO,
                 f"net reaction {U.fmt_vec(rt, 'force', s)} (self-equilibrated or displacement-driven load)")

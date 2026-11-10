@@ -22,7 +22,8 @@ def _load(folder: Path) -> tuple[dict, dict]:
         res = json.loads(rp.read_text(encoding="utf-8"))
         return res, res.get("job") or {}
     if jp.exists():
-        job = json.loads(jp.read_text(encoding="utf-8"))
+        from ..fea.job import read_json
+        job = read_json(jp)
         return {}, job
     raise FileNotFoundError(f"{folder} has neither results.json nor job.json")
 

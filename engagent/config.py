@@ -12,7 +12,7 @@ import shutil
 from pathlib import Path
 
 CONFIG_NAME = "engagent.config.json"
-DEFAULTS = {"units": "metric", "standard": "auto", "ccx": "", "threads": 4}
+DEFAULTS = {"units": "metric", "standard": "auto", "ccx": "", "threads": 1}
 _STANDARDS = ("auto", "iso", "asme")
 
 
@@ -87,10 +87,13 @@ def set_standard(standard: str) -> str:
 
 
 def threads() -> int:
+    """Solver threads.  Default 1: CalculiX 2.21 gave intermittently wrong stresses, reactions
+    and eigenvalues with more than one thread in validation (about 1 run in 8), and identical,
+    correct results on every serial run.  Raise it only for a solver build you have verified."""
     try:
         return max(1, int(os.environ.get("ENGAGENT_THREADS") or load()["threads"]))
     except (TypeError, ValueError):
-        return 4
+        return 1
 
 
 def find_ccx() -> str | None:
@@ -99,6 +102,10 @@ def find_ccx() -> str | None:
     for name in ("ccx", "ccx_static", "ccx_dynamic", "ccx_2.23", "ccx_2.22", "ccx_2.21",
                  "ccx_MT", "ccx.exe", "ccx_static.exe"):
         candidates.append(shutil.which(name))
+    tools = root() / "tools" / "calculix"
+    if tools.is_dir():                      # installed by scripts/setup.ps1 (zip layout varies)
+        for pat in ("ccx_static.exe", "ccx*.exe", "ccx", "ccx_*"):
+            candidates += [str(p) for p in sorted(tools.rglob(pat)) if p.is_file()]
     home = Path.home()
     for d in (Path("C:/calculix"), home / "calculix", root() / "tools" / "calculix",
               Path("C:/Program Files/CalculiX"), Path("/usr/local/bin"), Path("/opt/homebrew/bin")):

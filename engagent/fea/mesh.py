@@ -284,7 +284,7 @@ def build_mesh(parts: list[tuple[str, str]], sets: dict[str, Any] | None = None,
     gmsh.initialize()
     try:
         gmsh.option.setNumber("General.Terminal", 0)
-        gmsh.option.setNumber("General.NumThreads", 0)
+        gmsh.option.setNumber("General.NumThreads", 1)       # reproducible meshes
         faces, part_vols = _import_parts(gmsh, parts)
         bb = np.array(gmsh.model.getBoundingBox(-1, -1))
         diag = float(np.linalg.norm(bb[3:] - bb[:3]))
