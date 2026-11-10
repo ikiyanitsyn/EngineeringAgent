@@ -1,0 +1,95 @@
+{
+ "name": "05-plastic-bar-nonlinear",
+ "units": "metric",
+ "material": {
+  "base": "steel_generic",
+  "plastic": [
+   [
+    250,
+    0.0
+   ],
+   [
+    350,
+    0.05
+   ]
+  ]
+ },
+ "geometry": {
+  "template": "beam",
+  "params": {
+   "length": 100,
+   "width": 10,
+   "height": 10
+  }
+ },
+ "mesh": {
+  "size": 3
+ },
+ "title": "Bar stretched beyond yield (plasticity)",
+ "analysis": "nonlinear",
+ "sets": {
+  "x0": "xmin",
+  "x1": "xmax",
+  "p1": {
+   "point": [
+    0,
+    -5,
+    -5
+   ]
+  },
+  "p2": {
+   "point": [
+    0,
+    5,
+    -5
+   ]
+  }
+ },
+ "constraints": [
+  {
+   "type": "displacement",
+   "on": "x0",
+   "x": 0
+  },
+  {
+   "type": "displacement",
+   "on": "x1",
+   "x": 1.0
+  },
+  {
+   "type": "displacement",
+   "on": "p1",
+   "y": 0,
+   "z": 0
+  },
+  {
+   "type": "displacement",
+   "on": "p2",
+   "z": 0
+  }
+ ],
+ "probes": {
+  "mid": {
+   "point": [
+    50,
+    0,
+    0
+   ]
+  }
+ },
+ "stress_exclusion": false,
+ "nonlinear": {
+  "nlgeom": true,
+  "plasticity": true
+ },
+ "hand_calcs": [
+  {
+   "name": "Stress on the hardening curve at 1 % stretch",
+   "expected": "267.6 MPa",
+   "kind": "pressure",
+   "formula": "sigma = Sy + H (eps_log - sigma/E), H = (350-250)/0.05 MPa",
+   "metric": "probe.mid.sxx",
+   "tol": 0.02
+  }
+ ]
+}

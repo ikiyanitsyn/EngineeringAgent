@@ -1,0 +1,75 @@
+{
+ "name": "07-bar-conduction",
+ "units": "metric",
+ "material": "steel_generic",
+ "geometry": {
+  "template": "beam",
+  "params": {
+   "length": 100,
+   "width": 10,
+   "height": 10
+  }
+ },
+ "mesh": {
+  "size": 2.5
+ },
+ "title": "Steady conduction along a bar",
+ "analysis": "thermal_steady",
+ "sets": {
+  "hot": "xmin",
+  "cold": "xmax"
+ },
+ "constraints": [
+  {
+   "type": "temperature",
+   "on": "hot",
+   "value": 100
+  },
+  {
+   "type": "temperature",
+   "on": "cold",
+   "value": 20
+  }
+ ],
+ "probes": {
+  "mid": {
+   "point": [
+    50,
+    0,
+    0
+   ]
+  }
+ },
+ "hand_calcs": [
+  {
+   "name": "Temperature at mid-length",
+   "calc": "thermal.conduction_slab",
+   "inputs": {
+    "k": 50,
+    "A": 100,
+    "L": 100,
+    "T_hot": 100,
+    "T_cold": 20,
+    "x": 50
+   },
+   "output": "T_at_x",
+   "metric": "probe.mid.temperature",
+   "tol": 0.0125,
+   "span": 80
+  },
+  {
+   "name": "Heat flow",
+   "calc": "thermal.conduction_slab",
+   "inputs": {
+    "k": 50,
+    "A": 100,
+    "L": 100,
+    "T_hot": 100,
+    "T_cold": 20
+   },
+   "output": "heat_flow",
+   "metric": "heat_flow.hot",
+   "tol": 0.01
+  }
+ ]
+}

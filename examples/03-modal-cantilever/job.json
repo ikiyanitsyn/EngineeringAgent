@@ -1,0 +1,50 @@
+{
+ "name": "03-modal-cantilever",
+ "units": "metric",
+ "material": "steel_generic",
+ "geometry": {
+  "template": "beam",
+  "params": {
+   "length": 100,
+   "width": 10,
+   "height": 10
+  }
+ },
+ "mesh": {
+  "size": 2.5
+ },
+ "title": "Cantilever natural frequencies",
+ "analysis": "modal",
+ "sets": {
+  "fixed": "xmin"
+ },
+ "constraints": [
+  {
+   "type": "fixed",
+   "on": "fixed"
+  }
+ ],
+ "modal": {
+  "modes": 6
+ },
+ "hand_calcs": [
+  {
+   "name": "First bending frequency",
+   "calc": "beam.natural_frequency",
+   "inputs": {
+    "L": 100,
+    "E": 210000,
+    "b": 10,
+    "h": 10,
+    "density": 7850,
+    "support": "cantilever"
+   },
+   "output": "f1",
+   "metric": "frequency_1",
+   "tol": 0.03
+  }
+ ],
+ "criteria": {
+  "min_frequency": 100
+ }
+}

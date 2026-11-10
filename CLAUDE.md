@@ -78,9 +78,10 @@ References: `docs/job-reference.md` (every job field), `docs/gdt.md`,
 
 ## Known solver facts (do not rediscover)
 
-- CalculiX 2.21 with a multithreaded equation solver returns wrong, run-to-run varying
-  eigenvalues. The toolkit forces the serial solver for modal and buckling runs; never
-  bypass that by calling `ccx` directly for eigenvalue work.
+- CalculiX 2.21 run with more than one thread gave intermittently wrong stresses,
+  reactions and eigenvalues in validation (about 1 run in 8; serial runs were always
+  correct and identical). The toolkit therefore solves serially (`"threads": 1` in
+  `engagent.config.json`). Do not raise it and do not call `ccx` directly.
 - Gmsh and CalculiX number the last two mid-side nodes of a 10-node tetrahedron
   differently. The toolkit reorders them; never hand-edit element connectivity.
 - A total force on a face of quadratic tetrahedra goes on the mid-side nodes only

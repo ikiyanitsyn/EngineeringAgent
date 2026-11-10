@@ -1,0 +1,68 @@
+{
+ "name": "04-column-buckling",
+ "units": "metric",
+ "material": "steel_generic",
+ "geometry": {
+  "template": "beam",
+  "params": {
+   "length": 200,
+   "width": 10,
+   "height": 10
+  }
+ },
+ "mesh": {
+  "size": 3
+ },
+ "title": "Column buckling (fixed-free)",
+ "analysis": "buckling",
+ "sets": {
+  "fixed": "xmin",
+  "tip": "xmax"
+ },
+ "constraints": [
+  {
+   "type": "fixed",
+   "on": "fixed"
+  }
+ ],
+ "loads": [
+  {
+   "type": "force",
+   "on": "tip",
+   "value": [
+    -1000,
+    0,
+    0
+   ]
+  }
+ ],
+ "buckling": {
+  "modes": 4
+ },
+ "hand_calcs": [
+  {
+   "name": "Euler critical load",
+   "calc": "column.euler_buckling",
+   "inputs": {
+    "L": 200,
+    "E": 210000,
+    "b": 10,
+    "h": 10,
+    "ends": "fixed_free",
+    "yield_strength": 250
+   },
+   "output": "P_cr"
+  },
+  {
+   "name": "Buckling load factor = P_cr / P",
+   "expected": 10.795,
+   "kind": "ratio",
+   "formula": "pi^2 E I / (2 L)^2 / P",
+   "metric": "buckling_factor_1",
+   "tol": 0.03
+  }
+ ],
+ "criteria": {
+  "min_buckling_factor": 3
+ }
+}

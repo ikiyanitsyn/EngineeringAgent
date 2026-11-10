@@ -244,7 +244,7 @@ def assemble(folder: str | Path) -> dict:
                            f"{U.fmt(conv['fine']['size'], 'length', system)}, {conv['fine']['nodes']:,} nodes."))
             blocks.append(("table", ["Metric", "Coarse", "Fine", "Change"],
                            [(r["metric"], U.fmt(r["coarse"], r["kind"], system), U.fmt(r["fine"], r["kind"], system),
-                             f"{r['change'] * 100:.2f} %" + ("" if r["required"] else " (singular, informative)"))
+                             f"{r['change'] * 100:.2f} %" + ("" if r["required"] else " (for information)"))
                             for r in conv["rows"]], {"widths": [0.4, 0.2, 0.2, 0.2]}))
         fat = res.get("fatigue")
         if fat and not fat.get("error"):
@@ -258,7 +258,9 @@ def assemble(folder: str | Path) -> dict:
                 ("Safety factor - Goodman / Gerber", f"{fat['n_goodman']:.3g} / {fat['n_gerber']:.3g}"),
                 ("Safety factor - Soderberg / first-cycle yield",
                  f"{fat['n_soderberg']:.3g} / {fat['n_yield']:.3g}" if fat.get("n_soderberg") else "n/a"),
-                ("Estimated life", "infinite (below endurance limit)" if fat["infinite_life"]
+                ("Estimated life", ("beyond the life at which the fatigue strength is quoted (non-ferrous "
+                                    "alloys have no true endurance limit)" if fat.get("tested_strength")
+                                    else "infinite (below the endurance limit)") if fat["infinite_life"]
                  else f"{fat['cycles']:.3g} cycles"),
                 ("Required safety factor", f"{fat['required_sf']:g}  ->  {fat['status']}")]))
             blocks.append(("p", "Formulas: " + "; ".join(f for c in fat["calcs"] for f in c["formulas"][:2])

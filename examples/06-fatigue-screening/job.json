@@ -1,0 +1,95 @@
+{
+ "name": "06-fatigue-screening",
+ "units": "metric",
+ "material": "steel_generic",
+ "geometry": {
+  "template": "beam",
+  "params": {
+   "length": 100,
+   "width": 10,
+   "height": 10
+  }
+ },
+ "mesh": {
+  "size": 2.5
+ },
+ "title": "Cantilever under repeated load (fatigue screening)",
+ "analysis": "static",
+ "description": "Fixed at x = 0, transverse force on the free end face.",
+ "sets": {
+  "fixed": "xmin",
+  "tip": "xmax"
+ },
+ "constraints": [
+  {
+   "type": "fixed",
+   "on": "fixed"
+  }
+ ],
+ "loads": [
+  {
+   "type": "force",
+   "on": "tip",
+   "value": [
+    0,
+    0,
+    -100
+   ]
+  }
+ ],
+ "probes": {
+  "tip": {
+   "set": "tip"
+  },
+  "top_x20": {
+   "point": [
+    20,
+    0,
+    5
+   ]
+  }
+ },
+ "hand_calcs": [
+  {
+   "name": "Tip deflection",
+   "calc": "beam.cantilever_end_load",
+   "inputs": {
+    "P": 100,
+    "L": 100,
+    "E": 210000,
+    "b": 10,
+    "h": 10,
+    "nu": 0.3
+   },
+   "output": "deflection",
+   "metric": "probe.tip.uz",
+   "tol": 0.02
+  },
+  {
+   "name": "Bending stress at x = 20 mm",
+   "calc": "beam.cantilever_end_load",
+   "inputs": {
+    "P": 100,
+    "L": 100,
+    "E": 210000,
+    "b": 10,
+    "h": 10,
+    "x": 20
+   },
+   "output": "stress_at_x",
+   "metric": "probe.top_x20.sxx",
+   "tol": 0.1
+  }
+ ],
+ "criteria": {
+  "yield_sf": 1.5
+ },
+ "fatigue": {
+  "R": 0,
+  "surface": "machined",
+  "loading": "bending",
+  "reliability": 0.9,
+  "required_sf": 1.5,
+  "stress": "max_principal"
+ }
+}

@@ -1,0 +1,71 @@
+{
+ "valid": true,
+ "solids": 1,
+ "faces": 51,
+ "edges": 100,
+ "volume": 51180.56933916497,
+ "area": 43727.24905190798,
+ "bbox_min": [
+  -8.881784197001252e-16,
+  -8.881784197001252e-16,
+  0.0
+ ],
+ "bbox_max": [
+  100.0,
+  70.0,
+  40.0
+ ],
+ "bbox_size": [
+  100.0,
+  70.0,
+  40.0
+ ],
+ "center_of_mass": [
+  50.000000000000036,
+  35.00000000000012,
+  14.633117477604827
+ ],
+ "inertia_unit_density": [
+  [
+   43951723.13493818,
+   4.76837158203125e-07,
+   1.1175870895385742e-07
+  ],
+  [
+   4.76837158203125e-07,
+   74302402.18022406,
+   1.9371509552001953e-07
+  ],
+  [
+   1.1175870895385742e-07,
+   1.9371509552001953e-07,
+   101112934.21445534
+  ]
+ ],
+ "face_types": {
+  "plane": 31,
+  "cylinder": 20
+ },
+ "cylinder_diameters": [
+  {
+   "diameter": 2.6,
+   "faces": 4
+  },
+  {
+   "diameter": 3.2,
+   "faces": 4
+  },
+  {
+   "diameter": 7.0,
+   "faces": 6
+  },
+  {
+   "diameter": 8.0,
+   "faces": 4
+  }
+ ],
+ "files": [
+  "/home/user/EngineeringAgent/examples/21-printed-enclosure/part.step"
+ ],
+ "template": "enclosure"
+}

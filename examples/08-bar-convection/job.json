@@ -1,0 +1,59 @@
+{
+ "name": "08-bar-convection",
+ "units": "metric",
+ "material": "steel_generic",
+ "geometry": {
+  "template": "beam",
+  "params": {
+   "length": 100,
+   "width": 10,
+   "height": 10
+  }
+ },
+ "mesh": {
+  "size": 2.5
+ },
+ "title": "Bar heated at one end, convection at the other",
+ "analysis": "thermal_steady",
+ "sets": {
+  "hot": "xmin",
+  "end": "xmax"
+ },
+ "constraints": [
+  {
+   "type": "temperature",
+   "on": "hot",
+   "value": 100
+  }
+ ],
+ "loads": [
+  {
+   "type": "convection",
+   "on": "end",
+   "h": 500,
+   "ambient": 20
+  }
+ ],
+ "probes": {
+  "end": {
+   "set": "end"
+  }
+ },
+ "hand_calcs": [
+  {
+   "name": "End-face temperature",
+   "calc": "thermal.wall_conduction_convection",
+   "inputs": {
+    "k": 50,
+    "L": 100,
+    "h": 500,
+    "T_fixed": 100,
+    "T_ambient": 20
+   },
+   "output": "T_surface",
+   "metric": "probe.end.temperature",
+   "tol": 0.02,
+   "span": 80
+  }
+ ]
+}

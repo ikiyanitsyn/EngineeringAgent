@@ -1,0 +1,67 @@
+{
+ "name": "10-laminate-heatup-transient",
+ "units": "metric",
+ "title": "Laminate heat-up between hot platens",
+ "analysis": "thermal_transient",
+ "material": "cf_peek_ud",
+ "description": "Through-thickness heat-up of a CF/PEEK laminate in a matched-die press.",
+ "geometry": {
+  "template": "plate",
+  "params": {
+   "length": 6,
+   "width": 6,
+   "thickness": 4
+  }
+ },
+ "mesh": {
+  "size": 0.8
+ },
+ "initial_temperature": 20,
+ "sets": {
+  "bottom": "zmin",
+  "top": "zmax"
+ },
+ "constraints": [
+  {
+   "type": "temperature",
+   "on": "bottom",
+   "value": 385
+  },
+  {
+   "type": "temperature",
+   "on": "top",
+   "value": 385
+  }
+ ],
+ "thermal": {
+  "duration": 30,
+  "increments": 100,
+  "frames": 20
+ },
+ "probes": {
+  "centre": {
+   "point": [
+    3,
+    3,
+    2
+   ],
+   "target": 380
+  }
+ },
+ "hand_calcs": [
+  {
+   "name": "Time for the mid-plane to reach the target",
+   "calc": "composite.consolidation_heatup",
+   "inputs": {
+    "material": "cf_peek_ud",
+    "thickness": 4,
+    "T_initial": 20,
+    "T_tool": 385,
+    "T_target": 380
+   },
+   "output": "time_to_target",
+   "metric": "probe.centre.time_to_target",
+   "tol": 0.06
+  }
+ ]
+}

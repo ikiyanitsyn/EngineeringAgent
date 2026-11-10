@@ -267,6 +267,14 @@ def write_deck(job: Job, mesh: Mesh, path: Path) -> dict:
                     if ax in c and c[ax] is not None:
                         held[idx, d] = True
         on_supports = np.zeros(3)
+        sup_nodes = np.nonzero(held.any(axis=1))[0] + 1
+        if mech:
+            sup_nodes = np.union1d(sup_nodes, [nid for c in job.constraints if c["type"] == "minimal"
+                                               for nid, _ in minimal_constraint_nodes(mesh)]).astype(int)
+        if len(sup_nodes):
+            f.write("*NSET, NSET=N_ALLSUPPORTS\n")
+            _ids(f, sup_nodes)
+            info["all_supports"] = True
 
         # ---- step
         a = job.analysis
@@ -485,7 +493,7 @@ def write_deck(job: Job, mesh: Mesh, path: Path) -> dict:
         if evars:
             f.write(f"*EL FILE{fq}\n{', '.join(evars)}\n")
         if mech and a not in ("modal", "buckling"):
-            for s in info["print_sets"]:
+            for s in info["print_sets"] + (["ALLSUPPORTS"] if info.get("all_supports") else []):
                 f.write(f"*NODE PRINT, NSET=N_{s}, TOTALS=ONLY{fq}\nRF\n")
         for s in info["thermal_print_sets"]:
             f.write(f"*NODE PRINT, NSET=N_{s}, TOTALS=ONLY{fq}\nRFL\n")

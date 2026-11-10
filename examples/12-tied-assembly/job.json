@@ -1,0 +1,93 @@
+{
+ "name": "12-tied-assembly",
+ "units": "metric",
+ "analysis": "static",
+ "title": "Steel and aluminium bars joined end to end (bonded)",
+ "parts": [
+  {
+   "name": "steel",
+   "material": "steel_generic",
+   "geometry": {
+    "template": "beam",
+    "params": {
+     "length": 50,
+     "width": 10,
+     "height": 10
+    },
+    "step": "steel.step"
+   }
+  },
+  {
+   "name": "alu",
+   "material": "al_6061_t6",
+   "geometry": {
+    "script": "alu.py",
+    "step": "alu.step"
+   }
+  }
+ ],
+ "mesh": {
+  "size": 2.5
+ },
+ "sets": {
+  "fixed": {
+   "part": "steel",
+   "plane": "x",
+   "at": 0
+  },
+  "steel_end": {
+   "part": "steel",
+   "plane": "x",
+   "at": 50
+  },
+  "alu_start": {
+   "part": "alu",
+   "plane": "x",
+   "at": 50
+  },
+  "tip": {
+   "part": "alu",
+   "plane": "x",
+   "at": 100
+  }
+ },
+ "interactions": [
+  {
+   "type": "tie",
+   "master": "steel_end",
+   "slave": "alu_start"
+  }
+ ],
+ "constraints": [
+  {
+   "type": "fixed",
+   "on": "fixed"
+  }
+ ],
+ "loads": [
+  {
+   "type": "force",
+   "on": "tip",
+   "value": [
+    5000,
+    0,
+    0
+   ]
+  }
+ ],
+ "probes": {
+  "tip": {
+   "set": "tip"
+  }
+ },
+ "hand_calcs": [
+  {
+   "name": "Series elongation P L1/(A E1) + P L2/(A E2)",
+   "expected": "0.04819 mm",
+   "kind": "length",
+   "formula": "delta = P L1 / (A E1) + P L2 / (A E2)",
+   "metric": "probe.tip.ux",
+   "tol": 0.03
+  }
+ ]
+}

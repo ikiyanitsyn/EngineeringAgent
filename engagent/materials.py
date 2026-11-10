@@ -200,9 +200,8 @@ class Material:
         for k, v in self.props.items():
             if k in FIELD_KIND:
                 unit = None
-                if FIELD_KIND[k] == "pressure" and k.startswith(("E", "G")) and \
-                        U.normalize_system(system) == "metric":
-                    unit = "GPa"
+                if FIELD_KIND[k] == "pressure" and k.startswith(("E", "G")):
+                    unit = "GPa" if U.normalize_system(system) == "metric" else "Msi"
                 out[k] = U.fmt(v, FIELD_KIND[k], system, unit)
             else:
                 out[k] = f"{v:g}"

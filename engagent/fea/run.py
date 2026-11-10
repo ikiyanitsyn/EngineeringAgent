@@ -233,7 +233,11 @@ def _checks(job: Job, mesh: Mesh, log: RunLog, metrics: dict, info: dict, hand: 
     else:
         worst = max((r["change"] for r in conv["rows"] if r["required"]), default=0.0)
         tol = conv["tol"]
-        det = "; ".join(f"{r['metric']}: {r['change'] * 100:.2f} %" for r in conv["rows"])
+        det = "; ".join(f"{r['metric']}: {r['change'] * 100:.2f} %" for r in conv["rows"] if r["required"])
+        extra = [r for r in conv["rows"] if not r["required"] and r["change"] > tol]
+        if extra:
+            det += " (for information, not required: " + "; ".join(
+                f"{r['metric']} {r['change'] * 100:.1f} %" for r in extra) + ")"
         add("convergence", f"Mesh convergence (size x{conv['ratio']:g}, change < {tol * 100:g} %)",
             PASS if worst <= tol else FAIL, det)
     # 7 singularities
@@ -359,7 +363,7 @@ def _fatigue(job: Job, metrics: dict) -> dict | None:
             "stress_mean": sm, "Se": Se, "n_goodman": n, "n_gerber": ms.value("n_gerber"),
             "n_soderberg": ms.outputs.get("n_soderberg"), "n_yield": ms.outputs.get("n_yield"),
             "cycles": cyc if math.isfinite(cyc) else None, "infinite_life": not math.isfinite(cyc),
-            "required_sf": req, "target_cycles": target, "status": status,
+            "required_sf": req, "target_cycles": target, "status": status, "tested_strength": bool(etest),
             "calcs": [en.to_dict(s), ms.to_dict(s), life.to_dict(s)],
             "notes": en.notes + ms.notes + life.notes +
             (["Endurance limit taken from the material's tested fatigue strength (non-ferrous: "
@@ -377,8 +381,6 @@ def run_job(spec: dict | str | Path, folder: str | Path | None = None, *, conver
     mesh = _mesh_job(job)
     say(f"Mesh: {mesh.n_nodes:,} nodes, {mesh.n_elems:,} {mesh.etype}. Solving ({job.analysis}) ...")
     log, frames, dat, info = _solve(job, mesh, "job")
-    if job.constraints and any(c["type"] == "minimal" for c in job.constraints):
-        info["partial_reactions"] = True
     metrics = post.compute_metrics(job, mesh, frames, dat, info) if frames else {}
     history = post.transient_history(job, mesh, frames, metrics) if job.transient and frames else None
 
@@ -392,7 +394,9 @@ def run_job(spec: dict | str | Path, folder: str | Path | None = None, *, conver
         checks.append({"id": "fatigue", "name": f"Fatigue (Goodman) safety factor >= {fatigue['required_sf']:g}",
                        "status": fatigue["status"],
                        "detail": f"n = {fatigue['n_goodman']:.3g}; life "
-                       + ("infinite" if fatigue["infinite_life"] else f"{fatigue['cycles']:.3g} cycles")})
+                       + (("beyond the fatigue-strength basis of the material data" if fatigue["tested_strength"]
+                           else "infinite (below the endurance limit)") if fatigue["infinite_life"]
+                          else f"{fatigue['cycles']:.3g} cycles")})
     elif fatigue:
         checks.append({"id": "fatigue", "name": "Fatigue screening", "status": NOT_DONE,
                        "detail": fatigue["error"]})
@@ -452,6 +456,9 @@ def _converge(job: Job, mesh: Mesh, metrics: dict, say) -> dict:
     except Exception as e:
         return {"error": f"refined run failed: {type(e).__name__}: {e}"}
     names = list(opt.get("metrics") or CONV_METRICS.get(job.analysis, []))
+    must = set(names) | {h.get("metric") for h in job.hand_calcs if h.get("metric")}
+    must.discard("peak_von_mises")
+    names += [m for m in must if m not in names]
     names += [k for k in metrics if k.startswith("probe.") and k not in names
               and not k.endswith(("sxy", "syz", "szx", "ux", "uy", "uz", "sxx", "syy", "szz"))]
     rows = []
@@ -465,7 +472,7 @@ def _converge(job: Job, mesh: Mesh, metrics: dict, say) -> dict:
             else:
                 ch = abs(b - a) / max(abs(b), 1e-30)
             rows.append({"metric": n, "coarse": a, "fine": b, "kind": metrics[n]["kind"], "change": ch,
-                         "required": n != "peak_von_mises"})
+                         "required": n in must})
     return {"ratio": ratio, "tol": tol, "rows": rows,
             "coarse": {"size": mesh.size, "nodes": mesh.n_nodes, "elements": mesh.n_elems},
             "fine": {"size": fine.size, "nodes": fine.n_nodes, "elements": fine.n_elems}}

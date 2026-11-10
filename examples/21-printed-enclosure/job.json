@@ -1,0 +1,33 @@
+{
+ "name": "21-printed-enclosure",
+ "title": "PETG electronics enclosure (design review for FDM printing)",
+ "description": "Open-top enclosure 100 x 70 x 40 mm with four screw bosses for self-tapping 3 mm screws, printed in PETG on a desktop FDM printer. Design-only job: CAD verification, printability and tolerances, no FEA.",
+ "units": "metric",
+ "geometry": {"template": "enclosure",
+              "params": {"length": 100, "width": 70, "height": 40, "wall": 2.4, "floor": 2.4,
+                         "corner_radius": 4, "boss_diameter": 7, "boss_hole": 2.6}},
+ "material": "petg",
+ "print": {"process": "fdm", "material": "petg", "infill": 0.3, "build_volume": [220, 220, 250]},
+ "gdt": {
+  "process": "fdm",
+  "general_tolerance": "ISO 2768-c",
+  "datums": [
+   {"label": "A", "feature": "floor underside", "reason": "print bed face, sits on the device"},
+   {"label": "B", "feature": "long outer wall", "reason": "aligns with the panel"}
+  ],
+  "features": [
+   {"name": "floor underside", "type": "surface", "fcf": {"characteristic": "flatness", "tolerance": 0.4}},
+   {"name": "long outer wall", "type": "surface", "fcf": {"characteristic": "perpendicularity", "tolerance": 0.5, "datums": ["A"]}},
+   {"name": "outer length", "type": "width", "nominal": 100, "tol": 0.4},
+   {"name": "boss pilot holes 4x", "type": "hole", "nominal": 2.6, "tol": 0.15,
+    "fcf": {"characteristic": "position", "tolerance": 0.5, "diameter": true, "datums": ["A", "B"]}}
+  ],
+  "stacks": [
+   {"name": "lid clearance on the long side",
+    "contributors": [
+     {"name": "lid inner length", "nominal": 100.8, "tol": 0.4, "direction": 1},
+     {"name": "enclosure outer length", "nominal": 100, "tol": 0.4, "direction": -1}],
+    "limits": {"min": 0.1, "max": 1.6}}
+  ]
+ }
+}

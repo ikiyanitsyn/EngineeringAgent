@@ -1,0 +1,87 @@
+{
+ "name": "02-cantilever-imperial",
+ "units": "imperial",
+ "material": "steel_generic",
+ "geometry": {
+  "template": "beam",
+  "params": {
+   "length": 3.937,
+   "width": 0.3937,
+   "height": 0.3937
+  }
+ },
+ "mesh": {
+  "size": 0.098425
+ },
+ "title": "Steel cantilever with an end load",
+ "analysis": "static",
+ "description": "Fixed at x = 0, transverse force on the free end face.",
+ "sets": {
+  "fixed": "xmin",
+  "tip": "xmax"
+ },
+ "constraints": [
+  {
+   "type": "fixed",
+   "on": "fixed"
+  }
+ ],
+ "loads": [
+  {
+   "type": "force",
+   "on": "tip",
+   "value": [
+    0,
+    0,
+    -22.481
+   ]
+  }
+ ],
+ "probes": {
+  "tip": {
+   "set": "tip"
+  },
+  "top_x20": {
+   "point": [
+    0.7874,
+    0,
+    0.19685
+   ]
+  }
+ },
+ "hand_calcs": [
+  {
+   "name": "Tip deflection",
+   "calc": "beam.cantilever_end_load",
+   "inputs": {
+    "P": 22.481,
+    "L": 3.937,
+    "E": 30458000.0,
+    "b": 0.3937,
+    "h": 0.3937,
+    "nu": 0.3
+   },
+   "output": "deflection",
+   "metric": "probe.tip.uz",
+   "tol": 0.02
+  },
+  {
+   "name": "Bending stress at x = 20 mm",
+   "calc": "beam.cantilever_end_load",
+   "inputs": {
+    "P": 22.481,
+    "L": 3.937,
+    "E": 30458000.0,
+    "b": 0.3937,
+    "h": 0.3937,
+    "x": 0.7874
+   },
+   "output": "stress_at_x",
+   "metric": "probe.top_x20.sxx",
+   "tol": 0.1
+  }
+ ],
+ "criteria": {
+  "yield_sf": 1.5
+ }
+}

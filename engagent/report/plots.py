@@ -75,7 +75,7 @@ def contour(view: dict, field: str, frame: int = -1, path: str | Path | None = N
     ax.set_ylim(c[1] - ext[1] / 2, c[1] + ext[1] / 2)
     ax.set_zlim(c[2] - ext[2] / 2, c[2] + ext[2] / 2)
     try:
-        ax.set_box_aspect(tuple(ext), zoom=1.25)
+        ax.set_box_aspect(tuple(ext), zoom=1.25 if ext.max() > 4 * np.sort(ext)[1] else 0.98)
     except TypeError:
         ax.set_box_aspect(tuple(ext))
     ax.view_init(elev=elev, azim=azim)

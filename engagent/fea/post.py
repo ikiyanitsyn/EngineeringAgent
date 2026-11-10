@@ -149,10 +149,14 @@ def compute_metrics(job: Job, mesh: Mesh, frames: list[Frame], dat: dict, info: 
         tot = np.zeros(3)
         for name, rows in dat["rf"].items():
             v = np.array(rows[-1][1][:3])
+            if name == "ALLSUPPORTS":
+                continue
             key = _orig_name(name, mesh)
             M[f"reaction.{key}"] = _metric(np.linalg.norm(v), "force", f"Reaction force on '{key}'",
                                            vector=v.tolist())
             tot += v
+        if "ALLSUPPORTS" in dat["rf"]:       # union of all supported nodes: no double counting
+            tot = np.array(dat["rf"]["ALLSUPPORTS"][-1][1][:3])
         M["reaction_total"] = _metric(np.linalg.norm(tot), "force", "Total reaction force",
                                       vector=tot.tolist())
     app = np.array(info.get("applied_force", [0, 0, 0]))

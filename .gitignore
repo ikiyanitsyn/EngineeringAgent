@@ -12,3 +12,9 @@ spooles.out
 job_fine.*
 *.log
 .setup.log
+# regenerable job outputs (large): `./ea fea run <job> --report` recreates them
+job.inp
+job.dat
+view.json
+viewer.html
+plots/

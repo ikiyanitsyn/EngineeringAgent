@@ -1,0 +1,69 @@
+{
+ "name": "20-bracket-design-review",
+ "title": "Aluminium angle bracket, 300 N on the upright",
+ "description": "6061-T6 angle bracket bolted to a frame with two M6 screws through the base leg. A 300 N load pulls the upright leg in -X through two M6 screws (repeated load, zero to maximum). Required: yield safety factor 2.0, deflection below 0.5 mm, fatigue safety factor 1.5.",
+ "units": "metric",
+ "analysis": "static",
+ "geometry": {"script": "geometry.py"},
+ "material": "al_6061_t6",
+ "mesh": {"size": 3, "refine": [{"on": "corner", "size": 1.0, "distance": 3}]},
+ "sets": {
+  "underside": "zmin",
+  "base_holes": {"cylinder": {"radius": 3.3, "axis": "z"}},
+  "load_holes": {"cylinder": {"radius": 3.3, "axis": "x"}},
+  "corner": {"cylinder": {"radius": 5}}
+ },
+ "constraints": [
+  {"type": "fixed", "on": "base_holes"},
+  {"type": "displacement", "on": "underside", "z": 0}
+ ],
+ "loads": [
+  {"type": "force", "on": "load_holes", "value": [-300, 0, 0]}
+ ],
+ "probes": {
+  "upright_outer": {"point": [0, 20, 22]},
+  "load_point": {"set": "load_holes"}
+ },
+ "stress_exclusion": {"sets": ["base_holes", "underside"], "distance": 4},
+ "hand_calcs": [
+  {"name": "Bending stress in the upright at z = 22 mm (cantilever from the load line)",
+   "calc": "beam.cantilever_end_load",
+   "inputs": {"P": 300, "L": 37, "E": "68.9 GPa", "b": 40, "h": 5, "x": 17},
+   "output": "stress_at_x", "metric": "probe.upright_outer.szz", "tol": 0.15,
+   "notes": ["Upright treated as a cantilever clamped at the top of the base leg (z = 5 mm); load line at z = 42 mm."]},
+  {"name": "Nominal bending stress at the corner (no stress concentration)",
+   "calc": "beam.cantilever_end_load",
+   "inputs": {"P": 300, "L": 37, "E": "68.9 GPa", "b": 40, "h": 5},
+   "output": "stress"}
+ ],
+ "criteria": {"yield_sf": 2.0, "max_displacement": 0.5},
+ "fatigue": {"R": 0, "surface": "machined", "loading": "bending", "reliability": 0.9, "required_sf": 1.5, "size": 5},
+ "gdt": {
+  "process": "cnc_milling",
+  "general_tolerance": "ISO 2768-mK",
+  "datums": [
+   {"label": "A", "feature": "underside", "reason": "seats on the frame"},
+   {"label": "B", "feature": "back face", "reason": "locates the bracket along X"},
+   {"label": "C", "feature": "side face", "reason": "locates the bracket along Y"}
+  ],
+  "features": [
+   {"name": "underside", "type": "surface", "fcf": {"characteristic": "flatness", "tolerance": 0.1}},
+   {"name": "back face", "type": "surface", "fcf": {"characteristic": "perpendicularity", "tolerance": 0.1, "datums": ["A"]}},
+   {"name": "side face", "type": "surface", "fcf": {"characteristic": "perpendicularity", "tolerance": 0.2, "datums": ["A", "B"]}},
+   {"name": "base holes 2x", "type": "hole", "nominal": 6.6, "tol": 0.1,
+    "fcf": {"characteristic": "position", "tolerance": 0.25, "diameter": true, "modifier": "M", "datums": ["A", "B", "C"]},
+    "fastener": {"size": "M6", "joint": "fixed"}},
+   {"name": "load holes 2x", "type": "hole", "nominal": 6.6, "tol": 0.1,
+    "fcf": {"characteristic": "position", "tolerance": 0.4, "diameter": true, "modifier": "M", "datums": ["B", "A", "C"]},
+    "fastener": {"size": "M6", "joint": "floating"}}
+  ],
+  "stacks": [
+   {"name": "load hole height above the frame",
+    "contributors": [
+     {"name": "hole height from underside", "nominal": 42, "tol": 0.2, "direction": 1},
+     {"name": "frame pad height", "nominal": 10, "tol": 0.1, "direction": 1},
+     {"name": "mating part hole height", "nominal": 52, "tol": 0.2, "direction": -1}],
+    "limits": {"min": -0.6, "max": 0.6}, "monte_carlo": 20000}
+  ]
+ }
+}

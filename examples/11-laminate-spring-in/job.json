@@ -1,0 +1,87 @@
+{
+ "name": "11-laminate-spring-in",
+ "units": "metric",
+ "title": "Spring-in of a 90 degree CF/PEEK bend on cool-down",
+ "analysis": "thermal_stress",
+ "description": "Curved quasi-isotropic laminate cooled from its stress-free temperature to room temperature; anisotropic shrinkage closes the angle.",
+ "geometry": {
+  "template": "curved_laminate",
+  "params": {
+   "inner_radius": 10,
+   "thickness": 2.24,
+   "arc_deg": 90.0,
+   "width": 6
+  }
+ },
+ "material": {
+  "laminate": {
+   "lamina": "cf_peek_ud",
+   "layup": "[0/45/-45/90]2s"
+  }
+ },
+ "orientation": {
+  "system": "cylindrical",
+  "origin": [
+   0,
+   0,
+   0
+  ],
+  "axis": [
+   0,
+   1,
+   0
+  ]
+ },
+ "mesh": {
+  "size": 0.7
+ },
+ "initial_temperature": 310,
+ "sets": {
+  "start": "zmin",
+  "end": "xmin"
+ },
+ "constraints": [
+  {
+   "type": "minimal"
+  }
+ ],
+ "loads": [
+  {
+   "type": "temperature_change",
+   "value": 20
+  }
+ ],
+ "angles": {
+  "spring_in": {
+   "between": [
+    "start",
+    "end"
+   ]
+  }
+ },
+ "hand_calcs": [
+  {
+   "name": "Laminate properties (CLT)",
+   "calc": "composite.laminate",
+   "inputs": {
+    "material": "cf_peek_ud",
+    "layup": "[0/45/-45/90]2s",
+    "dT": -290
+   },
+   "output": "alpha_z"
+  },
+  {
+   "name": "Spring-in angle (Radford)",
+   "calc": "composite.spring_in",
+   "inputs": {
+    "angle": 90,
+    "alpha_inplane": "2.701 um/m/K",
+    "alpha_thickness": "38.58 um/m/K",
+    "dT": -290
+   },
+   "output": "delta_angle",
+   "metric": "angle.spring_in",
+   "tol": 0.05
+  }
+ ]
+}

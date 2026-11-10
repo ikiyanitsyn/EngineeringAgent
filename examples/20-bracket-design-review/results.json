@@ -1,0 +1,1283 @@
+{
+ "engagent_version": "0.1.0",
+ "name": "20-bracket-design-review",
+ "title": "Aluminium angle bracket, 300 N on the upright",
+ "description": "6061-T6 angle bracket bolted to a frame with two M6 screws through the base leg. A 300 N load pulls the upright leg in -X through two M6 screws (repeated load, zero to maximum). Required: yield safety factor 2.0, deflection below 0.5 mm, fatigue safety factor 1.5.",
+ "analysis": "static",
+ "units": "metric",
+ "standard": "iso",
+ "status": "ok",
+ "verdict": "PASS",
+ "solver": {
+  "version": "2.21",
+  "seconds": 22.26,
+  "errors": [],
+  "warnings": [],
+  "command": "ccx -i job",
+  "tail": ""
+ },
+ "mesh": {
+  "nodes": 46192,
+  "elements": 28494,
+  "element_type": "C3D10",
+  "size_mm": 3.0,
+  "parts": [
+   "part"
+  ],
+  "bbox_min": [
+   -7.327471962524999e-16,
+   0.0,
+   0.0
+  ],
+  "bbox_max": [
+   60.0,
+   40.0,
+   60.0
+  ],
+  "volume_mm3": 22556.497657438293,
+  "quality_min": 0.2461624315695528,
+  "quality_mean": 0.8018716856856575,
+  "quality_below_0p1": 0
+ },
+ "parts": [
+  {
+   "name": "part",
+   "geometry": "part.step",
+   "material": {
+    "key": "al_6061_t6",
+    "name": "Aluminium 6061-T6",
+    "family": "aluminium",
+    "orthotropic": false,
+    "properties": {
+     "E": "68.9 GPa",
+     "nu": "0.33",
+     "density": "2700 kg/m^3",
+     "cte": "23.6 um/m/K",
+     "k": "167 W/m/K",
+     "cp": "896 J/kg/K",
+     "yield": "276 MPa",
+     "uts": "310 MPa",
+     "elongation": "0.12",
+     "endurance": "96.5 MPa"
+    },
+    "meta": {
+     "spec": "ASTM B209 6061-T6"
+    }
+   },
+   "orientation": null
+  }
+ ],
+ "sets": {
+  "underside": {
+   "area": 2334.66,
+   "faces": [
+    11
+   ],
+   "nodes": 3257,
+   "centroid": [
+    29.72013055434196,
+    20.000000000000004,
+    0.0
+   ]
+  },
+  "base_holes": {
+   "area": 205.8316969674455,
+   "faces": [
+    12,
+    13
+   ],
+   "nodes": 440,
+   "centroid": [
+    40.00008080745793,
+    20.00003909746614,
+    2.4998936736061
+   ]
+  },
+  "load_holes": {
+   "area": 205.83205937361174,
+   "faces": [
+    6,
+    7
+   ],
+   "nodes": 440,
+   "centroid": [
+    2.4998957899068137,
+    20.000031907297863,
+    41.999918613870136
+   ]
+  },
+  "corner": {
+   "area": 313.7638361450239,
+   "faces": [
+    3
+   ],
+   "nodes": 1565,
+   "centroid": [
+    6.824989676835005,
+    19.99999895988234,
+    6.824861186387444
+   ]
+  }
+ },
+ "constraints": [
+  "Fixed (all translations) on 'base_holes'",
+  "Prescribed displacement on 'underside': uz = 0 mm"
+ ],
+ "loads": [
+  "Force (-300, 0, 0) N on 'load_holes' (area 205.8 mm^2)"
+ ],
+ "interactions": [],
+ "notes": [],
+ "initial_temperature": null,
+ "metrics": {
+  "max_displacement": {
+   "value": 0.29405441405424687,
+   "kind": "length",
+   "label": "Maximum displacement",
+   "location": [
+    0.0,
+    19.99999999999995,
+    60.0
+   ],
+   "vector": [
+    -0.293489,
+    1.23954e-06,
+    -0.0182265
+   ]
+  },
+  "max_ux": {
+   "value": -0.293504,
+   "kind": "length",
+   "label": "Largest ux",
+   "location": [
+    2.504833127167079,
+    19.999985612600767,
+    60.0
+   ]
+  },
+  "max_uy": {
+   "value": 0.00223693,
+   "kind": "length",
+   "label": "Largest uy",
+   "location": [
+    0.0,
+    40.0,
+    16.928336108752177
+   ]
+  },
+  "max_uz": {
+   "value": -0.0183319,
+   "kind": "length",
+   "label": "Largest uz",
+   "location": [
+    0.0,
+    39.3066187394991,
+    47.24727972774478
+   ]
+  },
+  "peak_von_mises": {
+   "value": 67.36259215283474,
+   "kind": "pressure",
+   "label": "Peak von Mises stress (anywhere)",
+   "location": [
+    5.071867474686995,
+    19.497367034535696,
+    9.155304899415144
+   ],
+   "in_exclusion": false
+  },
+  "max_von_mises": {
+   "value": 67.36259215283474,
+   "kind": "pressure",
+   "label": "Design von Mises stress (away from supports/contacts)",
+   "location": [
+    5.071867474686995,
+    19.497367034535696,
+    9.155304899415144
+   ]
+  },
+  "max_principal": {
+   "value": 78.22902344396651,
+   "kind": "pressure",
+   "label": "Maximum principal stress (design zone)",
+   "location": [
+    5.159650233422676,
+    23.748339515731217,
+    8.746598971918864
+   ]
+  },
+  "min_principal": {
+   "value": -59.36061134052983,
+   "kind": "pressure",
+   "label": "Minimum principal stress (design zone)",
+   "location": [
+    0.0,
+    20.646263757136293,
+    9.511163449406729
+   ]
+  },
+  "safety_factor_yield": {
+   "value": 4.097229503487648,
+   "kind": "ratio",
+   "label": "Safety factor on yield (design stress)",
+   "part": "part",
+   "yield_strength": 276.0
+  },
+  "reaction.base_holes": {
+   "value": 301.02660044197575,
+   "kind": "force",
+   "label": "Reaction force on 'base_holes'",
+   "vector": [
+    300.0,
+    4.419764e-10,
+    24.83977
+   ]
+  },
+  "reaction.underside": {
+   "value": 30.089021673799916,
+   "kind": "force",
+   "label": "Reaction force on 'underside'",
+   "vector": [
+    13.26506,
+    -0.09674442,
+    -27.007
+   ]
+  },
+  "reaction_total": {
+   "value": 300.0,
+   "kind": "force",
+   "label": "Total reaction force",
+   "vector": [
+    300.0,
+    4.418627e-10,
+    4.318565e-10
+   ]
+  },
+  "applied_force": {
+   "value": 300.0,
+   "kind": "force",
+   "label": "Total applied force",
+   "vector": [
+    -300.0,
+    0.0,
+    0.0
+   ]
+  },
+  "probe.upright_outer.ux": {
+   "value": -0.0478731808446121,
+   "kind": "length",
+   "label": "ux at probe 'upright_outer'",
+   "location": [
+    0.0,
+    20.0,
+    22.0
+   ]
+  },
+  "probe.upright_outer.uy": {
+   "value": 6.957484666475425e-07,
+   "kind": "length",
+   "label": "uy at probe 'upright_outer'",
+   "location": [
+    0.0,
+    20.0,
+    22.0
+   ]
+  },
+  "probe.upright_outer.uz": {
+   "value": -0.012901308058242817,
+   "kind": "length",
+   "label": "uz at probe 'upright_outer'",
+   "location": [
+    0.0,
+    20.0,
+    22.0
+   ]
+  },
+  "probe.upright_outer.displacement": {
+   "value": 0.04958109714678248,
+   "kind": "length",
+   "label": "Displacement at probe 'upright_outer'",
+   "location": [
+    0.0,
+    20.0,
+    22.0
+   ]
+  },
+  "probe.upright_outer.sxx": {
+   "value": -0.010775962416756777,
+   "kind": "pressure",
+   "label": "sxx at probe 'upright_outer'",
+   "location": [
+    0.0,
+    20.0,
+    22.0
+   ]
+  },
+  "probe.upright_outer.syy": {
+   "value": -7.609291918037999,
+   "kind": "pressure",
+   "label": "syy at probe 'upright_outer'",
+   "location": [
+    0.0,
+    20.0,
+    22.0
+   ]
+  },
+  "probe.upright_outer.szz": {
+   "value": -35.24062710163591,
+   "kind": "pressure",
+   "label": "szz at probe 'upright_outer'",
+   "location": [
+    0.0,
+    20.0,
+    22.0
+   ]
+  },
+  "probe.upright_outer.sxy": {
+   "value": -0.0005678147427609052,
+   "kind": "pressure",
+   "label": "sxy at probe 'upright_outer'",
+   "location": [
+    0.0,
+    20.0,
+    22.0
+   ]
+  },
+  "probe.upright_outer.syz": {
+   "value": -0.002733618447720986,
+   "kind": "pressure",
+   "label": "syz at probe 'upright_outer'",
+   "location": [
+    0.0,
+    20.0,
+    22.0
+   ]
+  },
+  "probe.upright_outer.szx": {
+   "value": -0.4458614292100887,
+   "kind": "pressure",
+   "label": "szx at probe 'upright_outer'",
+   "location": [
+    0.0,
+    20.0,
+    22.0
+   ]
+  },
+  "probe.upright_outer.von_mises": {
+   "value": 32.121358480787755,
+   "kind": "pressure",
+   "label": "von Mises at probe 'upright_outer'",
+   "location": [
+    0.0,
+    20.0,
+    22.0
+   ]
+  },
+  "probe.load_point.ux": {
+   "value": -0.1688716227272727,
+   "kind": "length",
+   "label": "ux at probe 'load_point'",
+   "location": [
+    2.487896916540889,
+    19.999586138222067,
+    41.95578556117677
+   ]
+  },
+  "probe.load_point.uy": {
+   "value": 3.128686372727278e-06,
+   "kind": "length",
+   "label": "uy at probe 'load_point'",
+   "location": [
+    2.487896916540889,
+    19.999586138222067,
+    41.95578556117677
+   ]
+  },
+  "probe.load_point.uz": {
+   "value": -0.0010480390068181823,
+   "kind": "length",
+   "label": "uz at probe 'load_point'",
+   "location": [
+    2.487896916540889,
+    19.999586138222067,
+    41.95578556117677
+   ]
+  },
+  "probe.load_point.displacement": {
+   "value": 0.16887487485736538,
+   "kind": "length",
+   "label": "Displacement at probe 'load_point'",
+   "location": [
+    2.487896916540889,
+    19.999586138222067,
+    41.95578556117677
+   ]
+  },
+  "probe.load_point.sxx": {
+   "value": 0.01903829975,
+   "kind": "pressure",
+   "label": "sxx at probe 'load_point'",
+   "location": [
+    2.487896916540889,
+    19.999586138222067,
+    41.95578556117677
+   ]
+  },
+  "probe.load_point.syy": {
+   "value": -0.003194602181818192,
+   "kind": "pressure",
+   "label": "syy at probe 'load_point'",
+   "location": [
+    2.487896916540889,
+    19.999586138222067,
+    41.95578556117677
+   ]
+  },
+  "probe.load_point.szz": {
+   "value": 0.021114276386363665,
+   "kind": "pressure",
+   "label": "szz at probe 'load_point'",
+   "location": [
+    2.487896916540889,
+    19.999586138222067,
+    41.95578556117677
+   ]
+  },
+  "probe.load_point.sxy": {
+   "value": -0.008384433227272734,
+   "kind": "pressure",
+   "label": "sxy at probe 'load_point'",
+   "location": [
+    2.487896916540889,
+    19.999586138222067,
+    41.95578556117677
+   ]
+  },
+  "probe.load_point.syz": {
+   "value": -0.02439050333181816,
+   "kind": "pressure",
+   "label": "syz at probe 'load_point'",
+   "location": [
+    2.487896916540889,
+    19.999586138222067,
+    41.95578556117677
+   ]
+  },
+  "probe.load_point.szx": {
+   "value": -1.2466263835909095,
+   "kind": "pressure",
+   "label": "szx at probe 'load_point'",
+   "location": [
+    2.487896916540889,
+    19.999586138222067,
+    41.95578556117677
+   ]
+  },
+  "probe.load_point.von_mises": {
+   "value": 2.1598084112964946,
+   "kind": "pressure",
+   "label": "von Mises at probe 'load_point'",
+   "location": [
+    2.487896916540889,
+    19.999586138222067,
+    41.95578556117677
+   ]
+  },
+  "fatigue_sf_goodman": {
+   "value": 1.769499918251068,
+   "kind": "ratio",
+   "label": "Fatigue safety factor (Goodman)"
+  }
+ },
+ "hand_calcs": [
+  {
+   "name": "Bending stress in the upright at z = 22 mm (cantilever from the load line)",
+   "calc": "beam.cantilever_end_load",
+   "output": "stress_at_x",
+   "formulas": [
+    "delta = P L^3 / (3 E I)",
+    "M_max = P L (at the support)",
+    "M(x) = P (L - x)",
+    "theta = P L^2 / (2 E I)",
+    "sigma = M c / I",
+    "delta_shear = (shear term) / (kappa A G)"
+   ],
+   "reference": "Roark's Formulas for Stress and Strain, 8th ed., Table 8.1; Shigley's Mechanical Engineering Design, 10th ed., Table A-9",
+   "inputs": {
+    "P": "300 N",
+    "L": "37 mm",
+    "E": "68900 MPa",
+    "b": "40 mm",
+    "h": "5 mm",
+    "x": "17 mm"
+   },
+   "notes": [
+    "Small deflection, linear elastic, plane sections remain plane.",
+    "Pass nu to include shear deflection (Timoshenko)."
+   ],
+   "all_outputs": {
+    "deflection_bending": "0.1764 mm",
+    "moment": "11.1 N*m",
+    "shear_force": "300 N",
+    "I": "416.7 mm^4",
+    "deflection": "0.1764 mm",
+    "stress": "66.6 MPa",
+    "stress_at_x": "36 MPa",
+    "shear_stress_avg": "1.5 MPa",
+    "slope": "0.4098 deg",
+    "reaction": "300 N"
+   },
+   "expected": 36.0,
+   "kind": "pressure",
+   "metric": "probe.upright_outer.szz",
+   "fea": -35.24062710163591,
+   "diff": 0.021093691621224764,
+   "tol": 0.15,
+   "status": "PASS"
+  },
+  {
+   "name": "Nominal bending stress at the corner (no stress concentration)",
+   "calc": "beam.cantilever_end_load",
+   "output": "stress",
+   "formulas": [
+    "delta = P L^3 / (3 E I)",
+    "M_max = P L (at the support)",
+    "M(x) = P (L - x)",
+    "theta = P L^2 / (2 E I)",
+    "sigma = M c / I",
+    "delta_shear = (shear term) / (kappa A G)"
+   ],
+   "reference": "Roark's Formulas for Stress and Strain, 8th ed., Table 8.1; Shigley's Mechanical Engineering Design, 10th ed., Table A-9",
+   "inputs": {
+    "P": "300 N",
+    "L": "37 mm",
+    "E": "68900 MPa",
+    "b": "40 mm",
+    "h": "5 mm"
+   },
+   "notes": [
+    "Small deflection, linear elastic, plane sections remain plane.",
+    "Pass nu to include shear deflection (Timoshenko)."
+   ],
+   "all_outputs": {
+    "deflection_bending": "0.1764 mm",
+    "moment": "11.1 N*m",
+    "shear_force": "300 N",
+    "I": "416.7 mm^4",
+    "deflection": "0.1764 mm",
+    "stress": "66.6 MPa",
+    "shear_stress_avg": "1.5 MPa",
+    "slope": "0.4098 deg",
+    "reaction": "300 N"
+   },
+   "expected": 66.6,
+   "kind": "pressure",
+   "status": "INFO"
+  }
+ ],
+ "checks": [
+  {
+   "id": "solver",
+   "name": "Solver finished without errors",
+   "status": "PASS",
+   "detail": "CalculiX 2.21, 22.3 s, no warnings"
+  },
+  {
+   "id": "units",
+   "name": "Unit set and material values",
+   "status": "PASS",
+   "detail": "deck written in mm, tonne, s, N, MPa, mJ, mW, degC; inputs read as metric"
+  },
+  {
+   "id": "mesh",
+   "name": "Mesh quality",
+   "status": "PASS",
+   "detail": "46,192 nodes, 28,494 C3D10, size 3 mm, min quality (SICN) 0.25"
+  },
+  {
+   "id": "equilibrium",
+   "name": "Reactions balance the applied load",
+   "status": "PASS",
+   "detail": "applied (-300, 0, 0) N, reactions (300, 0, 0) N, imbalance 2.06e-10 %"
+  },
+  {
+   "id": "hand_calc",
+   "name": "Agreement with hand calculation",
+   "status": "PASS",
+   "detail": "Bending stress in the upright at z = 22 mm (cantilever from the load line): 2.11 % (tol 15 %)"
+  },
+  {
+   "id": "convergence",
+   "name": "Mesh convergence (size x0.5, change < 5 %)",
+   "status": "PASS",
+   "detail": "max_displacement: 0.01 %; max_von_mises: 0.53 %; probe.upright_outer.szz: 0.08 % (for information, not required: probe.load_point.von_mises 5.2 %)"
+  },
+  {
+   "id": "singularity",
+   "name": "Stress singularities identified and excluded",
+   "status": "PASS",
+   "detail": "peak stress 67.36 MPa is in the design zone; peak changed 0.5 % on refinement"
+  },
+  {
+   "id": "linearity",
+   "name": "Linear analysis is valid",
+   "status": "PASS",
+   "detail": "small displacement and stress below yield"
+  },
+  {
+   "id": "sanity",
+   "name": "Displacement follows the load direction",
+   "status": "PASS",
+   "detail": "cosine between peak displacement and net load = 1.00"
+  },
+  {
+   "id": "criteria",
+   "name": "Safety factor on yield >= 2",
+   "status": "PASS",
+   "detail": "achieved 4.1"
+  },
+  {
+   "id": "criteria",
+   "name": "Displacement <= 0.5 mm",
+   "status": "PASS",
+   "detail": "achieved 0.2941 mm"
+  },
+  {
+   "id": "fatigue",
+   "name": "Fatigue (Goodman) safety factor >= 1.5",
+   "status": "PASS",
+   "detail": "n = 1.77; life beyond the fatigue-strength basis of the material data"
+  }
+ ],
+ "convergence": {
+  "ratio": 0.5,
+  "tol": 0.05,
+  "rows": [
+   {
+    "metric": "max_displacement",
+    "coarse": 0.29405441405424687,
+    "fine": 0.2940783679076896,
+    "kind": "length",
+    "change": 8.14539798120936e-05,
+    "required": true
+   },
+   {
+    "metric": "max_von_mises",
+    "coarse": 67.36259215283474,
+    "fine": 67.00781032087119,
+    "kind": "pressure",
+    "change": 0.005294634017507125,
+    "required": true
+   },
+   {
+    "metric": "peak_von_mises",
+    "coarse": 67.36259215283474,
+    "fine": 67.00781032087119,
+    "kind": "pressure",
+    "change": 0.005294634017507125,
+    "required": false
+   },
+   {
+    "metric": "probe.upright_outer.szz",
+    "coarse": -35.24062710163591,
+    "fine": -35.21198113828816,
+    "kind": "pressure",
+    "change": 0.0008135288734606482,
+    "required": true
+   },
+   {
+    "metric": "probe.upright_outer.displacement",
+    "coarse": 0.04958109714678248,
+    "fine": 0.04956719790782016,
+    "kind": "length",
+    "change": 0.0002804120375771143,
+    "required": false
+   },
+   {
+    "metric": "probe.upright_outer.von_mises",
+    "coarse": 32.121358480787755,
+    "fine": 32.088582928356814,
+    "kind": "pressure",
+    "change": 0.0010214085334998417,
+    "required": false
+   },
+   {
+    "metric": "probe.load_point.displacement",
+    "coarse": 0.16887487485736538,
+    "fine": 0.16742245087968718,
+    "kind": "length",
+    "change": 0.008675204371019122,
+    "required": false
+   },
+   {
+    "metric": "probe.load_point.von_mises",
+    "coarse": 2.1598084112964946,
+    "fine": 2.277398724373698,
+    "kind": "pressure",
+    "change": 0.051633608036529395,
+    "required": false
+   }
+  ],
+  "coarse": {
+   "size": 3.0,
+   "nodes": 46192,
+   "elements": 28494
+  },
+  "fine": {
+   "size": 1.5,
+   "nodes": 79865,
+   "elements": 49560
+  }
+ },
+ "fatigue": {
+  "stress_metric": "max_principal",
+  "stress_max": 78.22902344396651,
+  "R": 0.0,
+  "stress_alt": 39.114511721983256,
+  "stress_mean": 39.114511721983256,
+  "Se": 89.10813293926128,
+  "n_goodman": 1.769499918251068,
+  "n_gerber": 2.1157775453355927,
+  "n_soderberg": 1.7221342567397098,
+  "n_yield": 3.5281023314536437,
+  "cycles": null,
+  "infinite_life": true,
+  "required_sf": 1.5,
+  "target_cycles": null,
+  "status": "PASS",
+  "tested_strength": true,
+  "calcs": [
+   {
+    "name": "fatigue.endurance_limit",
+    "title": "Corrected endurance limit (Marin factors) for steel",
+    "reference": "Shigley's Mechanical Engineering Design, 10th ed., Sec. 6-7 to 6-9",
+    "formulas": [
+     "Se = ka kb kc kd ke kf Se'",
+     "Se' = 0.5 Sut (steel, Sut <= 1400 MPa), else 700 MPa",
+     "ka = a Sut^b (surface)",
+     "kb = 1.24 d^-0.107 (2.79 <= d <= 51 mm), 1.51 d^-0.157 (51 < d <= 254 mm)",
+     "kc = 1 bending, 0.85 axial, 0.59 torsion"
+    ],
+    "notes": [
+     "Steel correlations. For aluminium, titanium, polymers and composites supply a tested fatigue strength with 'endurance_test' (taken as Se' at the stated life)."
+    ],
+    "inputs": {
+     "uts": "310 MPa",
+     "surface": "machined",
+     "size": "5 mm",
+     "loading": "bending",
+     "reliability": "0.9",
+     "endurance_test": "96.5 MPa",
+     "k_misc": "1"
+    },
+    "outputs": {
+     "Se": "89.11 MPa",
+     "Se_prime": "96.5 MPa",
+     "ka": "0.9862",
+     "kb": "1.044",
+     "kc": "1",
+     "ke": "0.897"
+    },
+    "outputs_internal": {
+     "Se": 89.10813293926128,
+     "Se_prime": 96.5,
+     "ka": 0.9862015777977035,
+     "kb": 1.0438350960261886,
+     "kc": 1.0,
+     "ke": 0.897
+    },
+    "output_kinds": {
+     "Se": "pressure",
+     "Se_prime": "pressure",
+     "ka": "ratio",
+     "kb": "ratio",
+     "kc": "ratio",
+     "ke": "ratio"
+    }
+   },
+   {
+    "name": "fatigue.mean_stress",
+    "title": "Fatigue safety factor with mean stress (Goodman, Gerber, Soderberg, Langer)",
+    "reference": "Shigley's Mechanical Engineering Design, 10th ed., Sec. 6-12, Eq. 6-45 to 6-49",
+    "formulas": [
+     "Goodman: 1/n = sa/Se + sm/Sut",
+     "Soderberg: 1/n = sa/Se + sm/Sy",
+     "Gerber: n sa/Se + (n sm/Sut)^2 = 1",
+     "Langer first-cycle yield: n = Sy / (sa + sm)",
+     "sigma_ar = sa / (1 - sm/Sut)  (equivalent fully reversed, Goodman)"
+    ],
+    "notes": [
+     "Kf (fatigue notch factor) multiplies the alternating stress; use Kf = 1 when the FEA stress already includes the notch.",
+     "Compressive mean stress is treated as zero mean (conservative for Goodman)."
+    ],
+    "inputs": {
+     "stress_alt": "39.11 MPa",
+     "stress_mean": "39.11 MPa",
+     "Se": "89.11 MPa",
+     "uts": "310 MPa",
+     "yield_strength": "276 MPa",
+     "Kf": "1"
+    },
+    "outputs": {
+     "n_goodman": "1.769",
+     "n_gerber": "2.116",
+     "n_soderberg": "1.722",
+     "n_yield": "3.528",
+     "stress_alt_equiv": "44.76 MPa"
+    },
+    "outputs_internal": {
+     "n_goodman": 1.769499918251068,
+     "n_gerber": 2.1157775453355927,
+     "n_soderberg": 1.7221342567397098,
+     "n_yield": 3.5281023314536437,
+     "stress_alt_equiv": 44.76245187918704
+    },
+    "output_kinds": {
+     "n_goodman": "ratio",
+     "n_gerber": "ratio",
+     "n_soderberg": "ratio",
+     "n_yield": "ratio",
+     "stress_alt_equiv": "pressure"
+    }
+   },
+   {
+    "name": "fatigue.basquin_life",
+    "title": "Finite life from the S-N (Basquin) line",
+    "reference": "Shigley's Mechanical Engineering Design, 10th ed., Eq. 6-13 to 6-16",
+    "formulas": [
+     "S_f = a N^b",
+     "a = (f Sut)^2 / Se",
+     "b = -(1/3) log10(f Sut / Se)",
+     "N = (sigma_ar / a)^(1/b)",
+     "f = fatigue strength fraction at 10^3 cycles (about 0.9 at Sut = 490 MPa, 0.77 at 1380 MPa)"
+    ],
+    "notes": [
+     "Valid for 10^3 to N_endurance cycles; below Se the life is reported as infinite (steel) and above f*Sut the result is low-cycle fatigue (not valid here).",
+     "Equivalent alternating stress is below the endurance limit: infinite life predicted."
+    ],
+    "inputs": {
+     "stress_alt_equiv": "44.76 MPa",
+     "uts": "310 MPa",
+     "Se": "89.11 MPa",
+     "N_endurance": "1.000e+06"
+    },
+    "outputs": {
+     "cycles": "inf",
+     "a": "873.6 MPa",
+     "b": "-0.1652"
+    },
+    "outputs_internal": {
+     "cycles": Infinity,
+     "a": 873.5566264536,
+     "b": -0.16522895305851784
+    },
+    "output_kinds": {
+     "cycles": "ratio",
+     "a": "pressure",
+     "b": "ratio"
+    }
+   }
+  ],
+  "notes": [
+   "Steel correlations. For aluminium, titanium, polymers and composites supply a tested fatigue strength with 'endurance_test' (taken as Se' at the stated life).",
+   "Kf (fatigue notch factor) multiplies the alternating stress; use Kf = 1 when the FEA stress already includes the notch.",
+   "Compressive mean stress is treated as zero mean (conservative for Goodman).",
+   "Valid for 10^3 to N_endurance cycles; below Se the life is reported as infinite (steel) and above f*Sut the result is low-cycle fatigue (not valid here).",
+   "Equivalent alternating stress is below the endurance limit: infinite life predicted.",
+   "Endurance limit taken from the material's tested fatigue strength (non-ferrous: valid at the stated life only, no true endurance limit)."
+  ]
+ },
+ "history": null,
+ "frequencies": [],
+ "buckling_factors": [],
+ "exclusion": {
+  "distance": 4.0,
+  "sets": [
+   "base_holes",
+   "underside"
+  ]
+ },
+ "criteria": {
+  "yield_sf": 2.0,
+  "max_displacement": 0.5
+ },
+ "gdt": {
+  "process": "cnc_milling",
+  "general_tolerance": "ISO 2768-mK",
+  "datums": [
+   {
+    "label": "A",
+    "feature": "underside",
+    "reason": "seats on the frame"
+   },
+   {
+    "label": "B",
+    "feature": "back face",
+    "reason": "locates the bracket along X"
+   },
+   {
+    "label": "C",
+    "feature": "side face",
+    "reason": "locates the bracket along Y"
+   }
+  ],
+  "features": [
+   {
+    "name": "underside",
+    "type": "surface",
+    "fcf": {
+     "characteristic": "flatness",
+     "tolerance": 0.1
+    }
+   },
+   {
+    "name": "back face",
+    "type": "surface",
+    "fcf": {
+     "characteristic": "perpendicularity",
+     "tolerance": 0.1,
+     "datums": [
+      "A"
+     ]
+    }
+   },
+   {
+    "name": "side face",
+    "type": "surface",
+    "fcf": {
+     "characteristic": "perpendicularity",
+     "tolerance": 0.2,
+     "datums": [
+      "A",
+      "B"
+     ]
+    }
+   },
+   {
+    "name": "base holes 2x",
+    "type": "hole",
+    "nominal": 6.6,
+    "tol": 0.1,
+    "fcf": {
+     "characteristic": "position",
+     "tolerance": 0.25,
+     "diameter": true,
+     "modifier": "M",
+     "datums": [
+      "A",
+      "B",
+      "C"
+     ]
+    },
+    "fastener": {
+     "size": "M6",
+     "joint": "fixed"
+    }
+   },
+   {
+    "name": "load holes 2x",
+    "type": "hole",
+    "nominal": 6.6,
+    "tol": 0.1,
+    "fcf": {
+     "characteristic": "position",
+     "tolerance": 0.4,
+     "diameter": true,
+     "modifier": "M",
+     "datums": [
+      "B",
+      "A",
+      "C"
+     ]
+    },
+    "fastener": {
+     "size": "M6",
+     "joint": "floating"
+    }
+   }
+  ],
+  "stacks": [
+   {
+    "name": "load hole height above the frame",
+    "contributors": [
+     {
+      "name": "hole height from underside",
+      "nominal": 42,
+      "tol": 0.2,
+      "direction": 1
+     },
+     {
+      "name": "frame pad height",
+      "nominal": 10,
+      "tol": 0.1,
+      "direction": 1
+     },
+     {
+      "name": "mating part hole height",
+      "nominal": 52,
+      "tol": 0.2,
+      "direction": -1
+     }
+    ],
+    "limits": {
+     "min": -0.6,
+     "max": 0.6
+    },
+    "monte_carlo": 20000
+   }
+  ]
+ },
+ "runtime_s": 88.4,
+ "job": {
+  "name": "20-bracket-design-review",
+  "title": "Aluminium angle bracket, 300 N on the upright",
+  "description": "6061-T6 angle bracket bolted to a frame with two M6 screws through the base leg. A 300 N load pulls the upright leg in -X through two M6 screws (repeated load, zero to maximum). Required: yield safety factor 2.0, deflection below 0.5 mm, fatigue safety factor 1.5.",
+  "units": "metric",
+  "analysis": "static",
+  "geometry": {
+   "script": "geometry.py"
+  },
+  "material": "al_6061_t6",
+  "mesh": {
+   "size": 3,
+   "refine": [
+    {
+     "on": "corner",
+     "size": 1.0,
+     "distance": 3
+    }
+   ]
+  },
+  "sets": {
+   "underside": "zmin",
+   "base_holes": {
+    "cylinder": {
+     "radius": 3.3,
+     "axis": "z"
+    }
+   },
+   "load_holes": {
+    "cylinder": {
+     "radius": 3.3,
+     "axis": "x"
+    }
+   },
+   "corner": {
+    "cylinder": {
+     "radius": 5
+    }
+   }
+  },
+  "constraints": [
+   {
+    "type": "fixed",
+    "on": "base_holes"
+   },
+   {
+    "type": "displacement",
+    "on": "underside",
+    "z": 0
+   }
+  ],
+  "loads": [
+   {
+    "type": "force",
+    "on": "load_holes",
+    "value": [
+     -300,
+     0,
+     0
+    ]
+   }
+  ],
+  "probes": {
+   "upright_outer": {
+    "point": [
+     0,
+     20,
+     22
+    ]
+   },
+   "load_point": {
+    "set": "load_holes"
+   }
+  },
+  "stress_exclusion": {
+   "sets": [
+    "base_holes",
+    "underside"
+   ],
+   "distance": 4
+  },
+  "hand_calcs": [
+   {
+    "name": "Bending stress in the upright at z = 22 mm (cantilever from the load line)",
+    "calc": "beam.cantilever_end_load",
+    "inputs": {
+     "P": 300,
+     "L": 37,
+     "E": "68.9 GPa",
+     "b": 40,
+     "h": 5,
+     "x": 17
+    },
+    "output": "stress_at_x",
+    "metric": "probe.upright_outer.szz",
+    "tol": 0.15,
+    "notes": [
+     "Upright treated as a cantilever clamped at the top of the base leg (z = 5 mm); load line at z = 42 mm."
+    ]
+   },
+   {
+    "name": "Nominal bending stress at the corner (no stress concentration)",
+    "calc": "beam.cantilever_end_load",
+    "inputs": {
+     "P": 300,
+     "L": 37,
+     "E": "68.9 GPa",
+     "b": 40,
+     "h": 5
+    },
+    "output": "stress"
+   }
+  ],
+  "criteria": {
+   "yield_sf": 2.0,
+   "max_displacement": 0.5
+  },
+  "fatigue": {
+   "R": 0,
+   "surface": "machined",
+   "loading": "bending",
+   "reliability": 0.9,
+   "required_sf": 1.5,
+   "size": 5
+  },
+  "gdt": {
+   "process": "cnc_milling",
+   "general_tolerance": "ISO 2768-mK",
+   "datums": [
+    {
+     "label": "A",
+     "feature": "underside",
+     "reason": "seats on the frame"
+    },
+    {
+     "label": "B",
+     "feature": "back face",
+     "reason": "locates the bracket along X"
+    },
+    {
+     "label": "C",
+     "feature": "side face",
+     "reason": "locates the bracket along Y"
+    }
+   ],
+   "features": [
+    {
+     "name": "underside",
+     "type": "surface",
+     "fcf": {
+      "characteristic": "flatness",
+      "tolerance": 0.1
+     }
+    },
+    {
+     "name": "back face",
+     "type": "surface",
+     "fcf": {
+      "characteristic": "perpendicularity",
+      "tolerance": 0.1,
+      "datums": [
+       "A"
+      ]
+     }
+    },
+    {
+     "name": "side face",
+     "type": "surface",
+     "fcf": {
+      "characteristic": "perpendicularity",
+      "tolerance": 0.2,
+      "datums": [
+       "A",
+       "B"
+      ]
+     }
+    },
+    {
+     "name": "base holes 2x",
+     "type": "hole",
+     "nominal": 6.6,
+     "tol": 0.1,
+     "fcf": {
+      "characteristic": "position",
+      "tolerance": 0.25,
+      "diameter": true,
+      "modifier": "M",
+      "datums": [
+       "A",
+       "B",
+       "C"
+      ]
+     },
+     "fastener": {
+      "size": "M6",
+      "joint": "fixed"
+     }
+    },
+    {
+     "name": "load holes 2x",
+     "type": "hole",
+     "nominal": 6.6,
+     "tol": 0.1,
+     "fcf": {
+      "characteristic": "position",
+      "tolerance": 0.4,
+      "diameter": true,
+      "modifier": "M",
+      "datums": [
+       "B",
+       "A",
+       "C"
+      ]
+     },
+     "fastener": {
+      "size": "M6",
+      "joint": "floating"
+     }
+    }
+   ],
+   "stacks": [
+    {
+     "name": "load hole height above the frame",
+     "contributors": [
+      {
+       "name": "hole height from underside",
+       "nominal": 42,
+       "tol": 0.2,
+       "direction": 1
+      },
+      {
+       "name": "frame pad height",
+       "nominal": 10,
+       "tol": 0.1,
+       "direction": 1
+      },
+      {
+       "name": "mating part hole height",
+       "nominal": 52,
+       "tol": 0.2,
+       "direction": -1
+      }
+     ],
+     "limits": {
+      "min": -0.6,
+      "max": 0.6
+     },
+     "monte_carlo": 20000
+    }
+   ]
+  }
+ }
+}
