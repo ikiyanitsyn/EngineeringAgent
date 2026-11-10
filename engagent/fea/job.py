@@ -91,7 +91,8 @@ class Job:
         return U.to_internal(v, kind, self.system)
 
 
-def _resolve_geometry(spec: Any, folder: Path, name: str, rebuild: bool = False) -> Path:
+def _resolve_geometry(spec: Any, folder: Path, name: str, rebuild: bool = False,
+                      system: str | None = None) -> Path:
     """Return a STEP path; run a build123d script first if one is given."""
     if isinstance(spec, (str, Path)):
         spec = {"script": str(spec)} if str(spec).endswith(".py") else {"step": str(spec)}
@@ -102,12 +103,12 @@ def _resolve_geometry(spec: Any, folder: Path, name: str, rebuild: bool = False)
         step = (folder / spec.get("step", f"{name}.step")).resolve()
         if rebuild or not step.exists() or step.stat().st_mtime < script.stat().st_mtime:
             from ..cad.build import run_script
-            run_script(script, step, params=spec.get("params"))
+            run_script(script, step, params=spec.get("params"), system=system)
         return step
     if "template" in spec:
         from ..cad import templates
         step = (folder / spec.get("step", f"{name}.step")).resolve()
-        templates.build_to_step(spec["template"], spec.get("params", {}), step)
+        templates.build_to_step(spec["template"], spec.get("params", {}), step, system)
         return step
     if "step" in spec:
         return (folder / spec["step"]).resolve()
@@ -138,7 +139,7 @@ def load_job(spec: dict | str | Path, folder: str | Path | None = None,
             pname = str(p["name"])
             mat = materials.get(p.get("material", raw.get("material", "steel_generic")), system)
             parts.append(Part(pname, _resolve_geometry(p.get("geometry", p), folder, pname,
-                                                       rebuild_geometry),
+                                                       rebuild_geometry, system),
                               mat, p.get("orientation", raw.get("orientation"))))
     else:
         if "geometry" not in raw:
@@ -147,7 +148,7 @@ def load_job(spec: dict | str | Path, folder: str | Path | None = None,
             raise ValueError("job needs a 'material' (library key or property dict); "
                              "materials are never assumed")
         parts.append(Part("part", _resolve_geometry(raw["geometry"], folder, "part",
-                                                    rebuild_geometry),
+                                                    rebuild_geometry, system),
                           materials.get(raw["material"], system), raw.get("orientation")))
 
     job = Job(name=name, folder=folder, analysis=a, system=system, parts=parts, raw=raw,

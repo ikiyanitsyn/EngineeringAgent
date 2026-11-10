@@ -56,7 +56,7 @@ def assemble(folder: str | Path) -> dict:
             geoms.append((p["name"], folder / p["geometry"], p["material"]["key"]))
     elif job.get("geometry"):
         from ..fea.job import _resolve_geometry
-        geoms.append(("part", _resolve_geometry(job["geometry"], folder, "part"), job.get("material")))
+        geoms.append(("part", _resolve_geometry(job["geometry"], folder, "part", False, system), job.get("material")))
     cad_rows = []
     for name, step, mat in geoms:
         try:
