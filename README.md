@@ -24,6 +24,8 @@ The numerical work is done by a tested Python package, not improvised by the AI 
 run. Every analysis type is benchmarked against a closed-form answer
 ([docs/validation.md](docs/validation.md)).
 
+**New here? Read the [user guide](docs/USER-GUIDE.md)** - beginner walkthrough for Windows, iPhone and free AI models.
+
 ## Install
 
 Requirements: Git, Python 3.10-3.13 (3.12 recommended), about 2 GB of disk.
