@@ -179,6 +179,21 @@ def compute_metrics(job: Job, mesh: Mesh, frames: list[Frame], dat: dict, info: 
             M[f"heat_flow.{key}"] = _metric(rows[-1][1][0], "power",
                                             f"Heat flow into the model at '{key}'")
 
+    # change of angle between two faces (spring-in, bracket opening, flange rotation)
+    if "U" in last.fields and a not in ("modal", "buckling"):
+        for aname, spec in job.opts.get("angles", {}).items():
+            sa, sb = spec["between"]
+            ia, ib = mesh.node_sets[sa] - 1, mesh.node_sets[sb] - 1
+            def normal(idx, deformed, ref=None):
+                pts = mesh.nodes[idx] + (last.fields["U"][idx] if deformed else 0.0)
+                n = np.linalg.svd(pts - pts.mean(axis=0), full_matrices=False)[2][-1]
+                return -n if ref is not None and n @ ref < 0 else n
+            na0, nb0 = normal(ia, False), normal(ib, False)
+            na1, nb1 = normal(ia, True, na0), normal(ib, True, nb0)
+            ang = lambda u, v: float(np.degrees(np.arctan2(np.linalg.norm(np.cross(u, v)), u @ v)))  # noqa: E731
+            M[f"angle.{aname}"] = _metric(ang(na1, nb1) - ang(na0, nb0), "angle",
+                                          f"Change of angle between '{sa}' and '{sb}'",
+                                          initial=ang(na0, nb0))
     # probes
     for pname, spec in job.probes.items():
         idx, w = probe_weights(job, mesh, spec)
@@ -290,7 +305,7 @@ def view_data(job: Job, mesh: Mesh, frames: list[Frame], dat: dict, max_frames: 
         if "U" in fr.fields:
             u = fr.fields["U"][idx]
             if a in ("modal", "buckling"):
-                peak = np.abs(u).max() or 1.0
+                peak = np.linalg.norm(u, axis=1).max() or 1.0
                 u = u / peak
                 fields["Mode shape (normalised)"] = {"unit": "", "values": _r(np.linalg.norm(u, axis=1))}
                 disp = u

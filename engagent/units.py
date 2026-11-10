@@ -209,7 +209,10 @@ def fmt(value: Number | None, kind: str, system: str | None = None,
 def fmt_vec(values: Sequence[Number], kind: str, system: str | None = None, sig: int = 4) -> str:
     u = default_unit(kind, system)
     fac, off = _lookup(kind, u)
-    return "(" + ", ".join(_sig((float(v) - off) / fac, sig) for v in values) + f") {u}"
+    vals = [(float(v) - off) / fac for v in values]
+    big = max((abs(v) for v in vals), default=0.0)
+    vals = [0.0 if abs(v) < 1e-9 * big else v for v in vals]      # numerical noise -> 0
+    return "(" + ", ".join(_sig(v, sig) for v in vals) + f") {u}"
 
 
 def _sig(v: float, sig: int = 4) -> str:

@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>__TITLE__ - results viewer</title>
+<style>
+:root{--bg:#f4f5f7;--panel:#ffffff;--ink:#1c2330;--muted:#5b6678;--line:#d9dee6;--accent:#1f6feb;--canvas1:#e9edf3;--canvas2:#ffffff}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#11151c;--panel:#1a202a;--ink:#e6ebf2;--muted:#9aa6b8;--line:#2c3542;--accent:#6ea8ff;--canvas1:#141a23;--canvas2:#232c3a}}
+:root[data-theme="dark"]{--bg:#11151c;--panel:#1a202a;--ink:#e6ebf2;--muted:#9aa6b8;--line:#2c3542;--accent:#6ea8ff;--canvas1:#141a23;--canvas2:#232c3a}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;flex-direction:column}
+header{display:flex;align-items:baseline;gap:12px;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--panel);flex-wrap:wrap}
+header h1{font-size:16px;margin:0;font-weight:650}
+header .sub{color:var(--muted);font-size:13px}
+header .sp{flex:1}
+button,select,input{font:inherit;color:inherit}
+button{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:5px 10px;cursor:pointer}
+button:hover{border-color:var(--accent)}
+button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+main{flex:1;display:flex;min-height:0}
+#side{width:290px;flex:none;background:var(--panel);border-right:1px solid var(--line);padding:14px 16px;overflow:auto}
+#side h2{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:16px 0 6px}
+#side h2:first-child{margin-top:0}
+label{display:block;font-size:12.5px;color:var(--muted);margin:8px 0 3px}
+select,input[type=number]{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:6px 8px}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.row{display:flex;gap:8px;align-items:center}
+.row>*{flex:1}
+.chk{display:flex;gap:8px;align-items:center;margin:6px 0;color:var(--ink);font-size:13px}
+.chk input{width:auto;accent-color:var(--accent)}
+#view{flex:1;position:relative;min-width:0;background:linear-gradient(var(--canvas2),var(--canvas1))}
+canvas#gl{width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+canvas#gl:active{cursor:grabbing}
+#legend{position:absolute;right:14px;top:14px;bottom:20px;width:150px;pointer-events:none;display:flex;flex-direction:column}
+#legend .ttl{font-size:12px;font-weight:600;text-align:right;margin-bottom:14px;white-space:nowrap;text-shadow:0 0 4px var(--canvas2)}
+#legend .bar{flex:1;display:flex;gap:6px;justify-content:flex-end;min-height:0}
+#legend canvas{width:18px;height:100%;border:1px solid var(--line);border-radius:3px}
+#legend .ticks{position:relative;width:66px;font-size:11.5px;font-variant-numeric:tabular-nums}
+#legend .ticks span{position:absolute;right:0;transform:translateY(-50%);white-space:nowrap;text-shadow:0 0 4px var(--canvas2)}
+#readout{position:absolute;left:14px;bottom:12px;font-size:12.5px;background:color-mix(in srgb,var(--panel) 88%,transparent);border:1px solid var(--line);border-radius:6px;padding:6px 10px;max-width:70%}
+#frameLabel{position:absolute;left:14px;top:12px;font-size:13px;font-weight:600;background:color-mix(in srgb,var(--panel) 88%,transparent);border:1px solid var(--line);border-radius:6px;padding:5px 10px}
+#triad{position:absolute;left:14px;bottom:56px;width:74px;height:74px;pointer-events:none}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-size:12.5px}
+.kv span:nth-child(odd){color:var(--muted)}
+.kv span:nth-child(even){text-align:right;font-variant-numeric:tabular-nums}
+.hint{color:var(--muted);font-size:12px;margin-top:12px}
+#err{position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:24px;text-align:center}
+@media (max-width:760px){main{flex-direction:column}#side{width:auto;border-right:0;border-bottom:1px solid var(--line);max-height:42vh}#legend{width:130px}}
+</style>
+</head>
+<body>
+<header>
+  <h1 id="title"></h1><span class="sub" id="subtitle"></span><span class="sp"></span>
+  <button id="themeBtn" title="Switch light / dark">Theme</button>
+</header>
+<main>
+  <aside id="side">
+    <h2>Result</h2>
+    <label for="field">Field</label><select id="field"></select>
+    <label for="frame" id="frameLbl">Frame</label><select id="frame"></select>
+    <div class="kv" style="margin-top:10px"><span>Minimum</span><span id="vmin"></span><span>Maximum</span><span id="vmax"></span></div>
+    <h2>Deformation</h2>
+    <label for="scale">Scale factor: <b id="scaleVal"></b></label>
+    <input type="range" id="scale" min="0" max="1000" value="500">
+    <div class="row" style="margin-top:6px"><button id="scale1">True scale (1x)</button><button id="scaleAuto">Auto</button></div>
+    <div class="row" style="margin-top:10px"><button id="play">Animate</button></div>
+    <label for="speed">Animation speed</label><input type="range" id="speed" min="1" max="100" value="40">
+    <h2>Display</h2>
+    <label class="chk"><input type="checkbox" id="edges" checked> Feature edges</label>
+    <label class="chk"><input type="checkbox" id="mesh"> Element edges</label>
+    <label class="chk"><input type="checkbox" id="ghost"> Undeformed outline</label>
+    <label class="chk"><input type="checkbox" id="bands"> Banded colours (12 levels)</label>
+    <label class="chk"><input type="checkbox" id="lockRange"> Same colour range for all frames</label>
+    <div class="row" style="margin-top:8px"><button data-view="iso">Iso</button><button data-view="x">+X</button><button data-view="y">+Y</button><button data-view="z">+Z</button></div>
+    <p class="hint">Drag to rotate, scroll to zoom, right-drag or Shift-drag to pan. Hover the model to read a value.</p>
+    <h2>Model</h2>
+    <div class="kv" id="modelInfo"></div>
+  </aside>
+  <section id="view">
+    <canvas id="gl"></canvas>
+    <div id="frameLabel"></div>
+    <div id="legend"><div class="ttl" id="legTitle"></div><div class="bar"><canvas id="legBar" width="18" height="256"></canvas><div class="ticks" id="legTicks"></div></div></div>
+    <canvas id="triad" width="148" height="148"></canvas>
+    <div id="readout">Hover the model to read a value</div>
+    <div id="err"></div>
+  </section>
+</main>
+<script>
+const DATA = /*__DATA__*/null;
+(function(){
+"use strict";
+const $ = id => document.getElementById(id);
+const fmt = v => { if(!isFinite(v)) return "-"; const a=Math.abs(v); if(a===0) return "0"; if(a>=1e5||a<1e-3) return v.toExponential(3); return Number(v.toPrecision(4)).toString(); };
+if(!DATA){ $("err").style.display="flex"; $("err").textContent="No result data embedded in this file."; return; }
+$("title").textContent = DATA.title || DATA.name;
+$("subtitle").textContent = DATA.analysis.replace(/_/g," ") + " analysis · units: " + DATA.units;
+$("themeBtn").onclick = () => { const r=document.documentElement; const dark = r.dataset.theme ? r.dataset.theme==="dark" : matchMedia("(prefers-color-scheme: dark)").matches; r.dataset.theme = dark?"light":"dark"; drawLegend(); requestDraw(); };
+
+const canvas = $("gl");
+const gl = canvas.getContext("webgl2",{antialias:true,preserveDrawingBuffer:true});
+if(!gl){ $("err").style.display="flex"; $("err").textContent="This browser does not support WebGL 2, which the viewer needs."; return; }
+
+const nodes = new Float32Array(DATA.nodes), tris = new Uint32Array(DATA.tris), coarse = new Uint32Array(DATA.coarse);
+const nN = nodes.length/3;
+let lo=[1e30,1e30,1e30], hi=[-1e30,-1e30,-1e30];
+for(let i=0;i<nN;i++) for(let k=0;k<3;k++){ const v=nodes[3*i+k]; if(v<lo[k])lo[k]=v; if(v>hi[k])hi[k]=v; }
+const center=[(lo[0]+hi[0])/2,(lo[1]+hi[1])/2,(lo[2]+hi[2])/2];
+const size=Math.hypot(hi[0]-lo[0],hi[1]-lo[1],hi[2]-lo[2])||1;
+
+// ---- edges: feature edges (crease > 25 deg or boundary) from the coarse triangles, plus all element edges
+function buildEdges(){
+  const map=new Map(), nrm=[];
+  const nT=coarse.length/3;
+  for(let t=0;t<nT;t++){
+    const a=coarse[3*t],b=coarse[3*t+1],c=coarse[3*t+2];
+    const ux=nodes[3*b]-nodes[3*a],uy=nodes[3*b+1]-nodes[3*a+1],uz=nodes[3*b+2]-nodes[3*a+2];
+    const vx=nodes[3*c]-nodes[3*a],vy=nodes[3*c+1]-nodes[3*a+1],vz=nodes[3*c+2]-nodes[3*a+2];
+    let nx=uy*vz-uz*vy,ny=uz*vx-ux*vz,nz=ux*vy-uy*vx; const l=Math.hypot(nx,ny,nz)||1; nrm.push(nx/l,ny/l,nz/l);
+    for(const [p,q] of [[a,b],[b,c],[c,a]]){ const k=p<q?p*nN+q:q*nN+p; const e=map.get(k); if(e) e.push(t); else map.set(k,[t]); }
+  }
+  const feat=[], all=[]; const cosLim=Math.cos(25*Math.PI/180);
+  for(const [k,ts] of map){ const p=Math.floor(k/nN), q=k-p*nN; all.push(p,q);
+    if(ts.length!==2){ feat.push(p,q); continue; }
+    const d=nrm[3*ts[0]]*nrm[3*ts[1]]+nrm[3*ts[0]+1]*nrm[3*ts[1]+1]+nrm[3*ts[0]+2]*nrm[3*ts[1]+2];
+    if(d<cosLim) feat.push(p,q); }
+  return {feat:new Uint32Array(feat), all:new Uint32Array(all)};
+}
+const E = buildEdges();
+
+// ---- shaders
+const VS=`#version 300 es
+in vec3 aPos; in vec3 aDisp; in float aVal;
+uniform mat4 uMVP; uniform mat4 uMV; uniform float uScale; uniform vec2 uRange;
+out float vT; out vec3 vEye;
+void main(){ vec4 p=vec4(aPos+aDisp*uScale,1.0); vEye=(uMV*p).xyz; vT=(aVal-uRange.x)/max(uRange.y-uRange.x,1e-30); gl_Position=uMVP*p; }`;
+const FS=`#version 300 es
+precision highp float;
+in float vT; in vec3 vEye; out vec4 o;
+uniform int uMode; uniform float uBands; uniform vec4 uColor;
+vec3 turbo(float x){ x=clamp(x,0.0,1.0);
+  const vec4 kR=vec4(0.13572138,4.61539260,-42.66032258,132.13108234); const vec4 kG=vec4(0.09140261,2.19418839,4.84296658,-14.18503333); const vec4 kB=vec4(0.10667330,12.64194608,-60.58204836,110.36276771);
+  const vec2 kR2=vec2(-152.94239396,59.28637943); const vec2 kG2=vec2(4.27729857,2.82956604); const vec2 kB2=vec2(-89.90310912,27.34824973);
+  vec4 v4=vec4(1.0,x,x*x,x*x*x); vec2 v2=v4.zw*v4.z;
+  return clamp(vec3(dot(v4,kR)+dot(v2,kR2),dot(v4,kG)+dot(v2,kG2),dot(v4,kB)+dot(v2,kB2)),0.0,1.0); }
+void main(){
+  if(uMode==1){ o=uColor; return; }
+  float t=vT; if(uBands>0.0) t=(floor(clamp(t,0.0,0.9999)*uBands)+0.5)/uBands;
+  vec3 n=normalize(cross(dFdx(vEye),dFdy(vEye))); if(n.z<0.0) n=-n;
+  float d=0.52+0.48*max(dot(n,normalize(vec3(0.35,0.5,0.8))),0.0);
+  o=vec4(turbo(t)*d,1.0); }`;
+function sh(type,src){ const s=gl.createShader(type); gl.shaderSource(s,src); gl.compileShader(s); if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; }
+const prog=gl.createProgram(); gl.attachShader(prog,sh(gl.VERTEX_SHADER,VS)); gl.attachShader(prog,sh(gl.FRAGMENT_SHADER,FS)); gl.linkProgram(prog);
+if(!gl.getProgramParameter(prog,gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+gl.useProgram(prog);
+const U_={}; for(const n of ["uMVP","uMV","uScale","uRange","uMode","uBands","uColor"]) U_[n]=gl.getUniformLocation(prog,n);
+function buf(target,data,usage){ const b=gl.createBuffer(); gl.bindBuffer(target,b); gl.bufferData(target,data,usage||gl.STATIC_DRAW); return b; }
+const bPos=buf(gl.ARRAY_BUFFER,nodes), bDisp=buf(gl.ARRAY_BUFFER,new Float32Array(nN*3),gl.DYNAMIC_DRAW), bVal=buf(gl.ARRAY_BUFFER,new Float32Array(nN),gl.DYNAMIC_DRAW);
+const iTri=buf(gl.ELEMENT_ARRAY_BUFFER,tris), iFeat=buf(gl.ELEMENT_ARRAY_BUFFER,E.feat), iAll=buf(gl.ELEMENT_ARRAY_BUFFER,E.all);
+function attr(name,b,n){ const l=gl.getAttribLocation(prog,name); gl.bindBuffer(gl.ARRAY_BUFFER,b); gl.enableVertexAttribArray(l); gl.vertexAttribPointer(l,n,gl.FLOAT,false,0,0); }
+attr("aPos",bPos,3); attr("aDisp",bDisp,3); attr("aVal",bVal,1);
+
+// ---- state
+const S={frame:0, field:null, scale:0, phase:1, playing:false, rot:[-1.05,0,0.6], dist:size*1.55, pan:[0,0], t0:0};
+const frames=DATA.frames;
+const fieldNames=Object.keys(frames[0].fields);
+let curDisp=new Float32Array(nN*3), curVal=new Float32Array(nN), range=[0,1], maxDisp=0;
+
+// ---- matrices (column-major)
+function persp(fov,asp,n,f){ const t=1/Math.tan(fov/2); return [t/asp,0,0,0, 0,t,0,0, 0,0,(f+n)/(n-f),-1, 0,0,2*f*n/(n-f),0]; }
+function mul(a,b){ const o=new Array(16); for(let c=0;c<4;c++) for(let r=0;r<4;r++){ let s=0; for(let k=0;k<4;k++) s+=a[k*4+r]*b[c*4+k]; o[c*4+r]=s; } return o; }
+function rotX(a){ const c=Math.cos(a),s=Math.sin(a); return [1,0,0,0, 0,c,s,0, 0,-s,c,0, 0,0,0,1]; }
+function rotZ(a){ const c=Math.cos(a),s=Math.sin(a); return [c,s,0,0, -s,c,0,0, 0,0,1,0, 0,0,0,1]; }
+function trans(x,y,z){ return [1,0,0,0, 0,1,0,0, 0,0,1,0, x,y,z,1]; }
+function viewRot(){ return mul(rotX(S.rot[0]),rotZ(S.rot[2])); }
+function mats(){ const w=canvas.clientWidth||1,h=canvas.clientHeight||1; const mv=mul(trans(S.pan[0],S.pan[1],-S.dist),mul(viewRot(),trans(-center[0],-center[1],-center[2]))); const p=persp(0.6,w/h,Math.max(S.dist-size*3,size*0.01),S.dist+size*3); return {mv, mvp:mul(p,mv)}; }
+
+function setFrame(){
+  const fr=frames[S.frame];
+  curDisp=fr.disp?new Float32Array(fr.disp):new Float32Array(nN*3);
+  maxDisp=0; for(let i=0;i<nN;i++){ const m=Math.hypot(curDisp[3*i],curDisp[3*i+1],curDisp[3*i+2]); if(m>maxDisp) maxDisp=m; }
+  gl.bindBuffer(gl.ARRAY_BUFFER,bDisp); gl.bufferData(gl.ARRAY_BUFFER,curDisp,gl.DYNAMIC_DRAW);
+  setField(); $("frameLabel").textContent=fr.label;
+}
+function setField(){
+  const fr=frames[S.frame]; const f=fr.fields[S.field]||fr.fields[fieldNames[0]];
+  curVal=new Float32Array(f.values);
+  gl.bindBuffer(gl.ARRAY_BUFFER,bVal); gl.bufferData(gl.ARRAY_BUFFER,curVal,gl.DYNAMIC_DRAW);
+  let mn=Infinity,mx=-Infinity;
+  const scan=a=>{ for(let i=0;i<a.length;i++){ const v=a[i]; if(v<mn)mn=v; if(v>mx)mx=v; } };
+  if($("lockRange").checked){ for(const g of frames){ const h=g.fields[S.field]; if(h) scan(h.values); } } else scan(curVal);
+  let fmn=Infinity,fmx=-Infinity; for(let i=0;i<curVal.length;i++){ const v=curVal[i]; if(v<fmn)fmn=v; if(v>fmx)fmx=v; }
+  if(mx-mn<1e-12*Math.max(1,Math.abs(mx))){ mx=mn+Math.max(1e-9,Math.abs(mn)*1e-6); }
+  range=[mn,mx]; S.unit=f.unit;
+  $("vmin").textContent=fmt(fmn)+" "+f.unit; $("vmax").textContent=fmt(fmx)+" "+f.unit;
+  drawLegend(); requestDraw();
+}
+function autoScale(){ return maxDisp>0 ? 0.06*size/maxDisp : 0; }
+function sliderToScale(v){ const a=autoScale(); if(a===0) return 0; return v<=0?0: a*Math.pow(10,(v-500)/250); }
+function scaleToSlider(s){ const a=autoScale(); if(a===0||s<=0) return 0; return Math.max(0,Math.min(1000,500+250*Math.log10(s/a))); }
+function setScale(s){ S.scale=s; $("scale").value=scaleToSlider(s); $("scaleVal").textContent=maxDisp>0?(s>=100?Math.round(s):Number(s.toPrecision(3)))+"x":"no displacement in this result"; requestDraw(); }
+
+function drawLegend(){
+  const c=$("legBar"), g=c.getContext("2d"), H=c.height, bands=$("bands").checked?12:0;
+  for(let y=0;y<H;y++){ let t=1-y/(H-1); if(bands) t=(Math.floor(Math.min(t,0.9999)*bands)+0.5)/bands; g.fillStyle=turboCss(t); g.fillRect(0,y,c.width,1); }
+  const tk=$("legTicks"); tk.innerHTML=""; const n=6;
+  for(let i=0;i<=n;i++){ const s=document.createElement("span"); s.style.top=(100*(1-i/n))+"%"; s.textContent=fmt(range[0]+(range[1]-range[0])*i/n); tk.appendChild(s); }
+  $("legTitle").textContent=S.field+(S.unit?" ["+S.unit+"]":"");
+}
+function turboCss(x){ const v4=[1,x,x*x,x*x*x], v2=[v4[2]*v4[2],v4[3]*v4[2]];
+  const d=(a,b)=>a.reduce((s,q,i)=>s+q*b[i],0), cl=q=>Math.round(255*Math.max(0,Math.min(1,q)));
+  return "rgb("+cl(d(v4,[0.13572138,4.61539260,-42.66032258,132.13108234])+d(v2,[-152.94239396,59.28637943]))+","+cl(d(v4,[0.09140261,2.19418839,4.84296658,-14.18503333])+d(v2,[4.27729857,2.82956604]))+","+cl(d(v4,[0.10667330,12.64194608,-60.58204836,110.36276771])+d(v2,[-89.90310912,27.34824973]))+")"; }
+
+let pending=false; function requestDraw(){ if(!pending){ pending=true; requestAnimationFrame(draw); } }
+function ink(){ const c=getComputedStyle(document.documentElement).getPropertyValue("--ink").trim(); const m=c.match(/^#(..)(..)(..)$/); return m?[parseInt(m[1],16)/255,parseInt(m[2],16)/255,parseInt(m[3],16)/255]:[0.1,0.1,0.1]; }
+function draw(ts){
+  pending=false;
+  const dpr=Math.min(window.devicePixelRatio||1,2), w=Math.round(canvas.clientWidth*dpr), h=Math.round(canvas.clientHeight*dpr);
+  if(canvas.width!==w||canvas.height!==h){ canvas.width=w; canvas.height=h; }
+  gl.viewport(0,0,w,h); gl.clearColor(0,0,0,0); gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT); gl.enable(gl.DEPTH_TEST);
+  if(S.playing){
+    const sp=$("speed").value/40;
+    if(DATA.transient && frames.length>1){ const f=Math.floor(((ts-S.t0)/1000*sp*4))%frames.length; if(f!==S.frame){ S.frame=f; $("frame").value=f; setFrame(); } S.phase=1; }
+    else S.phase = DATA.mode_like ? Math.sin((ts-S.t0)/1000*sp*3.2) : 0.5-0.5*Math.cos((ts-S.t0)/1000*sp*2.4);
+  } else S.phase=1;
+  const m=mats(); gl.uniformMatrix4fv(U_.uMVP,false,m.mvp); gl.uniformMatrix4fv(U_.uMV,false,m.mv);
+  gl.uniform2f(U_.uRange,range[0],range[1]); gl.uniform1f(U_.uBands,$("bands").checked?12:0);
+  gl.uniform1f(U_.uScale,S.scale*S.phase); gl.uniform1i(U_.uMode,0);
+  gl.enable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(1,1);
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,iTri); gl.drawElements(gl.TRIANGLES,tris.length,gl.UNSIGNED_INT,0);
+  gl.disable(gl.POLYGON_OFFSET_FILL);
+  const c=ink(); gl.uniform1i(U_.uMode,1);
+  if($("mesh").checked){ gl.uniform4f(U_.uColor,c[0],c[1],c[2],0.35); gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,iAll); gl.drawElements(gl.LINES,E.all.length,gl.UNSIGNED_INT,0); gl.disable(gl.BLEND); }
+  if($("edges").checked){ gl.uniform4f(U_.uColor,c[0],c[1],c[2],1); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,iFeat); gl.drawElements(gl.LINES,E.feat.length,gl.UNSIGNED_INT,0); }
+  if($("ghost").checked){ gl.uniform1f(U_.uScale,0); gl.uniform4f(U_.uColor,c[0],c[1],c[2],0.45); gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,iFeat); gl.drawElements(gl.LINES,E.feat.length,gl.UNSIGNED_INT,0); gl.disable(gl.BLEND); }
+  drawTriad();
+  if(S.playing) requestDraw();
+}
+function drawTriad(){
+  const c=$("triad"), g=c.getContext("2d"), R=viewRot(), o=74, L=46; g.clearRect(0,0,148,148);
+  const ax=[["X","#e5484d",[1,0,0]],["Y","#30a46c",[0,1,0]],["Z","#3e63dd",[0,0,1]]].map(([n,col,v])=>({n,col,x:R[0]*v[0]+R[4]*v[1]+R[8]*v[2],y:R[1]*v[0]+R[5]*v[1]+R[9]*v[2],z:R[2]*v[0]+R[6]*v[1]+R[10]*v[2]})).sort((a,b)=>a.z-b.z);
+  g.lineWidth=4; g.font="600 22px system-ui"; g.textAlign="center"; g.textBaseline="middle";
+  for(const a of ax){ g.strokeStyle=a.col; g.fillStyle=a.col; g.beginPath(); g.moveTo(o,o); g.lineTo(o+a.x*L,o-a.y*L); g.stroke(); g.fillText(a.n,o+a.x*(L+16),o-a.y*(L+16)); }
+}
+
+// ---- interaction
+let drag=null;
+canvas.addEventListener("contextmenu",e=>e.preventDefault());
+canvas.addEventListener("pointerdown",e=>{ canvas.setPointerCapture(e.pointerId); drag={x:e.clientX,y:e.clientY,pan:e.button===2||e.shiftKey}; });
+canvas.addEventListener("pointerup",()=>{ drag=null; });
+canvas.addEventListener("pointermove",e=>{
+  if(drag){ const dx=e.clientX-drag.x, dy=e.clientY-drag.y; drag.x=e.clientX; drag.y=e.clientY;
+    if(drag.pan){ const k=S.dist*0.0016; S.pan[0]+=dx*k; S.pan[1]-=dy*k; } else { S.rot[2]+=dx*0.008; S.rot[0]=Math.max(-Math.PI,Math.min(0,S.rot[0]+dy*0.008)); }
+    requestDraw(); }
+  else pick(e);
+});
+canvas.addEventListener("wheel",e=>{ e.preventDefault(); S.dist*=Math.exp(e.deltaY*0.0012); S.dist=Math.max(size*0.05,Math.min(size*30,S.dist)); requestDraw(); },{passive:false});
+function pick(e){
+  const r=canvas.getBoundingClientRect(), px=e.clientX-r.left, py=e.clientY-r.top, m=mats().mvp, sc=S.scale*S.phase;
+  let best=-1, bd=18*18, bz=1e30;
+  for(let i=0;i<nN;i++){ const x=nodes[3*i]+curDisp[3*i]*sc, y=nodes[3*i+1]+curDisp[3*i+1]*sc, z=nodes[3*i+2]+curDisp[3*i+2]*sc;
+    const w=m[3]*x+m[7]*y+m[11]*z+m[15]; if(w<=0) continue;
+    const sx=((m[0]*x+m[4]*y+m[8]*z+m[12])/w*0.5+0.5)*r.width, sy=(1-((m[1]*x+m[5]*y+m[9]*z+m[13])/w*0.5+0.5))*r.height;
+    const d=(sx-px)*(sx-px)+(sy-py)*(sy-py); if(d<bd && w<bz*1.02){ if(d<bd*0.6||w<bz){ best=i; bd=d; bz=w; } } }
+  $("readout").textContent = best<0 ? "Hover the model to read a value" :
+    S.field+": "+fmt(curVal[best])+" "+(S.unit||"")+"   at ("+fmt(nodes[3*best])+", "+fmt(nodes[3*best+1])+", "+fmt(nodes[3*best+2])+") "+DATA.length_unit;
+}
+function fill(sel,items){ sel.innerHTML=""; items.forEach((t,i)=>{ const o=document.createElement("option"); o.value=i; o.textContent=t; sel.appendChild(o); }); }
+fill($("field"),fieldNames); fill($("frame"),frames.map(f=>f.label));
+$("frameLbl").textContent = DATA.mode_like?"Mode":(DATA.transient?"Time step":"Frame");
+const prefer=["von Mises stress","Temperature","Mode shape (normalised)","Displacement"]; S.field=prefer.find(p=>fieldNames.includes(p))||fieldNames[0]; $("field").value=fieldNames.indexOf(S.field);
+if(DATA.transient) { S.frame=frames.length-1; $("frame").value=S.frame; $("lockRange").checked=true; }
+$("field").onchange=e=>{ S.field=fieldNames[+e.target.value]; setField(); };
+$("frame").onchange=e=>{ S.frame=+e.target.value; setFrame(); if(!DATA.transient) setScale(autoScale()); };
+$("scale").oninput=e=>setScale(sliderToScale(+e.target.value));
+$("scale1").onclick=()=>setScale(maxDisp>0?1:0); $("scaleAuto").onclick=()=>setScale(autoScale());
+$("play").onclick=()=>{ S.playing=!S.playing; S.t0=performance.now(); $("play").classList.toggle("on",S.playing); $("play").textContent=S.playing?"Stop":"Animate"; requestDraw(); };
+for(const id of ["edges","mesh","ghost"]) $(id).onchange=requestDraw;
+$("bands").onchange=()=>{ drawLegend(); requestDraw(); }; $("lockRange").onchange=setField;
+document.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>{ const v=b.dataset.view; S.pan=[0,0];
+  S.rot = v==="iso"?[-1.05,0,0.6] : v==="x"?[-Math.PI/2,0,-Math.PI/2] : v==="y"?[-Math.PI/2,0,Math.PI] : [0,0,0]; requestDraw(); });
+const info=$("modelInfo"); [["Surface nodes",nN.toLocaleString()],["Surface triangles",(tris.length/3).toLocaleString()],["Size",fmt(DATA.size)+" "+DATA.length_unit],["Frames",frames.length]].forEach(([k,v])=>{ const a=document.createElement("span"), b=document.createElement("span"); a.textContent=k; b.textContent=v; info.append(a,b); });
+window.addEventListener("resize",requestDraw);
+setFrame(); setScale(autoScale());
+window.__viewer={S,setScale,requestDraw,frames,setFrame};
+})();
+</script>
+</body>
+</html>

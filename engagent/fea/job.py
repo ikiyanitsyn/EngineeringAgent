@@ -164,7 +164,7 @@ def load_job(spec: dict | str | Path, folder: str | Path | None = None,
         raw.get("initial_temperature", raw.get("reference_temperature",
                                                "20 degC")), "temperature", system)
     for key in ("modal", "buckling", "nonlinear", "thermal", "fatigue", "stress_exclusion",
-                "transient", "output"):
+                "transient", "output", "angles"):
         if key in raw:
             job.opts[key] = raw[key]
     _validate(job)
@@ -203,8 +203,14 @@ def _validate(job: Job) -> None:
     if job.analysis in ("static", "nonlinear", "buckling", "thermal_stress") and not mech_bc:
         raise ValueError("a static analysis needs supports; add constraints "
                          "(or {'type': 'minimal'} to remove rigid-body motion only)")
-    if job.analysis in ("static", "nonlinear", "buckling") and not job.loads:
+    driven = any(c["type"] == "displacement" and any(
+        ax in c and c[ax] is not None and job.L(c[ax]) != 0.0 for ax in "xyz") for c in job.constraints)
+    if job.analysis in ("static", "nonlinear", "buckling") and not job.loads and not driven:
         raise ValueError("no loads defined; loads and boundary conditions are never assumed")
+    for name, spec in job.raw.get("angles", {}).items():
+        for sname in spec.get("between", []):
+            if sname not in names:
+                raise ValueError(f"angle {name!r} refers to set {sname!r}, which is not defined in 'sets'")
     for p in job.parts:
         m = p.material
         if job.mechanical:

@@ -346,8 +346,8 @@ def _fatigue(job: Job, metrics: dict) -> dict | None:
     cyc = life.value("cycles")
     status = PASS if n >= req else (PASS if target and cyc >= float(target) else FAIL)
     metrics["fatigue_sf_goodman"] = {"value": n, "kind": "ratio", "label": "Fatigue safety factor (Goodman)"}
-    metrics["fatigue_life_cycles"] = {"value": cyc if math.isfinite(cyc) else 1e99, "kind": "ratio",
-                                      "label": "Estimated life (cycles)"}
+    if math.isfinite(cyc):
+        metrics["fatigue_life_cycles"] = {"value": cyc, "kind": "ratio", "label": "Estimated life (cycles)"}
     return {"stress_metric": stress_metric, "stress_max": smax, "R": R, "stress_alt": sa,
             "stress_mean": sm, "Se": Se, "n_goodman": n, "n_gerber": ms.value("n_gerber"),
             "n_soderberg": ms.outputs.get("n_soderberg"), "n_yield": ms.outputs.get("n_yield"),
