@@ -122,7 +122,7 @@ def test_local_ollama_is_used_without_any_settings(monkeypatch, tmp_path):
 
 def test_model_that_copies_example_values_gets_a_question(llm):
     llm.replies = ["Plan: cantilever.\n```bash\nea make beam length=200 width=10 height=20\n"
-                   "ea analyze last -m steel_s355 --fix xmin --force xmax 0,0,-500\n```"]
+                   "ea analyze last -m steel_s355 --fix xmin --force xmax 0,0,-500\n```"] * 3   # retries copy too
     out = assistant.ask("A bar 200 x 10 x 20 mm sticks out of a wall. How much does it bend?")
     assert out["kind"] == "question" and "material" in out["reply"] and "force" in out["reply"]
     assert "result" not in out                    # nothing was run
