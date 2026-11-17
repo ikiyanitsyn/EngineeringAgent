@@ -117,7 +117,7 @@ def main() -> int:
         comment_id = c["id"]
 
     link_base = f"{SERVER}/{REPO}/blob/{BRANCH}"
-    head, result, plan, req_text = "", None, "", ""
+    head, result, plan, req_text, followup = "", None, "", "", ""
     direct = parse(latest)
     try:
         if direct["commands"] or direct["json"] or direct["python"]:
@@ -135,6 +135,7 @@ def main() -> int:
             else:
                 result = out.get("result")
                 req_text = out.get("request", "")
+                followup = out.get("followup", "")
                 if result:
                     result["markdown"] = to_markdown(result, link_base)
                 if out["attempts"] > 1:
@@ -149,14 +150,14 @@ def main() -> int:
     try:
         if result:
             folders = sorted({os.path.relpath(Path(j["folder"]).resolve(), ROOT) for j in result["jobs"]})
-            head = _result_body(result, plan, direct, req_text, folders, issue)
+            head = _result_body(result, plan, direct, req_text, folders, issue, followup)
     except Exception as e:  # still answer the user
         head = f"### ❌ Unexpected error while saving results\n`{type(e).__name__}: {e}`\n\n[Log]({RUN_URL})"
     _finish(head, comment_id, folders)
     return 0
 
 
-def _result_body(result, plan, direct, req_text, folders, issue) -> str:
+def _result_body(result, plan, direct, req_text, folders, issue, followup="") -> str:
     pushed = commit(folders, f"#{issue['number']}" if issue else "manual run")
     parts = []
     if plan:
@@ -169,6 +170,9 @@ def _result_body(result, plan, direct, req_text, folders, issue) -> str:
     def ignored(path: str) -> bool:              # link only files that were committed
         return subprocess.run(["git", "check-ignore", "-q", path], cwd=ROOT).returncode == 0
     parts.append(to_markdown(result, f"{SERVER}/{REPO}/blob/{BRANCH}", skip=ignored))
+    if followup:
+        parts.append("### ❓ To finish your request\n" + followup
+                     + "\n\nReply in a comment below and I will continue.")
     if folders:
         parts.append(f"📦 **[Download all files, including the interactive 3D viewer]({RUN_URL}#artifacts)**"
                      + ("" if pushed else " (files were not committed - see the log)"))

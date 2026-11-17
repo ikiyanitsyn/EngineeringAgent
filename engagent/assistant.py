@@ -219,6 +219,12 @@ def split_reply(reply: str) -> tuple[str, str]:
     return plan, reply
 
 
+def _has_analysis(reply: str) -> bool:
+    req = parse(reply)
+    return any(c.split()[0] in ("analyze", "analyse") for c in req["commands"] if c.split()) or \
+        any('"analysis"' in j or '"loads"' in j for j in req["json"])
+
+
 def ask(conversation: list[dict] | str, *, max_fixes: int = 2, run: bool = True, model: str | None = None,
         on_event=None) -> dict:
     """Turn a conversation (or one message) into results.
@@ -252,6 +258,12 @@ def ask(conversation: list[dict] | str, *, max_fixes: int = 2, run: bool = True,
         if not run:
             out["kind"] = "request"
             return out
+        from .guard import analysis_intent, missing_for_analysis
+        if analysis_intent(user_text) and not _has_analysis(reply):
+            gaps = missing_for_analysis(user_text)
+            if gaps:                                   # deliver the part, and ask what the analysis needs
+                out["followup"] = question(gaps).replace("Before I run the analysis",
+                                                         "To answer your question with an analysis")
         say("running", attempt)
         res = run_request(reply)
         out["result"] = res

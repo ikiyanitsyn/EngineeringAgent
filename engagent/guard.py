@@ -152,3 +152,31 @@ def question(missing: list[str]) -> str:
             f"answer depends on them:\n{items}\n\nPlease give the material (e.g. 'steel', 'aluminium 6061', "
             "'PETG'), the load with its size and direction (e.g. '500 N downwards at the free end', "
             "'5 kg hanging from the hook'), and where the part is held, if not already stated.")
+
+
+INTENT = ("bend", "deflect", "sag", "stress", "strength", "strong", "hold", "break", "fail", "safety factor",
+          "safe", "carry", "support the", "vibrat", "frequency", "resonan", "buckl", "temperature", "how hot",
+          "heat", "cool", "thermal", "fatigue", "analy", "fea", "stiff", "deform", "crack")
+LOAD_UNITS = r"(n|kn|kg|g|lb|lbs|lbf|kip|psi|ksi|mpa|kpa|bar|pa|w|kw|nm|n\.?m|n\*m|°c|°f|degc|degf|c|f|k|newtons?|kilos?|pounds?)\b"
+SUPPORT_WORDS = ("fix", "bolt", "clamp", "held", "hold", "mount", "support", "wall", "weld", "screw", "rest",
+                 "sits", "attached", "cantilever", "pinned", "both ends", "one end")
+
+
+def analysis_intent(user_text: str) -> bool:
+    t = user_text.lower()
+    return any(w in t for w in INTENT)
+
+
+def missing_for_analysis(user_text: str) -> list[str]:
+    """What an analysis question still lacks, judged only from the user's own words."""
+    t = " " + user_text.lower() + " "
+    missing = []
+    mat_words = {w for ws in WORDS.values() for w in ws} | {"wood", "plastic", "metal", "iron", "nylon"}
+    if not any(w in t for w in mat_words):
+        missing.append("the material (for example steel, aluminium 6061, PETG)")
+    if not re.search(r"\d[\d.,]*\s*" + LOAD_UNITS, t):
+        missing.append("the load: how big, which direction and where it acts (for example 500 N downwards at "
+                       "the free end, or a 5 kg weight hanging from the hook)")
+    if not any(w in t for w in SUPPORT_WORDS):
+        missing.append("how the part is held (for example bolted to a wall at one end)")
+    return missing

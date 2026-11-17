@@ -126,3 +126,10 @@ def test_model_that_copies_example_values_gets_a_question(llm):
     out = assistant.ask("A bar 200 x 10 x 20 mm sticks out of a wall. How much does it bend?")
     assert out["kind"] == "question" and "material" in out["reply"] and "force" in out["reply"]
     assert "result" not in out                    # nothing was run
+
+
+def test_cad_only_reply_to_an_analysis_question_asks_for_what_is_missing(llm):
+    llm.replies = ["```bash\nea make beam length=200 width=10 height=20 --no-report\n```"]
+    out = assistant.ask("A bar 200 x 10 x 20 mm is bolted to a wall at one end. How much does the free end bend?")
+    assert out["kind"] == "results" and "followup" in out
+    assert "material" in out["followup"] and "load" in out["followup"] and "how the part is held (for" not in out["followup"]

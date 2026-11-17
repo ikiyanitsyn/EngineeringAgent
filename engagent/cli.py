@@ -523,6 +523,8 @@ def cmd_ask(a):
             print(out["request"])
         else:
             print(out["result"]["text"])
+            if out.get("followup"):
+                print("\n" + out["followup"])
     return 0 if out["kind"] in ("results", "question", "request") else 1
 
 
