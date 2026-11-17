@@ -316,9 +316,37 @@ def build_analysis_job(source: str, *, material: str | None, analysis: str = "st
         job["criteria"] = {"yield_sf": 1.5}
     if fatigue:
         job["fatigue"] = {"R": 0, "surface": "machined", "required_sf": 1.5}
+    if not checks:
+        auto = _auto_beam_check(source, params or {}, mat, cons, loads, a, system)
+        checks = [auto] if auto else None
     if checks:
         job["hand_calcs"] = [link_check(c, job, system) for c in checks]
     return job
+
+
+def _auto_beam_check(source, params, mat, cons, loads, analysis, system) -> str | None:
+    """The textbook cantilever: beam template, fixed at xmin, one transverse force on xmax."""
+    if source != "beam" or analysis != "static" or str(params.get("section", "rect")) != "rect":
+        return None
+    if [c["type"] for c in cons] != ["fixed"] or len(loads) != 1 or loads[0]["type"] != "force":
+        return None
+    from . import materials
+    try:
+        m = materials.get(mat, system)
+    except Exception:
+        return None
+    E = m.get("E")
+    if m.orthotropic or not E:
+        return None
+    fx, fy, fz = (U.to_internal(v, "force", system) for v in loads[0]["value"])
+    if abs(fx) > 1e-9 * max(abs(fy), abs(fz), 1.0) or (fy and fz):
+        return None
+    dims = {k: (U.to_internal(params[k], "length", system) if k in params else d)
+            for k, d in (("length", 100.0), ("width", 10.0), ("height", 10.0))}
+    b, h = (dims["width"], dims["height"]) if fz else (dims["height"], dims["width"])
+    nu = m.get("nu") or 0.3
+    return (f'beam.cantilever_end_load P="{abs(fz or fy):g} N" L="{dims["length"]:g} mm" E="{E:g} MPa" '
+            f'b="{b:g} mm" h="{h:g} mm" nu={nu:g}')
 
 
 # hand-calc output -> how to find the matching FEA result
