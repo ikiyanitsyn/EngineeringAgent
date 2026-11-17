@@ -293,6 +293,13 @@ def _ask_structured(conversation: list[dict], say, run: bool) -> dict:
                                "'thermal'), never in 'loads'."}], 180, fmt=sch)
         form = structured.parse_form(raw)
         out.update(attempts=2, form=form)
+    return _run_form(form, user_text, say, run, out)
+
+
+def _run_form(form: dict, user_text: str, say, run: bool, out: dict) -> dict:
+    """A filled form (from the rules or a model) -> checked request -> results."""
+    from . import structured
+    from .guard import check_request, question
     bad = structured.magnitudes_from_user(form, user_text) if form.get("action") == "analyze" else []
     if bad:
         out.update(kind="question", reply=question(bad))
@@ -327,6 +334,15 @@ def ask(conversation: list[dict] | str, *, max_fixes: int = 2, run: bool = True,
     say = on_event or (lambda *_: None)
     if isinstance(conversation, str):
         conversation = [{"role": "user", "content": conversation}]
+    if os.environ.get("ENGAGENT_NO_RULES") != "1":
+        from .rules import form_from_words          # common requests need no model at all
+        user_text = "\n".join(m["content"] for m in conversation if m.get("role") == "user")
+        form = form_from_words(user_text)
+        if form:
+            say("understood", 0)
+            out = {"attempts": 0, "form": form, "by_rules": True,
+                   "plan": "_Understood directly from your words - no AI model needed._"}
+            return _run_form(form, user_text, say, run, out)
     local = ":11434" in settings()["url"]           # small CPU model: shorter instructions, faster
     if local and os.environ.get("ENGAGENT_FREEFORM") != "1":
         return _ask_structured(conversation, say, run)

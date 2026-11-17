@@ -113,7 +113,7 @@ def main() -> int:
     comment_id = None
     if issue:
         c = gh("POST", f"/repos/{REPO}/issues/{issue['number']}/comments",
-               {"body": f"{MARK}\n⏳ Working on it - usually 2 to 15 minutes (the free built-in AI model is the slow part). [Live log]({RUN_URL})"})
+               {"body": f"{MARK}\n⏳ Working on it - common requests take 1 to 3 minutes; up to 15 if the free built-in AI model is needed. [Live log]({RUN_URL})"})
         comment_id = c["id"]
 
     link_base = f"{SERVER}/{REPO}/blob/{BRANCH}"

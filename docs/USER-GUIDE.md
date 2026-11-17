@@ -70,6 +70,14 @@ GitHub runs the CAD and FEA tools for you on its free servers and answers in the
   it and checks every material and load against your own words, so it never runs an analysis
   on values you did not give - if one is missing, it asks you in a comment.
 
+  Common requests are read straight from your words, with no AI model at all, and come back in
+  1 to 3 minutes: a bar bolted to a wall with a weight on its end, a plate clamped on an edge
+  with a load or pressure on top, a bar heated at one end and cooled by air, and "print me a
+  box / hook / phone stand / plate" with sizes. Write the material, the size with its unit, how
+  it is held and the load with its unit, e.g. *"mild steel bar 200 x 10 x 20 mm bolted to a wall
+  at one end, 50 kg hanging from the free end - how much does it bend?"*. Anything else goes to
+  the free AI model, which takes 5 to 15 minutes.
+
   The free built-in model covers the ready-made part types (beam, plate, bracket, flange,
   enclosure and lid, standoff, pipe clamp, wall hook, phone stand) with supports and forces or
   pressures, heat flow (a face held hot, air cooling, watts in) and thermal stress from a

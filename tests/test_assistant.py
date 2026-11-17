@@ -13,6 +13,11 @@ GOOD = "Plan: a plate.\n```bash\nea make plate length=80 --name good\nea analyze
 QUESTION = "What material is the part made of, and where is it held?"
 
 
+@pytest.fixture(autouse=True)
+def _model_path_only(monkeypatch):
+    monkeypatch.setenv("ENGAGENT_NO_RULES", "1")      # this module tests the language-model path
+
+
 class Fake(BaseHTTPRequestHandler):
     replies: list = []
     seen: list = []
@@ -32,6 +37,7 @@ class Fake(BaseHTTPRequestHandler):
 
 
 @pytest.fixture
+
 def llm(monkeypatch, tmp_path):
     srv = HTTPServer(("127.0.0.1", 0), Fake)
     threading.Thread(target=srv.serve_forever, daemon=True).start()
@@ -175,6 +181,7 @@ def _form_server(monkeypatch, tmp_path):
     for v in ("ENGAGENT_LLM_URL", "ENGAGENT_LLM_KEY", "ENGAGENT_LLM_MODEL"):
         monkeypatch.delenv(v, raising=False)
     monkeypatch.setenv("ENGAGENT_ROOT", str(tmp_path))
+    monkeypatch.setenv("ENGAGENT_NO_RULES", "1")      # these tests exercise the model path
     return srv
 
 

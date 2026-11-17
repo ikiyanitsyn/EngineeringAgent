@@ -59,6 +59,11 @@ Run everything: `.venv/bin/python -m pytest -q` then `.venv/bin/python -m pytest
    **Confirmed live:** issue #5 then answered 96.19 degC, both hand checks 0.0 %, PASS (~6 min,
    no key; jobs/13-beam). **Next for a follow-up session:** if the 7B model misfills thermal forms, add a deterministic pre-fill from the user's words (temperatures
    with units, "h = N", "held at" / "cooled by" -> faces) and let the model only pick the template.
+   **Rules first (`engagent/rules.py`):** common requests (cantilever bar with an end load, plate
+   clamped on an edge with a force or pressure on top, hot-end / air-cooled bar, print requests for
+   any template with sizes) are read from the user's words with no model, in 1-3 minutes, and go
+   through the same checks. Anything the rules are unsure of (no load direction, mid-span loads,
+   brackets, several loads) goes to the model. `ENGAGENT_NO_RULES=1` turns it off.
 3. **Watch the open model on harder requests.** Custom shapes (Python blocks) and multi-step
    analyses are where a 7B model is most likely to stumble; the error-feedback loop helps.
    If quality is poor, try `vars.ENGAGENT_LOCAL_MODEL = qwen2.5-coder:14b` (slower) or a key.
