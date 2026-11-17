@@ -115,6 +115,15 @@ def complete(messages: list[dict], *, model: str | None = None, timeout: float =
             break
     import sys
     print("LLM errors:\n  " + "\n  ".join(errors), file=sys.stderr)
+    if github and all("not JSON" in e or "Name or service" in e or "HTTP 401" in e or "HTTP 403" in e
+                      for e in errors):
+        raise LLMError(
+            "GitHub Models is not available to this account or network (it did not return a model reply). "
+            "Use any other free provider instead: e.g. a free Google Gemini key from "
+            "https://aistudio.google.com/apikey with ENGAGENT_LLM_URL="
+            "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions and "
+            "ENGAGENT_LLM_MODEL=gemini-2.5-flash. In GitHub: Settings > Secrets and variables > Actions "
+            "(secret ENGAGENT_LLM_KEY, variables ENGAGENT_LLM_URL and ENGAGENT_LLM_MODEL).")
     raise LLMError("the language model could not be used. " + " | ".join(errors[:3]))
 
 

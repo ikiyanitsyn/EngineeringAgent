@@ -54,6 +54,10 @@ jobs:
         id: bot
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Optional: use another free model provider for plain-English requests (see docs/USER-GUIDE.md):
+          # repository secret ENGAGENT_LLM_KEY, variables ENGAGENT_LLM_URL and ENGAGENT_LLM_MODEL.
+          ENGAGENT_LLM_KEY: ${{ secrets.ENGAGENT_LLM_KEY }}
+          ENGAGENT_LLM_URL: ${{ vars.ENGAGENT_LLM_URL }}
           ENGAGENT_LLM_MODEL: ${{ vars.ENGAGENT_LLM_MODEL }}
         run: python scripts/issue_bot.py
       - name: Upload files (STEP, STL, reports, interactive viewer)
