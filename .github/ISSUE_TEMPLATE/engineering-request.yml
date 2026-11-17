@@ -1,0 +1,23 @@
+name: Engineering request
+description: Ask for a part, a 3D-printable model or an analysis in plain English. Results are posted here in a few minutes.
+title: "Request: "
+labels: ["request"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe what you need, as you would to a colleague. Give dimensions with units.
+        For a strength or heat analysis also say: the **material**, **where it is held**, and the **load** (size, direction, where).
+        If something is missing, the bot asks in a comment; reply there to continue.
+        You can also paste `ea` command lines or a whole reply from any chatbot (see docs/CHATBOT-PROMPT.md).
+  - type: textarea
+    id: request
+    attributes:
+      label: What do you need?
+      placeholder: |
+        Printable PETG electronics box, 100 x 70 x 40 mm outside, 2.4 mm walls, four screw bosses.
+
+        or: Aluminium 6061 L-bracket, 60 mm legs, 40 mm wide, 6 mm thick, bolted through the two
+        base holes. 300 N pulls the upright holes sideways. Is the safety factor at least 2?
+    validations:
+      required: true

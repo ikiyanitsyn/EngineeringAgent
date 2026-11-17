@@ -486,6 +486,46 @@ def cmd_prompt(a):
         print(text)
 
 
+def cmd_ask(a):
+    from . import assistant
+    text = " ".join(a.text) if a.text else ""
+    if not text:
+        print("What do you need? (finish with an empty line)", file=sys.stderr)
+        lines = []
+        for line in sys.stdin:
+            if not line.strip() and lines:
+                break
+            lines.append(line)
+        text = "".join(lines).strip()
+    convo = [{"role": "user", "content": text}]
+    while True:
+        out = assistant.ask(convo, run=not a.dry_run, model=a.model,
+                            on_event=lambda what, n: print(f"  .. {what}" + (f" (attempt {n + 1})" if n else ""),
+                                                           file=sys.stderr))
+        if out["kind"] == "question" and sys.stdin.isatty() and not a.json:
+            print("\n" + out["reply"].strip() + "\n")
+            answer = input("> ").strip()
+            if not answer:
+                return 0
+            convo += [{"role": "assistant", "content": out["reply"]}, {"role": "user", "content": answer}]
+            continue
+        break
+    if a.json:
+        res = out.get("result") or {}
+        print(json.dumps({"kind": out["kind"], "reply": out.get("reply"), "plan": out.get("plan"),
+                          "jobs": res.get("jobs"), "errors": res.get("errors")}, indent=1, default=str))
+    else:
+        if out.get("plan"):
+            print(out["plan"] + "\n")
+        if out["kind"] == "question":
+            print(out["reply"])
+        elif out["kind"] == "request":
+            print(out["request"])
+        else:
+            print(out["result"]["text"])
+    return 0 if out["kind"] in ("results", "question", "request") else 1
+
+
 def cmd_request(a):
     from .request import run_request
     text = sys.stdin.read() if a.file == "-" else Path(a.file).read_text(encoding="utf-8")
@@ -606,6 +646,11 @@ def build_parser() -> argparse.ArgumentParser:
     q.add_argument("--quick", action="store_true", help="skip the mesh-convergence run")
     q.add_argument("--name"); q.add_argument("--folder"); q.add_argument("--title")
 
+    q = add(sub, "ask", cmd_ask, "PLAIN ENGLISH: describe a part or analysis; an AI model writes and runs the request")
+    q.add_argument("text", nargs="*", help='e.g. "printable PETG box 100x70x40 with 2.4 mm walls"')
+    q.add_argument("--model", help="override the model (see `ea ask --help` / docs)")
+    q.add_argument("--dry-run", action="store_true", help="show the request the model writes, do not run it")
+
     q = add(sub, "prompt", cmd_prompt, "print the instructions that turn any chatbot into a request writer")
     q.add_argument("--out", "-o", help="write to a file instead of printing")
 
@@ -630,7 +675,7 @@ def main(argv=None) -> int:
         os.environ["ENGAGENT_UNITS"] = args.units
     try:
         return int(args.fn(args) or 0)
-    except (ValueError, KeyError, FileNotFoundError, RuntimeError) as e:
+    except (ValueError, KeyError, FileNotFoundError, RuntimeError) as e:   # includes LLMError
         msg = e.args[0] if isinstance(e, KeyError) and e.args else str(e)
         if getattr(args, "json", False):
             print(json.dumps({"error": f"{type(e).__name__}: {msg}"}))
