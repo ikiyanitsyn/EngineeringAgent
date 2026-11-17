@@ -47,14 +47,24 @@ def parse(text: str) -> dict:
             blocks["json"].append(stripped)
         elif lang in ("python", "py") or (not lang and "build123d" in stripped):
             blocks["python"].append(body)
-    outside = FENCE_RE.sub("\n", text)
-    shell_bodies = [b for lang, b in FENCE_RE.findall(text) if lang.lower() in ("", "bash", "sh", "shell", "powershell", "ps1", "text", "txt", "console", "cmd")]
-    for chunk in [outside] + shell_bodies:
+    shellish = ("", "bash", "sh", "shell", "powershell", "ps1", "text", "txt", "console", "cmd", "zsh")
+    chunks: list[str] = []                       # scanned in document order
+    pos = 0
+    for m in FENCE_RE.finditer(text):
+        chunks.append(text[pos:m.start()])
+        if m.group(1).lower() in shellish and not m.group(2).strip().startswith("{"):
+            chunks.append(m.group(2))
+        pos = m.end()
+    chunks.append(text[pos:])
+    for chunk in chunks:
         joined = re.sub(r"[ \t]*[\\`^][ \t]*\n[ \t]*", " ", chunk)       # line continuations
         for line in joined.splitlines():
             m = CMD_RE.match(line.strip().strip("`"))
             if m:
                 commands.append(m.group(1))
+                continue
+            for inline in re.findall(r"`\s*(?:\./|\.\\)?ea(?:\.cmd)?\s+([^`]+?)\s*`", line):
+                commands.append(inline)
     return {"commands": commands, "json": blocks["json"], "python": blocks["python"]}
 
 
