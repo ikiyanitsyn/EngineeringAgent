@@ -10,7 +10,7 @@ pick up the rules and the command list from that file. Nothing else to configure
 
 ## 2. MCP server (any MCP-capable client)
 
-The server exposes 24 tools (units, materials, CAD build / inspect / faces / print
+The server exposes 28 tools (units, materials, CAD build / inspect / faces / print
 check, hand calculations, FEA run, report, viewer, fits, stack-ups, GD&T review).
 It speaks MCP over stdio.
 
@@ -64,7 +64,11 @@ when the client starts it from another folder. Pass absolute file paths to tools
 
 ## Tools exposed by the MCP server
 
-`doctor`, `units_get`, `units_set`, `standard_set`, `convert`, `materials_list`,
+Fastest path for a model: `chatbot_prompt` (read once), then `make` (one call: part + STL +
+print check + report), `analyze` (one call: FEA with supports, loads and a hand check), or
+`run_request` (a whole request in the `ea` format).
+
+Also: `doctor`, `units_get`, `units_set`, `standard_set`, `convert`, `materials_list`,
 `material_get`, `cad_templates`, `cad_build_template`, `cad_run_script`, `cad_inspect`,
 `cad_faces`, `cad_print_check`, `calc_list`, `calc_run`, `fea_job_help`, `fea_run`,
 `report_build`, `viewer_build`, `gdt_fit`, `gdt_fastener_hole`, `gdt_stack`,

@@ -5,6 +5,12 @@ description: Run heat-transfer and thermal-stress finite element analysis with C
 
 # Thermal and thermo-mechanical FEA
 
+**Fast path:** most jobs are one line, e.g.
+`./ea analyze <part.step|template|jobs/NN-name> -m MATERIAL --fix FACES --force FACES FX,FY,FZ --check "<hand calc>"`
+(thermal: `--temp FACES T`, `--convect FACES H T_AMB`, `--heat FACES W`, `-a transient`).
+Face shorthand: `xmin..zmax`, `plane:z=0`, `hole:D@x,y,z`, `cyl:R`, `near:x,y,z`. See `./ea analyze --help`.
+Write a full `job.json` (below) only for what the one-liner cannot express.
+
 ## Ask first
 
 Material (conductivity k, specific heat cp, density; plus E, nu, expansion for stress),

@@ -95,6 +95,15 @@ def _gmsh():
     return gmsh
 
 
+def _init(gmsh) -> None:
+    """Start Gmsh; without a Ctrl-C handler when not on the main thread (MCP server, GUIs)."""
+    import threading
+    if threading.current_thread() is threading.main_thread():
+        gmsh.initialize()
+    else:
+        gmsh.initialize(interruptible=False)
+
+
 def _face_info(gmsh, tag: int, part: str, vol: int) -> dict:
     x0, y0, z0, x1, y1, z1 = gmsh.model.getBoundingBox(2, tag)
     kind = gmsh.model.getType(2, tag)
@@ -253,7 +262,7 @@ def list_faces(parts: list[tuple[str, str]] | str) -> list[dict]:
     gmsh = _gmsh()
     if isinstance(parts, (str, Path)):
         parts = [("part", str(parts))]
-    gmsh.initialize()
+    _init(gmsh)
     try:
         gmsh.option.setNumber("General.Terminal", 0)
         faces, _ = _import_parts(gmsh, parts)
@@ -281,7 +290,7 @@ def build_mesh(parts: list[tuple[str, str]], sets: dict[str, Any] | None = None,
     """
     gmsh = _gmsh()
     sets = sets or {}
-    gmsh.initialize()
+    _init(gmsh)
     try:
         gmsh.option.setNumber("General.Terminal", 0)
         gmsh.option.setNumber("General.NumThreads", 1)       # reproducible meshes

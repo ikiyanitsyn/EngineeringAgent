@@ -19,6 +19,8 @@ from . import units as U
 INSTRUCTIONS = """EngineeringAgent: parametric CAD (build123d), FEA (Gmsh + CalculiX), hand calculations,
 GD&T / tolerancing and verification reports.
 
+Fastest path: call chatbot_prompt once, then make / analyze (one call each) or run_request.
+
 Rules for the calling model:
 1. Never invent loads, supports, materials or dimensions. Ask the user for anything missing.
 2. Call units_get first. Bare numbers are read in the active unit system; strings may carry units.
@@ -119,6 +121,53 @@ def build_server():
         """Properties of one library material in the active unit system (typical values)."""
         from . import materials
         return materials.get(key).to_dict()
+
+    @tool
+    def make(shape: str, params: dict | None = None, print_material: str = "", process: str = "",
+             name: str = "") -> dict:
+        """ONE CALL: build a part and get STEP + STL (+3MF) + report, with a 3D-print check when
+        print_material or process is given. shape = template name (cad_templates) or a path to a
+        build123d script / STEP file. params in the active unit system, e.g. {"thickness": 6}."""
+        from . import quick
+        r = quick.make(shape, params or {}, name=name or None, print_process=process or ("fdm" if print_material else None),
+                       print_material=print_material or None)
+        if r.get("print"):
+            r["print"] = {k: r["print"][k] for k in ("status", "orientation_note", "mass", "checks") if k in r["print"]}
+        r.pop("job", None)
+        return _clean(r)
+
+    @tool
+    def analyze(source: str, material: str, fix: list[str] | None = None, forces: list[list[str]] | None = None,
+                pressures: list[list[str]] | None = None, temps: list[list[str]] | None = None,
+                convects: list[list[str]] | None = None, analysis: str = "static", check: str = "",
+                params: dict | None = None, required_sf: float | None = None, quick_run: bool = False) -> dict:
+        """ONE CALL FEA. source = STEP path, template name or a job folder from `make`.
+        Faces: xmin..zmax, plane:z=0, hole:D@x,y,z, cyl:R, near:x,y,z. forces=[["xmax","0,0,-500"]],
+        pressures=[["zmax","0.1"]], temps=[["xmin","100"]], convects=[["xmax","25","20"]].
+        check = hand calculation, e.g. "beam.cantilever_end_load P=500 L=200 E=210GPa b=10 h=20"."""
+        from . import quick
+        r = quick.analyze(source, material=material, analysis=analysis, fix=fix, forces=forces,
+                          pressures=pressures, temps=temps, convects=convects, params=params,
+                          checks=[check] if check else None, converge=not quick_run,
+                          criteria={"yield_sf": required_sf} if required_sf else None)
+        res = r["results"]
+        return _clean({"folder": r["folder"], "verdict": res["verdict"], "summary": quick.summary_lines(res),
+                       "attention": quick.attention_lines(res), "files": r["files"]})
+
+    @tool
+    def run_request(text: str) -> dict:
+        """Run a request written in the `ea` command format (see `chatbot_prompt`): `ea make ...`,
+        `ea analyze last ...`, plus optional ```json job and ```python geometry blocks."""
+        from .request import run_request as rr
+        r = rr(text)
+        return _clean({"ok": r["ok"], "jobs": r["jobs"], "errors": r["errors"], "outputs": r["outputs"]})
+
+    @tool
+    def chatbot_prompt() -> str:
+        """The full instructions for writing requests: commands, face selectors, templates, materials,
+        build123d cheat sheet and examples. Read this once before using make / analyze / run_request."""
+        from .prompt import chatbot_prompt as cp
+        return cp()
 
     @tool
     def cad_templates() -> list:

@@ -5,6 +5,11 @@ description: Design and check parts for 3D printing (FDM/FFF, SLA, SLS, MJF, met
 
 # CAD for 3D printing
 
+**Fast path:** `./ea make <template> name=value ... --print [material]` builds STEP, STL, 3MF,
+the print check and a report in a new `jobs/NN-name` folder. For custom shapes write
+`jobs/NN-name/geometry.py` (pattern below) and run `./ea make jobs/NN-name/geometry.py --print petg`.
+Templates: `./ea cad templates`. Do not interview the user about CAD details: choose and state defaults.
+
 ## Ask first
 
 Process (FDM, SLA, SLS, MJF, DMLS), material, printer build volume and nozzle if unusual,

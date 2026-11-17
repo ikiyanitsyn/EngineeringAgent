@@ -5,6 +5,11 @@ description: Build parametric 3D CAD models in Python with build123d (OpenCascad
 
 # Parametric CAD with build123d
 
+**Fast path:** `./ea make <template> name=value ... --print [material]` builds STEP, STL, 3MF,
+the print check and a report in a new `jobs/NN-name` folder. For custom shapes write
+`jobs/NN-name/geometry.py` (pattern below) and run `./ea make jobs/NN-name/geometry.py --print petg`.
+Templates: `./ea cad templates`. Do not interview the user about CAD details: choose and state defaults.
+
 ## Steps
 
 1. Restate the part: every dimension, features (holes, fillets, ribs, pockets), where

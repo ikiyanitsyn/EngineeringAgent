@@ -5,6 +5,12 @@ description: Run mechanical finite element analysis with Gmsh and CalculiX on a 
 
 # Mechanical FEA
 
+**Fast path:** most jobs are one line, e.g.
+`./ea analyze <part.step|template|jobs/NN-name> -m MATERIAL --fix FACES --force FACES FX,FY,FZ --check "<hand calc>"`
+(thermal: `--temp FACES T`, `--convect FACES H T_AMB`, `--heat FACES W`, `-a transient`).
+Face shorthand: `xmin..zmax`, `plane:z=0`, `hole:D@x,y,z`, `cyl:R`, `near:x,y,z`. See `./ea analyze --help`.
+Write a full `job.json` (below) only for what the one-liner cannot express.
+
 Jobs are a `job.json` in the job folder. The toolkit meshes (10-node tetrahedra),
 writes the CalculiX deck, solves, reads the results, compares with the hand
 calculation and runs the verification checklist.
