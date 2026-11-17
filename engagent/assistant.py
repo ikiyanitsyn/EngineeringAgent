@@ -235,7 +235,8 @@ def ask(conversation: list[dict] | str, *, max_fixes: int = 2, run: bool = True,
     say = on_event or (lambda *_: None)
     if isinstance(conversation, str):
         conversation = [{"role": "user", "content": conversation}]
-    messages = [{"role": "system", "content": chatbot_prompt()}] + conversation
+    local = ":11434" in settings()["url"]           # small CPU model: shorter instructions, faster
+    messages = [{"role": "system", "content": chatbot_prompt(compact=local)}] + conversation
     out: dict = {"attempts": 0}
     for attempt in range(max_fixes + 1):
         out["attempts"] = attempt + 1

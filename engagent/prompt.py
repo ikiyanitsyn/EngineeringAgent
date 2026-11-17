@@ -110,7 +110,29 @@ ea analyze beam -m steel_generic -a modal --fix xmin --check "beam.natural_frequ
 """
 
 
-def chatbot_prompt(system: str | None = None) -> str:
+COMMON_MATERIALS = ("steel_generic", "steel_s355", "stainless_304", "al_6061_t6", "al_7075_t6", "ti_6al4v",
+                    "brass_c360", "pla", "petg", "abs", "asa", "pa12_sls", "pc", "peek", "cf_peek_ud")
+
+
+def chatbot_prompt(system: str | None = None, compact: bool = False) -> str:
+    """The full instructions, or a shorter version for small local models (faster on CPU)."""
+    text = _full_prompt(system)
+    if not compact:
+        return text
+    # shorter: template parameter names only, common materials only, fewer examples
+    head, rest = text.split("TEMPLATES", 1)
+    rows = [f"  {t['name']}: " + " ".join(f"{k}" for k in t["parameters"]) for t in templates.catalog()]
+    tail = rest.split("CUSTOM SHAPES", 1)[1]
+    examples = tail.split("EXAMPLES", 1)
+    ex_blocks = examples[1].split("Request:")
+    short_examples = "EXAMPLES" + "Request:".join(ex_blocks[:3])
+    return (head + "TEMPLATES (all lengths in mm; defaults are sensible)\n" + "\n".join(rows)
+            + "\n\nMATERIALS (-m or --print), common: " + ", ".join(COMMON_MATERIALS)
+            + "\n  Map words: mild steel -> steel_generic, aluminium -> al_6061_t6, stainless -> stainless_304."
+            + "\n\nCUSTOM SHAPES" + examples[0] + short_examples)
+
+
+def _full_prompt(system: str | None = None) -> str:
     from . import units as U
     s = U.normalize_system(system)
     rows = []
