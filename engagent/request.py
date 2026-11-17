@@ -37,7 +37,7 @@ FENCE_RE = re.compile(r"```[ \t]*([A-Za-z0-9_+-]*)[^\n]*\n(.*?)```", re.S)
 
 def parse(text: str) -> dict:
     """Split a request into command lines and code blocks."""
-    text = text.replace("\r\n", "\n")
+    text = text.replace("\r\n", "\n").lstrip("\ufeff")
     blocks = {"json": [], "python": []}
     commands: list[str] = []
     for lang, body in FENCE_RE.findall(text):

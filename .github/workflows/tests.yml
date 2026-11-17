@@ -53,8 +53,11 @@ jobs:
           $u = (& .venv\Scripts\engagent.exe units --json | ConvertFrom-Json).units
           if ($u -ne "imperial") { Write-Host "units toggle failed: $u"; exit 1 }
           powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start.ps1 -Do units
-          powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start.ps1 -Do prompt | Select-String "TEMPLATES" | Out-Null
-          if (-not $?) { exit 1 }
+          $t = (powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start.ps1 -Do prompt) -join "`n"
+          if ($t -notmatch "TEMPLATES") { Write-Host "prompt not printed"; exit 1 }
+          "ea make standoff --no-report" | Set-Content -Encoding UTF8 ci-bom.txt
+          powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start.ps1 -Do request -File ci-bom.txt
+          if ($LASTEXITCODE -ne 0) { exit 1 }
       - name: One-line commands on Windows
         shell: cmd
         run: |

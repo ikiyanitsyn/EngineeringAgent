@@ -528,7 +528,8 @@ def cmd_ask(a):
 
 def cmd_request(a):
     from .request import run_request
-    text = sys.stdin.read() if a.file == "-" else Path(a.file).read_text(encoding="utf-8")
+    text = sys.stdin.read() if a.file == "-" else Path(a.file).read_text(encoding="utf-8-sig")
+    text = text.lstrip("\ufeff")
     out = run_request(text, markdown=a.markdown)
     print(out["markdown"] if a.markdown else out["text"])
     return 0 if out["ok"] else 1
