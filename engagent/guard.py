@@ -229,3 +229,104 @@ def retry_hint(missing: list[str], user_text: str) -> str:
               "'aluminium 6061' -> al_6061_t6). A weight hanging down is a force in -Z of that many N. "
               "Reply with the complete corrected REQUEST. If the user truly did not give a material or "
               "a load, reply with a short question instead and no commands.")
+
+
+# user words -> library key, most specific first
+MATERIAL_MAP = [
+    (("stainless", "304", "inox"), "stainless_304"), (("316",), "stainless_316l"),
+    (("s355",), "steel_s355"), (("s235",), "steel_s235"), (("a36",), "steel_a36"), (("4140",), "steel_4140_qt"),
+    (("1045",), "steel_1045"), (("tool steel", "p20"), "tool_steel_p20"), (("invar",), "invar_36"),
+    (("mild steel", "carbon steel", "structural steel", "steel"), "steel_generic"),
+    (("7075",), "al_7075_t6"), (("5052",), "al_5052_h32"),
+    (("6061", "aluminium", "aluminum", "alu "), "al_6061_t6"),
+    (("titanium", "ti-6", "ti6"), "ti_6al4v"), (("brass",), "brass_c360"), (("copper",), "copper_c110"),
+    (("petg", "pet-g"), "petg"), ((" pla",), "pla"), ((" abs",), "abs"), ((" asa",), "asa"),
+    (("pa12", "nylon"), "pa12_sls"), (("polycarbonate",), "pc"), (("peek",), "peek"), (("pekk",), "pekk"),
+    (("ultem", " pei"), "pei"), (("polypropylene",), "pp"),
+]
+
+
+def material_from_words(user_text: str) -> str | None:
+    t = " " + user_text.lower() + " "
+    for words, key in MATERIAL_MAP:
+        if any(w in t for w in words):
+            return key
+    return None
+
+
+def _user_loads(user_text: str, kind: str) -> list[float]:
+    vals = []
+    for q in stated_quantities(user_text):
+        m = re.search(r"=?\s*([\d.]+(?:e[-+]?\d+)?) (N|MPa)\b", q.split("=")[-1])
+        if m and ((kind == "force" and m.group(2) == "N") or (kind == "pressure" and m.group(2) == "MPa")):
+            vals.append(float(m.group(1)))
+    return list(dict.fromkeys(vals))
+
+
+def _wrong_grade(key: str, mapped: str | None, user_text: str) -> bool:
+    """True when the request's material is not what the user's words point to."""
+    if key.strip().startswith("{"):
+        return not _material_supported(key, user_text)
+    if not _material_supported(key, user_text):
+        return True
+    if not mapped or key == mapped:
+        return False
+    t = user_text.lower()
+    grade_tokens = [p for p in key.lower().split("_") if any(ch.isdigit() for ch in p)]
+    return not any(tok in t for tok in grade_tokens)        # e.g. s355 chosen but never mentioned
+
+
+def autocorrect(request_text: str, user_text: str) -> tuple[str, list[str]]:
+    """Replace invented materials / load magnitudes with the user's own, when unambiguous.
+
+    Returns (corrected request, notes describing each change). Only `ea analyze` lines change.
+    """
+    notes: list[str] = []
+    lines = request_text.split("\n")
+    mat = material_from_words(user_text)
+    forces, pressures = _user_loads(user_text, "force"), _user_loads(user_text, "pressure")
+    nums = _numbers(user_text)
+    for i, line in enumerate(lines):
+        if not re.match(r"^\s*(\./)?ea\s+analy[sz]e\b", line):
+            continue
+        try:
+            argv = shlex.split(line.strip())
+        except ValueError:
+            continue
+        changed = False
+        for j, a in enumerate(argv):
+            if a in ("-m", "--material") and j + 1 < len(argv) and _wrong_grade(argv[j + 1], mat, user_text):
+                if mat:
+                    notes.append(f"material: used `{mat}` for what you wrote (the AI had assumed `{argv[j + 1]}`)")
+                    argv[j + 1], changed = mat, True
+            if a == "--force" and j + 2 < len(argv):
+                comps = argv[j + 2].split(",")
+                try:
+                    vals = [float(c) for c in comps]
+                except ValueError:
+                    continue
+                nz = [k for k, v in enumerate(vals) if v]
+                if len(nz) == 1 and not _supported_number(abs(vals[nz[0]]), nums, "force") and len(forces) == 1:
+                    k = nz[0]
+                    vals[k] = forces[0] if vals[k] > 0 else -forces[0]
+                    argv[j + 2] = ",".join(f"{v:g}" for v in vals)
+                    notes.append(f"load: used {forces[0]:g} N from what you wrote, direction "
+                                 f"{'+-'[vals[k] < 0]}{'XYZ'[k]} as the AI set it")
+                    changed = True
+            if a == "--pressure" and j + 2 < len(argv) and len(pressures) == 1:
+                try:
+                    p = float(argv[j + 2])
+                except ValueError:
+                    continue
+                if not _supported_number(abs(p), nums, "pressure"):
+                    argv[j + 2] = f"{pressures[0]:g}"
+                    notes.append(f"pressure: used {pressures[0]:g} MPa from what you wrote")
+                    changed = True
+        if changed:
+            # --check hand calcs may carry the same invented numbers: drop them (the beam check is automatic)
+            if "--check" in argv:
+                k = argv.index("--check")
+                del argv[k:k + 2]
+                notes.append("hand check: re-derived from your values")
+            lines[i] = "ea " + " ".join(shlex.quote(x) for x in argv[1:])
+    return "\n".join(lines), list(dict.fromkeys(notes))

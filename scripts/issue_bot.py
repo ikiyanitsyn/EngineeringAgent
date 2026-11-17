@@ -126,6 +126,8 @@ def main() -> int:
         else:
             out = _ask_with_fallback(convo)
             plan = out.get("plan", "")
+            if out.get("corrections"):
+                plan = (plan + "\n\n**Checked against your words:** " + "; ".join(out["corrections"]) + ".").strip()
             if out.get("model_note"):
                 plan = (plan + "\n\n" + out["model_note"]).strip()
             if out["kind"] == "question":

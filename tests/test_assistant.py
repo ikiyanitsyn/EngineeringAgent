@@ -136,11 +136,21 @@ def test_cad_only_reply_to_an_analysis_question_asks_for_what_is_missing(llm):
 
 
 @pytest.mark.solver
-def test_rejected_values_get_one_retry_with_the_users_numbers(llm):
+def test_invented_values_are_corrected_from_the_users_words(llm):
     llm.replies = ["```bash\nea analyze beam length=200 width=10 height=20 -m steel_s355 --fix xmin --force xmax 0,0,-500 --quick\n```",
                    "```bash\nea analyze beam length=200 width=10 height=20 -m steel_generic --fix xmin --force xmax 0,0,-490.3 --quick\n```"]
     out = assistant.ask("A mild steel bar 200 x 10 x 20 mm is bolted to a wall at one end; "
                         "a 50 kg weight hangs from the free end. How much does it bend?")
+    # corrected in code on the first attempt: no second model call needed
+    assert out["kind"] == "results" and out["attempts"] == 1
+    assert any("490.3 N" in c for c in out["corrections"]) and any("steel_generic" in c for c in out["corrections"])
+
+
+@pytest.mark.solver
+def test_needless_question_is_pushed_back_once(llm):
+    llm.replies = ["What material did you mean by 'mild'?",
+                   "```bash\nea analyze beam length=200 width=10 height=20 -m steel_generic --fix xmin --force xmax 0,0,-490.3 --quick\n```"]
+    out = assistant.ask("A mild steel bar 200 x 10 x 20 mm is bolted to a wall at one end; a 50 kg weight hangs "
+                        "from the free end. How much does it bend?")
     assert out["kind"] == "results" and out["attempts"] == 2
-    hint = llm.seen[1]["messages"][-1]["content"]
-    assert "490.3 N" in hint and "steel" in hint
+    assert "steel_generic" in llm.seen[1]["messages"][-1]["content"]

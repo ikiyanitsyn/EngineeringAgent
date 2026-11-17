@@ -31,3 +31,15 @@ def test_cad_defaults_are_not_questioned():
 def test_json_jobs_are_checked_too():
     job = '```json\n{"analysis": "static", "material": "pla", "loads": [{"type": "force", "on": "a", "value": [0, 0, -75]}]}\n```'
     assert len(check_request(job, "a bracket that holds a shelf")) == 2
+
+
+def test_autocorrect_uses_the_users_material_and_load():
+    from engagent.guard import autocorrect
+    user = "Bar 200 x 10 x 20 mm bolted to a wall at one end. Mild steel, a 50 kg weight hangs from the free end."
+    fixed, notes = autocorrect("ea analyze beam -m steel_s355 --fix xmin --force xmax 0,0,-500", user)
+    assert "-m steel_generic" in fixed and "0,0,-490.3" in fixed and len(notes) == 2
+    assert check_request(fixed, user) == []
+    same, none = autocorrect("ea analyze beam -m steel_s355 --fix xmin --force xmax 0,0,-490.3", "S355 bar, 50 kg")
+    assert none == [] and "steel_s355" in same
+    untouched, n2 = autocorrect("ea analyze beam -m steel_s355 --fix xmin --force xmax 0,0,-500", "a bar on a wall")
+    assert n2 == [] and check_request(untouched, "a bar on a wall")      # nothing to map: still rejected

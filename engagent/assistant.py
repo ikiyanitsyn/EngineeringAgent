@@ -246,10 +246,28 @@ def ask(conversation: list[dict] | str, *, max_fixes: int = 2, run: bool = True,
         out.update(reply=reply, plan=plan)
         req = parse(reply)
         if not (req["commands"] or req["json"] or req["python"]):
+            user_text = "\n".join(m["content"] for m in conversation if m.get("role") == "user")
+            from .guard import analysis_intent, material_from_words, missing_for_analysis, stated_quantities
+            if attempt < max_fixes and analysis_intent(user_text) and not missing_for_analysis(user_text):
+                mat = material_from_words(user_text)
+                say("fixing", attempt)                 # the user already gave everything: insist once
+                messages += [{"role": "assistant", "content": reply},
+                             {"role": "user", "content":
+                              "Everything needed was already given - do not ask, write the REQUEST now. "
+                              f"Material: {mat or 'see my words'} (use exactly this library key). "
+                              f"Loads I stated: {', '.join(stated_quantities(user_text)) or 'see my words'}. "
+                              "A weight hanging down is a force in -Z. Use the supports I described."}]
+                continue
             out["kind"] = "question"
             return out
         user_text = "\n".join(m["content"] for m in conversation if m.get("role") == "user")
         from .guard import check_request, question
+        from .guard import autocorrect
+        fixed, notes = autocorrect(reply, user_text)     # use the user's own material / load
+        if notes and not check_request(fixed, user_text):
+            reply = fixed
+            out["corrections"] = notes
+            out["reply"] = reply
         invented = check_request(reply, user_text)
         if invented:                                   # never run on inputs the user did not give
             if attempt < max_fixes:                    # first let the model use what the user said
