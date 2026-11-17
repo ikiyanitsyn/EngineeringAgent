@@ -38,6 +38,13 @@ Run everything: `.venv/bin/python -m pytest -q` then `.venv/bin/python -m pytest
    back to the model once. Small models still sometimes ask odd questions - the user can always paste
    `ea` lines, or add a Gemini key. Each CPU model call takes
    roughly 3-6 minutes; a Gemini key (or a faster runner) makes replies ~1 minute.
+   **Final design for local models (`engagent/structured.py`):** the small model fills a JSON form
+   constrained by Ollama's schema support (template, dimensions, material words, held faces, loads
+   with the user's own magnitude and unit); the code maps the material, converts units, places end
+   loads on the end face, builds the `ea` commands and checks every magnitude. Live result (issue #4):
+   "mild steel bar 200 x 10 x 20, bolted to a wall at one end, 50 kg hanging from the free end" ->
+   SF 1.79, 0.94 mm, hand check 0.5 %, PASS, ~5 minutes, no key. Covers templates with supports and
+   forces/pressures; custom shapes, thermal and assemblies need a hosted model or a pasted request.
 3. **Watch the open model on harder requests.** Custom shapes (Python blocks) and multi-step
    analyses are where a 7B model is most likely to stumble; the error-feedback loop helps.
    If quality is poor, try `vars.ENGAGENT_LOCAL_MODEL = qwen2.5-coder:14b` (slower) or a key.

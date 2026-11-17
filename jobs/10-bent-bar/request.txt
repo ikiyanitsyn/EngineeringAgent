@@ -1,4 +1,0 @@
-```bash
-ea make beam length=200 width=10 height=20 --name "bent bar"
-ea analyze last -m steel_generic --force xmin+xmax,0,0,0,0,-500 --sf 2
-```

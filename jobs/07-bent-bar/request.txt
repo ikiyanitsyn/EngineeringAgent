@@ -1,3 +1,0 @@
-```bash
-ea make beam length=200 width=10 height=20 --name "bent bar"
-```
