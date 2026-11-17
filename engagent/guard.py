@@ -180,3 +180,52 @@ def missing_for_analysis(user_text: str) -> list[str]:
     if not any(w in t for w in SUPPORT_WORDS):
         missing.append("how the part is held (for example bolted to a wall at one end)")
     return missing
+
+
+_Q = [  # (regex unit, kind, factor to the request's metric unit, label)
+    (r"kg|kilos?|kilograms?", "force", G, "N (weight of the mass)"),
+    (r"lbs?|pounds?", "force", 0.45359237 * G, "N (weight)"),
+    (r"kn", "force", 1000, "N"), (r"lbf", "force", 4.4482216, "N"), (r"n|newtons?", "force", 1, "N"),
+    (r"mpa", "pressure", 1, "MPa"), (r"kpa", "pressure", 1e-3, "MPa"), (r"bar", "pressure", 0.1, "MPa"),
+    (r"psi", "pressure", 0.0068947573, "MPa"),
+    (r"n\.?m|n\*m|nm", "moment", 1, "N*m"),
+    (r"kw", "heat", 1000, "W"), (r"w|watts?", "heat", 1, "W"),
+]
+
+
+def stated_quantities(user_text: str) -> list[str]:
+    """Loads the user stated, converted to the request's metric units (for the model's retry)."""
+    out = []
+    t = user_text.lower()
+    for m in re.finditer(r"(\d+(?:\.\d+)?)\s*(°?c|°?f|deg\s?[cf]|[a-z*.]+)", t):
+        num, unit = float(m.group(1)), m.group(2).strip(".")
+        if re.fullmatch(r"°?c|deg\s?c", unit):
+            out.append(f"{num:g} degC")
+            continue
+        if re.fullmatch(r"°?f|deg\s?f", unit):
+            out.append(f"{num:g} degF = {(num - 32) * 5 / 9:.4g} degC")
+            continue
+        for rx, kind, f, label in _Q:
+            if re.fullmatch(rx, unit):
+                out.append(f"{num:g} {unit} = {num * f:.4g} {label}" if f != 1 else f"{num:g} {label}")
+                break
+    return list(dict.fromkeys(out))
+
+
+def materials_mentioned(user_text: str) -> list[str]:
+    t = " " + user_text.lower() + " "
+    return sorted({w.strip() for ws in WORDS.values() for w in ws if w in t})
+
+
+def retry_hint(missing: list[str], user_text: str) -> str:
+    q = stated_quantities(user_text)
+    mats = materials_mentioned(user_text)
+    return ("The tool rejected this request because these values were not given by the user:\n"
+            + "\n".join(f"- {m}" for m in missing)
+            + "\nUse ONLY what the user actually said. The user stated these quantities: "
+            + (", ".join(q) if q else "none")
+            + ". Material words the user used: " + (", ".join(mats) if mats else "none")
+            + ". Map the material words to the closest library key (e.g. 'mild steel' -> steel_generic, "
+              "'aluminium 6061' -> al_6061_t6). A weight hanging down is a force in -Z of that many N. "
+              "Reply with the complete corrected REQUEST. If the user truly did not give a material or "
+              "a load, reply with a short question instead and no commands.")

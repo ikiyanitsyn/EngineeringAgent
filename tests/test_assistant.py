@@ -133,3 +133,14 @@ def test_cad_only_reply_to_an_analysis_question_asks_for_what_is_missing(llm):
     out = assistant.ask("A bar 200 x 10 x 20 mm is bolted to a wall at one end. How much does the free end bend?")
     assert out["kind"] == "results" and "followup" in out
     assert "material" in out["followup"] and "load" in out["followup"] and "how the part is held (for" not in out["followup"]
+
+
+@pytest.mark.solver
+def test_rejected_values_get_one_retry_with_the_users_numbers(llm):
+    llm.replies = ["```bash\nea analyze beam length=200 width=10 height=20 -m steel_s355 --fix xmin --force xmax 0,0,-500 --quick\n```",
+                   "```bash\nea analyze beam length=200 width=10 height=20 -m steel_generic --fix xmin --force xmax 0,0,-490.3 --quick\n```"]
+    out = assistant.ask("A mild steel bar 200 x 10 x 20 mm is bolted to a wall at one end; "
+                        "a 50 kg weight hangs from the free end. How much does it bend?")
+    assert out["kind"] == "results" and out["attempts"] == 2
+    hint = llm.seen[1]["messages"][-1]["content"]
+    assert "490.3 N" in hint and "steel" in hint

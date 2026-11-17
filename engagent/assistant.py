@@ -251,6 +251,12 @@ def ask(conversation: list[dict] | str, *, max_fixes: int = 2, run: bool = True,
         from .guard import check_request, question
         invented = check_request(reply, user_text)
         if invented:                                   # never run on inputs the user did not give
+            if attempt < max_fixes:                    # first let the model use what the user said
+                from .guard import retry_hint
+                say("fixing", attempt)
+                messages += [{"role": "assistant", "content": reply},
+                             {"role": "user", "content": retry_hint(invented, user_text)}]
+                continue
             out.update(kind="question", reply=question(invented), plan="", invented=invented,
                        request=reply)
             return out
