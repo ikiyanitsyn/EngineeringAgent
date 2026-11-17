@@ -56,8 +56,8 @@ Run everything: `.venv/bin/python -m pytest -q` then `.venv/bin/python -m pytest
    every value to appear in the user's words with a unit of the same kind. The 1-D hot-end /
    cooled-end bar gets automatic hand checks (end temperature + heat flow, which also closes the
    heat balance): locally 96.19 degC, both 0.0 %, PASS.
-   **Next for a follow-up session:** confirm issue #5 ends in a thermal PASS; if the 7B model
-   still misfills thermal forms, add a deterministic pre-fill from the user's words (temperatures
+   **Confirmed live:** issue #5 then answered 96.19 degC, both hand checks 0.0 %, PASS (~6 min,
+   no key; jobs/13-beam). **Next for a follow-up session:** if the 7B model misfills thermal forms, add a deterministic pre-fill from the user's words (temperatures
    with units, "h = N", "held at" / "cooled by" -> faces) and let the model only pick the template.
 3. **Watch the open model on harder requests.** Custom shapes (Python blocks) and multi-step
    analyses are where a 7B model is most likely to stumble; the error-feedback loop helps.
