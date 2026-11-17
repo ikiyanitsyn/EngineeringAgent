@@ -2,6 +2,10 @@
 EngineeringAgent start menu for Windows. Launched by START-HERE.cmd (double-click).
 Installs everything on first use, then offers the simplest ways to get a part or an analysis.
 #>
+param(
+    [string]$Do = "",      # non-interactive action for scripts and CI: prompt | request | units | doctor
+    [string]$File = ""     # request file for -Do request
+)
 $ErrorActionPreference = "Continue"
 $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
@@ -77,8 +81,12 @@ function Setup-AI {
     return $true
 }
 
+function Test-Ollama {
+    try { Invoke-RestMethod -Uri "http://localhost:11434/api/tags" -TimeoutSec 2 | Out-Null; return $true } catch { return $false }
+}
+
 function Ask-PlainEnglish {
-    $configured = [Environment]::GetEnvironmentVariable("ENGAGENT_LLM_URL", "User") -or $env:ENGAGENT_LLM_URL -or $env:ENGAGENT_LLM_KEY
+    $configured = [Environment]::GetEnvironmentVariable("ENGAGENT_LLM_URL", "User") -or $env:ENGAGENT_LLM_URL -or $env:ENGAGENT_LLM_KEY -or (Test-Ollama)
     if (-not $configured) { if (-not (Setup-AI)) { return } }
     Write-Host ""
     Write-Host "Describe what you need, with dimensions and units. For an analysis also say the material," -ForegroundColor Cyan
@@ -102,8 +110,18 @@ function Run-Pasted {
 
 if (-not (Ensure-Installed)) {
     Write-Host "Setup did not finish. Scroll up for the message, or ask for help with it." -ForegroundColor Red
-    Read-Host "Press Enter to close"
+    if (-not $Do) { Read-Host "Press Enter to close" }
     exit 1
+}
+
+if ($Do) {                                   # one action, no menu (used by CI and shortcuts)
+    switch ($Do) {
+        "prompt"  { & $ea prompt; exit $LASTEXITCODE }
+        "request" { & $ea request $File; exit $LASTEXITCODE }
+        "units"   { $u = Get-Units; if ($u -eq "metric") { & $ea units imperial } else { & $ea units metric }; exit $LASTEXITCODE }
+        "doctor"  { & $ea doctor --full; exit $LASTEXITCODE }
+        default   { Write-Host "unknown action $Do (prompt, request, units, doctor)"; exit 2 }
+    }
 }
 
 while ($true) {

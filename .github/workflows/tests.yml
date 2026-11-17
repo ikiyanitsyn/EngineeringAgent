@@ -43,6 +43,18 @@ jobs:
       - name: Windows setup (as a user would run it)
         shell: powershell
         run: powershell -NoProfile -ExecutionPolicy Bypass -File scripts\setup.ps1 -NoShortcut
+      - name: Windows menu actions (START-HERE, non-interactive)
+        shell: powershell
+        run: |
+          "ea make standoff --print petg --no-report" | Set-Content ci-request.txt
+          powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start.ps1 -Do request -File ci-request.txt
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start.ps1 -Do units
+          $u = (& .venv\Scripts\engagent.exe units --json | ConvertFrom-Json).units
+          if ($u -ne "imperial") { Write-Host "units toggle failed: $u"; exit 1 }
+          powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start.ps1 -Do units
+          powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start.ps1 -Do prompt | Select-String "TEMPLATES" | Out-Null
+          if (-not $?) { exit 1 }
       - name: One-line commands on Windows
         shell: cmd
         run: |
