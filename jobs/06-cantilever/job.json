@@ -1,0 +1,61 @@
+{
+ "name": "06-cantilever",
+ "units": "metric",
+ "analysis": "static",
+ "title": "static analysis of part",
+ "geometry": {
+  "template": "beam",
+  "params": {
+   "length": 200,
+   "width": 10,
+   "height": 20
+  }
+ },
+ "material": "steel_s355",
+ "sets": {
+  "xmin": "xmin",
+  "xmax": "xmax"
+ },
+ "constraints": [
+  {
+   "type": "fixed",
+   "on": "xmin"
+  }
+ ],
+ "loads": [
+  {
+   "type": "force",
+   "on": "xmax",
+   "value": [
+    0.0,
+    0.0,
+    -500.0
+   ]
+  }
+ ],
+ "probes": {
+  "xmax": {
+   "set": "xmax"
+  }
+ },
+ "criteria": {
+  "yield_sf": 1.5
+ },
+ "hand_calcs": [
+  {
+   "name": "Hand check: Cantilever, point load P at the free end",
+   "calc": "beam.cantilever_end_load",
+   "inputs": {
+    "P": 500,
+    "L": 200,
+    "E": "210GPa",
+    "b": 10,
+    "h": 20,
+    "nu": 0.3
+   },
+   "output": "deflection",
+   "tol": 0.05,
+   "metric": "probe.xmax.displacement"
+  }
+ ]
+}

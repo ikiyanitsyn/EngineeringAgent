@@ -1,0 +1,53 @@
+{
+ "valid": true,
+ "solids": 1,
+ "faces": 6,
+ "edges": 12,
+ "volume": 39999.99999999999,
+ "area": 12399.999999999996,
+ "bbox_min": [
+  0.0,
+  -5.0,
+  -10.0
+ ],
+ "bbox_max": [
+  200.0,
+  5.0,
+  10.0
+ ],
+ "bbox_size": [
+  200.0,
+  10.0,
+  20.0
+ ],
+ "center_of_mass": [
+  100.0,
+  -2.858824288409779e-17,
+  1.4210854715202007e-17
+ ],
+ "inertia_unit_density": [
+  [
+   1666666.666666667,
+   8.88178419700124e-12,
+   0.0
+  ],
+  [
+   8.88178419700124e-12,
+   134666666.6666667,
+   -1.625053464755285e-29
+  ],
+  [
+   0.0,
+   -1.625053464755285e-29,
+   133666666.66666669
+  ]
+ ],
+ "face_types": {
+  "plane": 6
+ },
+ "cylinder_diameters": [],
+ "files": [
+  "/home/runner/work/EngineeringAgent/EngineeringAgent/jobs/06-cantilever/part.step"
+ ],
+ "template": "beam"
+}
