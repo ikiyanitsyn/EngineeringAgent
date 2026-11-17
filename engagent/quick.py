@@ -330,6 +330,8 @@ def _auto_beam_check(source, params, mat, cons, loads, analysis, system) -> str 
         return None
     if [c["type"] for c in cons] != ["fixed"] or len(loads) != 1 or loads[0]["type"] != "force":
         return None
+    if cons[0].get("on") != "xmin" or loads[0].get("on") != "xmax":      # only the textbook layout
+        return None
     from . import materials
     try:
         m = materials.get(mat, system)

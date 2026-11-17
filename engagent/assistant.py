@@ -245,6 +245,8 @@ def _ask_structured(conversation: list[dict], say, run: bool) -> dict:
         out.update(kind="question", reply=question(bad))
         return out
     req, q = structured.build_request(form, user_text)
+    if form.get("_notes"):
+        out["corrections"] = form["_notes"]
     if q:
         out.update(kind="question", reply=q)
         return out

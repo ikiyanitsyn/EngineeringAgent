@@ -21,7 +21,9 @@ TO_N = {"N": 1.0, "kN": 1000.0, "kg": 9.80665, "lbf": 4.4482216, "lb": 4.4482216
 TO_MPA = {"MPa": 1.0, "kPa": 1e-3, "bar": 0.1, "psi": 0.0068947573}
 
 FACE_HELP = {
-    "beam": "bar along +X from x=0 to length; xmin and xmax are its two ends, zmax the top, zmin the bottom",
+    "beam": "bar along +X from x=0 to length; xmin and xmax are its two END faces (a load 'at the end', "
+            "'at the tip' or 'on the free end' acts on xmax when xmin is held), zmax the top surface along "
+            "the whole length, zmin the bottom",
     "plate": "flat plate on z=0; zmin is the bottom face, zmax the top, xmin/xmax/ymin/ymax the edges",
     "l_bracket": "base leg on z=0 along +X (zmin = underside of the base), upright leg at x=0 going up "
                  "(xmin = back of the upright)",
@@ -113,6 +115,18 @@ def build_request(form: dict, user_text: str) -> tuple[str | None, str | None]:
     if missing:
         return None, ("To run the analysis I still need: " + "; ".join(missing)
                       + ". Please reply with those - I will not guess them.")
+    notes = []
+    t = user_text.lower()
+    if tmpl == "beam" and re.search(r"\b(free end|at the end|on the end|end of|the tip|at the tip|tip load)\b", t):
+        ends = [f for f in fixed if f in ("xmin", "xmax")]
+        if ends:
+            free = "xmax" if ends[0] == "xmin" else "xmin"
+            for l in loads:
+                if l.get("face") not in ("xmin", "xmax"):
+                    notes.append(f"load placed on the free end ({free}) because you said it acts at the end "
+                                 f"(the AI had put it on {l.get('face')})")
+                    l["face"] = free
+    form["_notes"] = notes
     parts = [f"ea make {tmpl} {pstr} --name \"{name}\"".replace("  ", " "),
              f"ea analyze last -m {mat} " + " ".join(f"--fix {f}" for f in dict.fromkeys(fixed))]
     for l in loads:

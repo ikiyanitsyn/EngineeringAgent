@@ -43,3 +43,20 @@ def test_autocorrect_uses_the_users_material_and_load():
     assert none == [] and "steel_s355" in same
     untouched, n2 = autocorrect("ea analyze beam -m steel_s355 --fix xmin --force xmax 0,0,-500", "a bar on a wall")
     assert n2 == [] and check_request(untouched, "a bar on a wall")      # nothing to map: still rejected
+
+
+def test_beam_end_load_is_put_on_the_end_face():
+    from engagent import structured
+    u = "Mild steel bar 200 x 10 x 20 mm bolted to a wall at one end; a 50 kg weight hangs from the free end."
+    form = {"action": "analyze", "template": "beam", "params": {"length": 200}, "material_words": "mild steel",
+            "fixed_faces": ["xmin"], "loads": [{"face": "zmax", "kind": "force", "direction": "-z", "magnitude": 50, "unit": "kg"}]}
+    req, q = structured.build_request(form, u)
+    assert q is None and "--force xmax 0,0,-490.332" in req and form["_notes"]
+
+
+def test_auto_beam_check_only_for_the_textbook_layout():
+    from engagent.quick import build_analysis_job
+    j = build_analysis_job("beam", material="steel_generic", fix=["xmin"], forces=[["zmax", "0,0,-100"]], system="metric")
+    assert "hand_calcs" not in j
+    j = build_analysis_job("beam", material="steel_generic", fix=["xmin"], forces=[["xmax", "0,0,-100"]], system="metric")
+    assert j["hand_calcs"][0]["metric"] == "probe.xmax.displacement"
