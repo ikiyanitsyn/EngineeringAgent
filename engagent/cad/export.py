@@ -27,12 +27,9 @@ def export(shape, step: str | Path, *, stl: bool = False, threemf: bool = False,
             raise RuntimeError(f"STL export failed: {p}")
         files.append(p)
     if threemf:
-        from build123d import Mesher
-        p = step.with_suffix(".3mf")
-        m = Mesher()
-        m.add_shape(shape, linear_deflection=lin, angular_deflection=ang)
-        m.write(str(p))
-        files.append(p)
+        p = write_3mf(shape, step.with_suffix(".3mf"), lin, ang)
+        if p:
+            files.append(p)
     return files
 
 
@@ -53,10 +50,22 @@ def convert(src: str | Path, *, stl: bool = True, threemf: bool = False, quality
         export_stl(shape, str(p), tolerance=lin, angular_tolerance=ang)
         files.append(p)
     if threemf:
-        from build123d import Mesher
-        p = src.with_suffix(".3mf")
-        m = Mesher()
-        m.add_shape(shape, linear_deflection=lin, angular_deflection=ang)
-        m.write(str(p))
-        files.append(p)
+        p = write_3mf(shape, src.with_suffix(".3mf"), lin, ang)
+        if p:
+            files.append(p)
     return files
+
+
+def write_3mf(shape, path: Path, lin: float, ang: float) -> Path | None:
+    """3MF is a convenience format: retry coarser, and skip (STL/STEP remain) if the mesher refuses."""
+    from build123d import Mesher
+    for f in (1.0, 2.0, 5.0):
+        try:
+            m = Mesher()
+            m.add_shape(shape, linear_deflection=lin * f, angular_deflection=min(ang * f, 0.5))
+            m.write(str(path))
+            return Path(path)
+        except Exception:
+            continue
+    Path(path).unlink(missing_ok=True)
+    return None

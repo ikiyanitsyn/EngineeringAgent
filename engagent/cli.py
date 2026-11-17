@@ -422,6 +422,78 @@ def cmd_view(a):
     _out(a, {"viewer": str(p)}, [f"Viewer written: {p}", "Open it in any browser (double-click, or add --open)."])
 
 
+# ------------------------------------------------------------------ quick (one-line) commands
+def cmd_make(a):
+    from . import quick
+    from .cad.inspect import describe
+    params = quick.kv_params(a.params)
+    pmat = a.print if isinstance(a.print, str) and a.print != "__default__" else None
+    process = a.process or ("fdm" if a.print else None)
+    if a.print == "__default__":
+        pmat = a.material or "petg"
+    r = quick.make(a.shape, params, name=a.name, folder=a.folder, material=a.material,
+                   print_process=process, print_material=pmat, infill=a.infill,
+                   report=not a.no_report, title=a.title)
+    lines = [f"Built {a.shape} -> {r['folder']}"] + _kv(describe(r["cad"]))
+    if r.get("print"):
+        p = r["print"]
+        lines += [f"3D-print check ({p['process_name']}): {p['status']}",
+                  f"  {p.get('orientation_note', 'orientation ' + p['orientation'])}"]
+        if p.get("mass") is not None:
+            lines.append(f"  printed mass about {U.fmt(p['mass'], 'mass', unit='g' if config.get_units() == 'metric' else 'oz')}"
+                         f" at {p['infill'] * 100:.0f} % infill")
+        lines += [f"  [{c['status']}] {c['name']}: {c['detail']}" for c in p["checks"] if c["status"] != "PASS"]
+    lines += ["Files:"] + [f"  {f}" for f in r["files"]]
+    _out(a, {k: v for k, v in r.items() if k != "job"}, lines)
+    return 0 if r.get("verdict") != "FAIL" else 1
+
+
+def cmd_analyze(a):
+    from . import quick
+    say = (lambda m: print("  ..", m, file=sys.stderr)) if not a.json else None
+    crit = {}
+    if a.sf is not None:
+        crit["yield_sf"] = a.sf
+    if a.max_disp is not None:
+        crit["max_displacement"] = a.max_disp
+    if a.min_freq is not None:
+        crit["min_frequency"] = a.min_freq
+    r = quick.analyze(a.source, name=a.name, folder=a.folder, converge=not a.quick, progress=say,
+                      material=a.material, analysis=a.type, fix=a.fix, pin=a.pin, slide=a.slide,
+                      forces=a.force, pressures=a.pressure, moments=a.moment, gravity=a.gravity,
+                      temps=a.temp, convects=a.convect, heats=a.heat, dtemp=a.dT,
+                      initial_temperature=a.t0, params=quick.kv_params(a.params), mesh_size=a.size,
+                      modes=a.modes, duration=a.duration, criteria=crit or None, fatigue=a.fatigue,
+                      checks=a.check, title=a.title)
+    res = r["results"]
+    if a.json:
+        print(json.dumps({"folder": r["folder"], "verdict": res["verdict"], "files": r["files"],
+                          "summary": quick.summary_lines(res), "attention": quick.attention_lines(res),
+                          "metrics": res["metrics"]}, indent=1, default=str))
+    else:
+        for line in _print_results(res) + ["", "Files:"] + [f"  {f}" for f in r["files"]]:
+            print(line)
+    return 0 if res["verdict"] != "FAIL" else 1
+
+
+def cmd_prompt(a):
+    from .prompt import chatbot_prompt
+    text = chatbot_prompt()
+    if a.out:
+        Path(a.out).write_text(text, encoding="utf-8")
+        print(f"Wrote {a.out}. Paste its contents into any chatbot (or its custom instructions).")
+    else:
+        print(text)
+
+
+def cmd_request(a):
+    from .request import run_request
+    text = sys.stdin.read() if a.file == "-" else Path(a.file).read_text(encoding="utf-8")
+    out = run_request(text, markdown=a.markdown)
+    print(out["markdown"] if a.markdown else out["text"])
+    return 0 if out["ok"] else 1
+
+
 # ------------------------------------------------------------------ parser
 def build_parser() -> argparse.ArgumentParser:
     common = argparse.ArgumentParser(add_help=False)
@@ -494,6 +566,53 @@ def build_parser() -> argparse.ArgumentParser:
     q = add(gdt, "process", cmd_gdt_process, "process capability; check a tolerance against a process")
     q.add_argument("process", nargs="?"); q.add_argument("nominal", nargs="?", default="50"); q.add_argument("tolerance", nargs="?")
 
+    q = add(sub, "make", cmd_make, "ONE LINE: build a part (+ STL/3MF, print check, report)")
+    q.add_argument("shape", help="template name (ea cad templates), build123d script .py, or STEP file")
+    q.add_argument("params", nargs="*", help="name=value overrides, e.g. thickness=6")
+    q.add_argument("--print", nargs="?", const="__default__", metavar="MATERIAL",
+                   help="run the 3D-print check (default material petg)")
+    q.add_argument("--process", choices=["fdm", "sla", "sls", "mjf", "dmls"])
+    q.add_argument("--material", "-m"); q.add_argument("--infill", type=float)
+    q.add_argument("--name"); q.add_argument("--folder"); q.add_argument("--title")
+    q.add_argument("--no-report", action="store_true")
+
+    q = add(sub, "analyze", cmd_analyze, "ONE LINE: FEA of a STEP file, script, template or job folder")
+    q.add_argument("source", help="part.step, geometry.py, a template name, or a job folder from `ea make`")
+    q.add_argument("params", nargs="*", help="template/script parameters name=value")
+    q.add_argument("--material", "-m")
+    q.add_argument("--type", "-a", default="static",
+                   help="static | nonlinear | modal | buckling | thermal | transient | thermal_stress")
+    q.add_argument("--fix", action="append", metavar="FACES", help="fully held faces (repeatable)")
+    q.add_argument("--pin", action="append", metavar="FACES")
+    q.add_argument("--slide", nargs=2, action="append", metavar=("FACES", "AXIS"),
+                   help="symmetry / sliding support: no motion along AXIS")
+    q.add_argument("--force", nargs=2, action="append", metavar=("FACES", "FX,FY,FZ"))
+    q.add_argument("--pressure", nargs=2, action="append", metavar=("FACES", "P"))
+    q.add_argument("--moment", nargs=2, action="append", metavar=("FACES", "MX,MY,MZ"))
+    q.add_argument("--gravity", nargs="?", const="1", metavar="G", help="self weight in g (default 1, -Z)")
+    q.add_argument("--temp", nargs=2, action="append", metavar=("FACES", "T"))
+    q.add_argument("--convect", nargs=3, action="append", metavar=("FACES", "H", "T_AMBIENT"))
+    q.add_argument("--heat", nargs=2, action="append", metavar=("FACES", "WATTS"))
+    q.add_argument("--dT", metavar="T_FINAL", help="uniform final temperature (thermal stress)")
+    q.add_argument("--t0", metavar="T", help="initial / stress-free temperature")
+    q.add_argument("--size", help="element size"); q.add_argument("--modes", type=int)
+    q.add_argument("--duration", help="transient duration in seconds")
+    q.add_argument("--sf", type=float, help="required yield safety factor (default 1.5)")
+    q.add_argument("--max-disp", dest="max_disp", help="allowed displacement")
+    q.add_argument("--min-freq", dest="min_freq", help="required first frequency, Hz")
+    q.add_argument("--fatigue", action="store_true", help="add fatigue screening (load 0 -> max)")
+    q.add_argument("--check", action="append", metavar='"CALC k=v ..."',
+                   help="hand calculation to compare with, e.g. \"beam.cantilever_end_load P=500 L=200 E=210GPa b=10 h=20\"")
+    q.add_argument("--quick", action="store_true", help="skip the mesh-convergence run")
+    q.add_argument("--name"); q.add_argument("--folder"); q.add_argument("--title")
+
+    q = add(sub, "prompt", cmd_prompt, "print the instructions that turn any chatbot into a request writer")
+    q.add_argument("--out", "-o", help="write to a file instead of printing")
+
+    q = add(sub, "request", cmd_request, "run a request file (commands and/or JSON/Python blocks)")
+    q.add_argument("file", help="request text file, or - for stdin")
+    q.add_argument("--markdown", action="store_true", help="print a Markdown summary")
+
     q = add(sub, "report", cmd_report, "write the verification report for a job folder")
     q.add_argument("folder"); q.add_argument("--format", "-f", nargs="+", default=["html", "pdf"], choices=["html", "pdf"])
     q = add(sub, "view", cmd_view, "write the interactive viewer for a solved job")
@@ -502,6 +621,10 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv=None) -> int:
+    import re
+    argv = list(sys.argv[1:] if argv is None else argv)
+    # negative values such as -300,0,0 must not be taken for options (a leading space stops that)
+    argv = [(" " + x) if re.match(r"^-[\d.]", x) else x for x in argv]
     args = build_parser().parse_args(argv)
     if getattr(args, "units", None):
         os.environ["ENGAGENT_UNITS"] = args.units
