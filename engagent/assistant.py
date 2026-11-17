@@ -284,12 +284,13 @@ def _ask_structured(conversation: list[dict], say, run: bool) -> dict:
         say("fixing", 0)
         sch = structured.schema()
         sch["properties"]["action"] = {"enum": ["analyze"]}
-        sch["required"] = ["action", "template"]
+        sch["required"] = ["action", "template", "analysis"]
         raw = _post_ollama(base, s["model"], [{"role": "system", "content": structured.prompt()}] + conversation
                            + [{"role": "assistant", "content": raw},
                               {"role": "user", "content": "Everything needed is in my message - do not ask. Fill "
                                "the form as an analysis using only my numbers. The value I am asking about is the "
-                               "result, not an input."}], 180, fmt=sch)
+                               "result, not an input. Temperatures go in 'temperatures'/'convection' (analysis "
+                               "'thermal'), never in 'loads'."}], 180, fmt=sch)
         form = structured.parse_form(raw)
         out.update(attempts=2, form=form)
     bad = structured.magnitudes_from_user(form, user_text) if form.get("action") == "analyze" else []

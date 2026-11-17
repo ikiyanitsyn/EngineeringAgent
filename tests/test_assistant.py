@@ -271,3 +271,23 @@ def test_needless_question_is_retried_with_a_forced_form(monkeypatch, tmp_path):
         assert out["kind"] == "question" and len(FakeOllama.seen) == n + 1
     finally:
         srv.shutdown()
+
+
+def test_a_temperature_is_never_read_as_a_load():
+    """Live issue #5: the model turned '100 C' into a 100 kg force; the numbers must match by kind."""
+    from engagent import structured
+    text = ("Steel bar 100 mm long. One end is held at 100 C, the other end is cooled by air at 20 C with "
+            "h = 25. How hot does the cooled end get?")
+    form = {"action": "analyze", "template": "beam", "params": {"length": 100}, "material_words": "steel",
+            "fixed_faces": ["xmin"], "loads": [{"face": "xmax", "kind": "force", "direction": "-z",
+                                                "magnitude": 100, "unit": "kg"}]}
+    bad = structured.magnitudes_from_user(form, text)
+    assert bad and "100 kg" in bad[0]
+    assert structured.magnitudes_from_user(
+        {"loads": [{"kind": "force", "magnitude": 50, "unit": "kg"}]}, "a 50 kg weight") == []
+    assert structured.magnitudes_from_user(
+        {"loads": [{"kind": "force", "magnitude": 2, "unit": "kN"}]}, "pulled with 2kN") == []
+    assert structured.magnitudes_from_user(
+        {"temperatures": [{"value": 212, "unit": "F"}]}, "held at 212°F") == []
+    assert structured.magnitudes_from_user(
+        {"temperatures": [{"value": 100, "unit": "C"}]}, "a 100 mm bar") != []      # a length is not a temperature

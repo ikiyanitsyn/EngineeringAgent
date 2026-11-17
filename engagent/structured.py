@@ -205,8 +205,29 @@ def _thermal_stress_request(form, tmpl, pstr, name, mat, missing, fixed):
     return f'ea make {tmpl} {pstr} --name "{name}"'.replace("  ", " ") + "\n" + line, None
 
 
+_UNIT_WORDS = {   # what the user may write after a number, per form unit / quantity
+    "force": r"n|newtons?|kn|kilonewtons?|lbf|lbs?|pounds?|kg|kgs|kilos?|kilograms?",
+    "pressure": r"mpa|kpa|pa|bar|psi|ksi|atm",
+    "temperature": r"°\s*[cf]|deg(?:rees?)?\s*[cf]?|[cf]|celsius|fahrenheit",
+    "power": r"w|watts?|kw|mw",
+}
+_FORM_KIND = {"N": "force", "kN": "force", "kg": "force", "lbf": "force", "lb": "force",
+              "MPa": "pressure", "kPa": "pressure", "bar": "pressure", "psi": "pressure"}
+
+
+def _written_with_unit(value: float, user_text: str, kind: str) -> bool:
+    """The user wrote this number followed by a unit of this kind (e.g. '50 kg', '100 C')."""
+    rx = r"(-?\d+(?:[.,]\d+)?)\s*(?:" + _UNIT_WORDS[kind] + r")(?![a-z])"
+    for m in re.finditer(rx, user_text.lower()):
+        u = float(m.group(1).replace(",", "."))
+        if abs(abs(u) - abs(value)) <= 0.01 * max(abs(value), 1e-9):
+            return True
+    return False
+
+
 def magnitudes_from_user(form: dict, user_text: str) -> list[str]:
-    """Loads whose magnitude the user never wrote (checked before converting units)."""
+    """Values the user never wrote, or wrote as a different kind of quantity (e.g. a temperature
+    read as a mass). Checked before converting units."""
     from .guard import _numbers
     nums = _numbers(user_text)
     bad = []
@@ -216,24 +237,39 @@ def magnitudes_from_user(form: dict, user_text: str) -> list[str]:
         except (TypeError, ValueError):
             bad.append("a load without a number")
             continue
-        if m and not any(abs(m - u) <= 0.01 * m for u in nums):
-            bad.append(f"the load ({m:g} {l.get('unit')} was not in your message)")
-    vals = [("temperature", t.get("value")) for t in form.get("temperatures") or [] if isinstance(t, dict)]
+        kind = "pressure" if l.get("kind") == "pressure" else _FORM_KIND.get(l.get("unit"), "force")
+        if m and not _written_with_unit(m, user_text, kind):
+            bad.append(f"the load ({m:g} {l.get('unit')} - your message does not give a {kind} of that size)")
+    temps = [("temperature", t.get("value")) for t in form.get("temperatures") or [] if isinstance(t, dict)]
     for c in form.get("convection") or []:
         if isinstance(c, dict):
-            vals += [("convection coefficient h", c.get("h")), ("air temperature", c.get("ambient"))]
-    vals += [("heat input", h.get("watts")) for h in form.get("heat") or [] if isinstance(h, dict)]
+            temps.append(("air temperature", c.get("ambient")))
+            try:
+                h = abs(float(c.get("h")))
+                if h and not any(abs(h - abs(u)) <= 0.01 * h for u in nums):
+                    bad.append(f"the convection coefficient h ({h:g} was not in your message)")
+            except (TypeError, ValueError):
+                bad.append("the convection coefficient h")
     tc = form.get("temperature_change")
     if isinstance(tc, dict):
-        vals += [("starting temperature", tc.get("start")), ("final temperature", tc.get("end"))]
-    for label, v in vals:
+        temps += [("starting temperature", tc.get("start")), ("final temperature", tc.get("end"))]
+    for label, v in temps:
         try:
-            m = abs(float(v))
+            m = float(v)
         except (TypeError, ValueError):
             bad.append(f"the {label}")
             continue
-        if m and not any(abs(m - abs(u)) <= 0.01 * m for u in nums):
-            bad.append(f"the {label} ({m:g} was not in your message)")
+        if not _written_with_unit(m, user_text, "temperature"):
+            bad.append(f"the {label} ({m:g} - not a temperature in your message)")
+    for h in form.get("heat") or []:
+        if isinstance(h, dict):
+            try:
+                w = abs(float(h.get("watts")))
+            except (TypeError, ValueError):
+                bad.append("the heat input")
+                continue
+            if w and not _written_with_unit(w, user_text, "power"):
+                bad.append(f"the heat input ({w:g} W was not in your message)")
     return bad
 
 
