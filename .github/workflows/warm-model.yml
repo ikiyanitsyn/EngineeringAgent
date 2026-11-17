@@ -1,0 +1,33 @@
+# Keeps the free open model (used by the issue bot when no hosted model is configured) in the
+# Actions cache. Issue-triggered runs may only read caches, so the cache is written here.
+name: warm-model-cache
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 4 * * 1"          # weekly: caches unused for 7 days are evicted
+  push:
+    paths:
+      - .github/workflows/warm-model.yml
+      - .github/workflows/engineer.yml
+      - engagent/assistant.py
+permissions:
+  contents: read
+jobs:
+  warm:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        id: cache
+        with:
+          path: ~/.ollama/models
+          key: ollama-models-v1-${{ vars.ENGAGENT_LOCAL_MODEL || 'qwen2.5-coder-7b' }}
+      - name: Download the model (only when not cached)
+        if: steps.cache.outputs.cache-hit != 'true'
+        env:
+          GITHUB_ACTIONS: "true"
+          ENGAGENT_LOCAL_MODEL: ${{ vars.ENGAGENT_LOCAL_MODEL }}
+        run: |
+          python -c "import sys; sys.path.insert(0, '.'); from engagent import assistant; import os; assistant.ensure_ollama(os.environ.get('ENGAGENT_LOCAL_MODEL') or assistant.LOCAL_DEFAULT_MODEL)"
+          du -sh ~/.ollama/models
