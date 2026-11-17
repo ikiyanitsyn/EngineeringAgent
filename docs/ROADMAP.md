@@ -12,7 +12,8 @@ original conversation. Last updated 2026-11-17.
 | Request format (`ea` lines, ```json, ```python, `last`) | `engagent/request.py` | `tests/test_quick.py`, issue #1 live runs |
 | Chatbot prompt (generated from the catalogues) | `engagent/prompt.py` -> `docs/CHATBOT-PROMPT.md` | test fails if the doc is stale; every example in it was run |
 | Plain English: `ea ask` with any OpenAI-compatible model, error feedback and retry | `engagent/assistant.py` | `tests/test_assistant.py` with a fake model server |
-| GitHub issue bot | `.github/workflows/engineer.yml`, `scripts/issue_bot.py`, `.github/ISSUE_TEMPLATE/` | issue #1: direct requests ran on GitHub, results committed, reply posted |
+| GitHub issue bot | `.github/workflows/engineer.yml`, `scripts/issue_bot.py`, `.github/ISSUE_TEMPLATE/` | issue #1 (closed, kept as a worked example): `ea` lines and a Python-geometry request ran on GitHub, results committed (`jobs/01`-`04`), replies posted; same numbers as locally |
+| Default mesh from wall thickness; singularity diagnosis in the convergence check | `engagent/fea/run.py` | bracket example: stress 43 -> 48 MPa with the finer default; corner singularity reported with its location |
 | Windows: `START-HERE.cmd` + `scripts/start.ps1` menu, `scripts/setup.ps1` | | CI job `windows`: parse check, real setup (CalculiX 2.23 download, benchmark 0.795 %), one-liners |
 | MCP server (28 tools incl. one-call `make`, `analyze`, `run_request`) | `engagent/mcp_server.py` | stdio client test (manual, see commit history) |
 | Analysis core, hand calcs, GD&T, reports, viewer | `engagent/` | `pytest -m solver` (22 FEA benchmarks against closed form), `docs/validation.md` |
