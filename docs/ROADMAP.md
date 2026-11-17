@@ -22,16 +22,14 @@ Run everything: `.venv/bin/python -m pytest -q` then `.venv/bin/python -m pytest
 
 ## Open items, highest value first
 
-1. **Plain English in GitHub issues needs a model key (user action, 3 minutes).** GitHub
-   Models returned a plain-text "OK" instead of a completion from this repository's runners,
-   and the old Azure endpoint does not resolve there. The bot explains this in the issue.
-   Fix: add secret `ENGAGENT_LLM_KEY` (free Gemini key) and variables `ENGAGENT_LLM_URL`,
-   `ENGAGENT_LLM_MODEL` (values in docs/USER-GUIDE.md section 2A). Then re-test by opening an
-   issue in plain English. If GitHub Models becomes available, nothing needs to change.
-2. **Live test of the plain-English loop with a real model.** Only the fake-server test
-   exists. After item 1, open an issue such as "Printable PETG wall hook for a 5 kg coat" and
-   check the model's request, the auto-fix loop and the question path ("analyse my bracket").
-   Tune `engagent/prompt.py` from what goes wrong (regenerate the doc with `ea prompt -o docs/CHATBOT-PROMPT.md`).
+1. ~~Plain English in GitHub issues needs a model key~~ - done without a key: when no hosted
+   model answers (GitHub Models returned a plain "OK" from these runners), the bot installs
+   Ollama on the runner and uses `qwen2.5-coder:7b` (cached between runs). Live run: "3D
+   printable wall hook in PETG ... arm 50 mm" -> `ea make wall_hook arm_length=50 --print petg`
+   -> files, 6.7 min including the one-time download. A Gemini key remains an optional upgrade.
+2. **Watch the open model on harder requests.** Custom shapes (Python blocks) and multi-step
+   analyses are where a 7B model is most likely to stumble; the error-feedback loop helps.
+   If quality is poor, try `vars.ENGAGENT_LOCAL_MODEL = qwen2.5-coder:14b` (slower) or a key.
 3. ~~3MF export fails on some shapes~~ - done: a direct 3MF writer takes over when the mesher
    refuses (mesh volume checked against CAD).
 4. **More templates** for common print requests: hinge, snap-fit box with lid, knob, gear

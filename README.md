@@ -28,7 +28,7 @@ run. Every analysis type is benchmarked against a closed-form answer
 
 | You have | Do this |
 | --- | --- |
-| **A phone or browser only** | **Issues > New issue > Engineering request**, paste a request, submit. GitHub runs it for free and replies with the numbers, `report.pdf` and `part.stl`. |
+| **A phone or browser only** | **Issues > New issue > Engineering request**, describe what you need in plain English (or paste a chatbot reply), submit. GitHub runs it for free and replies with the numbers, `report.pdf` and `part.stl`; if something is missing it asks in a comment. |
 | **A Windows PC** | **Code > Download ZIP**, extract, double-click **`START-HERE.cmd`**. It installs itself, then shows a menu (plain English with a free AI, Claude Code, results). |
 | **Claude Code** | Open it in this repository and say what you need. It installs the tools itself if they are missing. |
 | **ChatGPT / Gemini / Copilot / Claude.ai** | Paste [docs/CHATBOT-PROMPT.md](docs/CHATBOT-PROMPT.md) into the chat once, describe your part, paste the reply into an issue or `START-HERE` option 4. |
@@ -38,9 +38,9 @@ A request is a few plain lines - any chatbot can write them, or you can:
     ea make l_bracket thickness=6 --print petg
     ea analyze last -m al_6061_t6 --fix hole:6.6@40,20,0 --force hole:6.6@0,20,40 -300,0,0 --sf 2
 
-With a free model connected (Gemini key, Ollama, GitHub Models) you can skip that and
-just write plain English: `ea ask "printable PETG wall hook for a 5 kg coat"`, or the same
-sentence in an issue.
+Or just write plain English. In a GitHub issue this works with no setup (a free open model
+runs on GitHub's machine); on your PC `ea ask "printable PETG wall hook for a 5 kg coat"`
+uses Ollama if it is running, or a free Gemini key.
 
 **Beginner walkthrough: [docs/USER-GUIDE.md](docs/USER-GUIDE.md)** (Windows, iPhone, free AI models).
 

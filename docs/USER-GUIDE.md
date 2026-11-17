@@ -61,9 +61,14 @@ GitHub runs the CAD and FEA tools for you on its free servers and answers in the
       ea make lid length=100 width=70 --print petg
       ea analyze beam length=200 width=10 height=20 -m steel_s355 --fix xmin --force xmax 0,0,-500
 
-- **Plain English** ("printable PETG box 100 x 70 x 40 with 2.4 mm walls") - needs an AI
-  model connected to your repository. One-time, 3 minutes, free:
-  1. Get a free Google Gemini key at <https://aistudio.google.com/apikey>.
+- **Plain English** ("printable PETG box 100 x 70 x 40 with 2.4 mm walls") - works with
+  no setup. With no key configured, GitHub runs a free open AI model (Qwen2.5-Coder 7B) on its
+  own machine to turn your words into a request; nothing is sent to an AI company. It is
+  slower (about 7 minutes for the first request, which downloads the model, then a few
+  minutes) and less capable than large models on unusual requests.
+
+  Optional upgrade, 3 minutes, free - faster and smarter answers with Google Gemini:
+  1. Get a free Gemini key at <https://aistudio.google.com/apikey>.
   2. In the repository: **Settings > Secrets and variables > Actions**.
   3. **Secrets** tab > *New repository secret*: name `ENGAGENT_LLM_KEY`, value: the key.
   4. **Variables** tab > *New repository variable*: `ENGAGENT_LLM_URL` =
