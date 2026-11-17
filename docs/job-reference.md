@@ -65,7 +65,8 @@ Cylindrical: radial = material 3 (thickness), tangential = material 1, axial = m
     "mesh": {"size": 3, "order": 2, "refine": [{"on": "hole", "size": 0.8, "distance": 4}],
              "min_size": 0.2, "curvature": 12, "max_nodes": 600000}
 
-`size` target element size (default bounding-box diagonal / 25); `order` 2 = 10-node
+`size` target element size (default: half the thinner wall thicknesses measured on the part,
+so walls get at least two elements, bounded to bounding-box diagonal / 150 ... / 25); `order` 2 = 10-node
 tetrahedra (default), 1 = linear; `refine.on` a set name or selector; `distance` how far
 the fine size extends; `curvature` elements per full circle on curved faces.
 

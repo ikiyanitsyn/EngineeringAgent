@@ -26,9 +26,40 @@ from .solver import RunLog, read_dat, read_frd, run_ccx
 PASS, FAIL, WARN, NOT_DONE, INFO = "PASS", "FAIL", "WARN", "NOT DONE", "INFO"
 
 
+def auto_mesh_size(steps: list[str]) -> float | None:
+    """Element size giving at least two quadratic elements through the thinner walls.
+
+    Measures wall thickness by ray casting (as the print check does) and takes half the
+    20th-percentile wall, bounded to diagonal/150 ... diagonal/25 so that large parts stay solvable.
+    """
+    try:
+        import numpy as np
+        from ..cad.inspect import load_shape
+        from ..cad.printcheck import _tessellate, _wall_thickness
+        sizes = []
+        for st in steps:
+            shape = load_shape(st)
+            bb = shape.bounding_box()
+            diag = float(np.linalg.norm([bb.size.X, bb.size.Y, bb.size.Z]))
+            v, t = _tessellate(shape, max(0.01, diag / 1000))
+            w = _wall_thickness(v, t, samples=300)
+            if w.get("min") is None:
+                sizes.append(diag / 25)
+                continue
+            thin = float(np.percentile(w["values"], 20))
+            sizes.append(min(diag / 25, max(thin / 2.0, diag / 150)))
+        return min(sizes) if sizes else None
+    except Exception:
+        return None
+
+
 def _mesh_job(job: Job, size: float | None = None) -> Mesh:
     m = job.mesh
     base = job.L(m["size"]) if "size" in m else None
+    if base is None and size is None:
+        base = auto_mesh_size([str(p.step) for p in job.parts])
+        if base:
+            job.mesh["_auto_size"] = base
     return build_mesh([(p.name, str(p.step)) for p in job.parts], job.sets,
                       size=size if size is not None else base, order=int(m.get("order", 2)),
                       refine=m.get("refine"), system=job.system,

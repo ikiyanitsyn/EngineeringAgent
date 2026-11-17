@@ -102,7 +102,7 @@ def run_request(text: str, *, markdown: bool = False, link_base: str | None = No
         if req["json"] or req["python"]:
             try:
                 job = json.loads(_strip_comments(req["json"][0])) if req["json"] else {}
-                name = job.get("name") or job.get("title") or ("part" if req["python"] else "job")
+                name = job.get("name") or job.get("title") or _name_from_text(text)
                 folder = quick.next_job_folder(name)
                 if req["python"]:
                     (folder / "geometry.py").write_text(req["python"][0], encoding="utf-8")
@@ -176,6 +176,16 @@ def run_request(text: str, *, markdown: bool = False, link_base: str | None = No
     res["text"] = _text(res)
     res["markdown"] = to_markdown(res, link_base)
     return res
+
+
+def _name_from_text(text: str) -> str:
+    """A short job name from the first line of prose ("Plan: a shelf bracket with ..." -> shelf bracket with)."""
+    for line in FENCE_RE.sub("\n", text).splitlines():
+        words = re.sub(r"^(plan|here is|here's|sure)[:!,.]*\s*", "", line.strip(), flags=re.I).split()
+        words = [w for w in words if w.lower() not in ("a", "an", "the", "your", "i", "will", "make")]
+        if words and not CMD_RE.match(line):
+            return " ".join(words[:4])
+    return "part"
 
 
 def _strip_comments(s: str) -> str:
