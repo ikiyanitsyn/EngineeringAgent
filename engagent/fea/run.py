@@ -269,8 +269,24 @@ def _checks(job: Job, mesh: Mesh, log: RunLog, metrics: dict, info: dict, hand: 
         if extra:
             det += " (for information, not required: " + "; ".join(
                 f"{r['metric']} {r['change'] * 100:.1f} %" for r in extra) + ")"
-        add("convergence", f"Mesh convergence (size x{conv['ratio']:g}, change < {tol * 100:g} %)",
-            PASS if worst <= tol else FAIL, det)
+        failing = [r for r in conv["rows"] if r["required"] and r["change"] > tol]
+        stress_kinds = ("max_von_mises", "max_principal", "min_principal")
+        stiff_ok = all(r["change"] <= tol for r in conv["rows"] if r["required"] and r["kind"] == "length")
+        singular = bool(failing) and stiff_ok and all(
+            r["metric"] in stress_kinds or (r["metric"].startswith("probe.") and r["kind"] == "pressure")
+            for r in failing)
+        name = f"Mesh convergence (size x{conv['ratio']:g}, change < {tol * 100:g} %)"
+        if singular:
+            loc = metrics.get("max_von_mises", {}).get("location")
+            add("convergence", name, WARN,
+                det + ". Displacements converged but the maximum stress keeps rising as the mesh is "
+                "refined: it sits at a sharp inside corner or edge (a stress singularity"
+                + (f", near {U.fmt_vec(loc, 'length', s)}" if loc else "") + "), so its value depends on "
+                "the mesh, not on the design. Model the real fillet radius there (and refine the mesh "
+                "around it) to get a usable peak stress; the stiffness and the stress away from that "
+                "corner are reliable.")
+        else:
+            add("convergence", name, PASS if worst <= tol else FAIL, det)
     # 7 singularities
     if "peak_von_mises" in metrics and "max_von_mises" in metrics:
         pk, ds = metrics["peak_von_mises"]["value"], metrics["max_von_mises"]["value"]
