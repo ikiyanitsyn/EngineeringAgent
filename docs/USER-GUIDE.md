@@ -410,9 +410,8 @@ and the phone is the screen. Three ways, simplest first.
 ### Way 0 - GitHub app (no install, no subscription)
 
 Use route A from section 2: in the GitHub app open the repository, **Issues > +**, choose
-*Engineering request*, paste the `ea` lines (from any chatbot app such as ChatGPT or
-Gemini, using the prompt in `docs/CHATBOT-PROMPT.md`) or plain English if you set up a
-model key, and submit. The answer arrives as a comment in a few minutes; tap
+*Engineering request*, describe what you need in plain English (or paste a reply from any
+chatbot app), and submit. No key or app setup is needed. The answer arrives as a comment in a few minutes; tap
 `report.pdf` or `part.stl` to view them on the phone. Send the STL to your printer's app
 from the share sheet.
 
