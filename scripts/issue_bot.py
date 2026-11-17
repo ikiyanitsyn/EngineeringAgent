@@ -97,7 +97,7 @@ def commit(folders: list[str], label: str) -> bool:
     return False
 
 
-def main() -> int:
+def _inputs():
     event = os.environ.get("GITHUB_EVENT_NAME", "workflow_dispatch")
     payload = json.loads(Path(os.environ["GITHUB_EVENT_PATH"]).read_text()) if os.environ.get("GITHUB_EVENT_PATH") else {}
     issue = payload.get("issue")
@@ -110,6 +110,21 @@ def main() -> int:
     else:
         latest = issue.get("body") or ""
         convo = conversation(issue)
+    return issue, latest, convo
+
+
+def needs_model() -> bool:
+    """Whether this request needs the local open model (so the workflow can skip its 4.6 GB cache)."""
+    from engagent.rules import form_from_words
+    _, latest, convo = _inputs()
+    d = parse(latest)
+    if d["commands"] or d["json"] or d["python"] or os.environ.get("ENGAGENT_LLM_KEY"):
+        return False
+    return form_from_words("\n".join(m["content"] for m in convo if m["role"] == "user")) is None
+
+
+def main() -> int:
+    issue, latest, convo = _inputs()
     comment_id = None
     if issue:
         c = gh("POST", f"/repos/{REPO}/issues/{issue['number']}/comments",
@@ -196,4 +211,11 @@ def _finish(head: str, comment_id, folders: list[str]) -> None:
 
 
 if __name__ == "__main__":
+    if "--needs-model" in sys.argv:
+        need = needs_model()
+        print(f"needs the local model: {need}")
+        if os.environ.get("GITHUB_OUTPUT"):
+            with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
+                f.write(f"needs={'true' if need else 'false'}\n")
+        sys.exit(0)
     sys.exit(main())

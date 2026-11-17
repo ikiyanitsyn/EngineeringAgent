@@ -50,7 +50,14 @@ jobs:
           sudo apt-get install -y -qq calculix-ccx libglu1-mesa libgl1 libxrender1 libxcursor1 libxft2 libxinerama1
       - name: Install EngineeringAgent
         run: python -m pip install -q -e .
+      - name: Does this request need the AI model?
+        id: decide
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ENGAGENT_LLM_KEY: ${{ secrets.ENGAGENT_LLM_KEY }}
+        run: python scripts/issue_bot.py --needs-model || echo "needs=true" >> "$GITHUB_OUTPUT"
       - name: Restore the cached open model (used when no hosted model is available)
+        if: steps.decide.outputs.needs != 'false'
         uses: actions/cache@v4
         with:
           path: ~/.ollama/models
