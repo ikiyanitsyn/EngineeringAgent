@@ -46,5 +46,5 @@ jobs:
       - name: One-line commands on Windows
         shell: cmd
         run: |
-          .\ea.cmd make enclosure --print petg --no-report || exit /b 1
-          .\ea.cmd analyze beam -m steel_generic --fix xmin --force xmax 0,0,-100 --quick --check "beam.cantilever_end_load P=100 L=100 E=210GPa b=10 h=10 nu=0.3" || exit /b 1
+          call .\ea.cmd make enclosure --print petg --no-report || exit /b 1
+          call .\ea.cmd analyze beam -m steel_generic --fix xmin --force xmax 0,0,-100 --quick --check "beam.cantilever_end_load P=100 L=100 E=210GPa b=10 h=10 nu=0.3" || exit /b 1

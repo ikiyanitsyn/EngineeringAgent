@@ -61,10 +61,15 @@ excluded from the design stress).
 
 ## What has not been validated
 
-- The Windows setup script and solver package (`scripts/setup.ps1`, CalculiX 2.23
-  Windows build) were written from the official download location but not executed on
-  Windows in this build. Run `.\ea.cmd doctor --full` after setup: it runs the
-  cantilever benchmark and reports the difference to beam theory.
+- Windows: `scripts/setup.ps1` runs on a GitHub Windows runner on every push (CI job
+  `windows`): it downloads CalculiX 2.23 for Windows, installs the packages and passes the
+  cantilever benchmark (0.795 % against beam theory, the same as on Linux with 2.21), then
+  runs `ea make` and `ea analyze`. The interactive menu (`START-HERE.cmd`) is checked for
+  syntax only; its steps call the same commands.
+- Plain-English requests depend on the model you connect; the toolkit validates what the
+  model produces (selectors, hand checks, verdict), and retries with the error messages.
+  GitHub Models returned no usable reply from this repository's runners when tested, so
+  the documented free default for the issue bot is a Gemini key.
 - Radiation is exercised (it runs and gives a plausible temperature) but has no
   closed-form comparison.
 - Transient thermal stress runs but is compared only qualitatively.

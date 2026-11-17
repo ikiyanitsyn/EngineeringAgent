@@ -149,10 +149,8 @@ problem with a known answer. Success looks like this at the end:
     benchmark (cantilever)  PASS: FEA vs beam theory 0.795 % (limit 2 %)
     READY
 
-> Honest note: this script was written carefully but has only been run on Linux so
-> far. If it stops with an error, copy the whole message into Claude Code (step 6) and
-> ask it to fix the setup. If Windows or antivirus blocks the solver download, allow it
-> or ask IT; it comes from the solver author's site, dhondt.de.
+> If setup stops with an error, copy the whole message into Claude Code and ask it to fix
+> the setup. The same script is tested on a Windows machine on every update.
 
 **Step 6 - start the agent:**
 
