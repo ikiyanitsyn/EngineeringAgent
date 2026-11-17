@@ -1,4 +1,0 @@
-```bash
-ea make beam length=200 width=10 height=20 --name cantilever
-ea analyze last -m steel_s355 --fix xmin --force xmax 0,0,-500 --check "beam.cantilever_end_load P=500 L=200 E=210GPa b=10 h=20 nu=0.3"
-```
