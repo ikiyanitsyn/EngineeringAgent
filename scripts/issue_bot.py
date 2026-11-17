@@ -144,7 +144,9 @@ def _result_body(result, plan, direct, req_text, folders, issue) -> str:
         if cmds:
             parts.append("<details><summary>Request that was run (copy, edit and post it as a comment to change it)</summary>\n\n```bash\n"
                          + "\n".join("ea " + c for c in cmds) + "\n```\n</details>")
-    parts.append(result["markdown"])
+    def ignored(path: str) -> bool:              # link only files that were committed
+        return subprocess.run(["git", "check-ignore", "-q", path], cwd=ROOT).returncode == 0
+    parts.append(to_markdown(result, f"{SERVER}/{REPO}/blob/{BRANCH}", skip=ignored))
     if folders:
         parts.append(f"📦 **[Download all files, including the interactive 3D viewer]({RUN_URL}#artifacts)**"
                      + ("" if pushed else " (files were not committed - see the log)"))

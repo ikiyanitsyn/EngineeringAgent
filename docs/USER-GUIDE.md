@@ -28,18 +28,90 @@ A few words you will see:
 | Hand calculation | a textbook formula used to predict the answer and check the computer |
 | Job | one piece of work, kept in its own folder under `jobs/` |
 
-## 2. One-time step: put the tool on your main branch
+## 2. Pick your way in (easiest first)
 
-The tool currently lives on the branch `claude/wonderful-cerf-u9mbnt`. To have it on
-every machine automatically, merge it into `main` once:
+| Way | Install | Cost | Best for |
+| --- | --- | --- | --- |
+| **A. GitHub issue** (phone or browser) | nothing | free | quick parts and checks from anywhere, including an iPhone |
+| **B. Windows double-click** (`START-HERE.cmd`) | automatic, once | free | working on your PC with a menu, no typing of commands |
+| **C. Claude Code** (terminal, desktop app, claude.ai/code, iPhone app) | Claude Code | Claude subscription | the best results: a real conversation, design iterations, complex jobs |
+| **D. Any chatbot + copy/paste** | none, or B | free | when you already use ChatGPT, Gemini, Copilot or Claude.ai |
 
-1. Open the repository on github.com.
-2. Click **Compare & pull request** for that branch (or **Pull requests > New**).
-3. Click **Create pull request**, then **Merge pull request**.
+All four drive the same tools and give the same files: `part.step`, `part.stl`, `report.pdf`, `viewer.html`.
 
-Until you do, add `git checkout claude/wonderful-cerf-u9mbnt` after cloning (shown below).
+### A. GitHub issue - nothing to install
 
-## 3. Getting started on a Windows PC
+GitHub runs the CAD and FEA tools for you on its free servers and answers in the issue.
+
+1. Open your repository on github.com, or in the GitHub app on your phone.
+2. **Issues > New issue > Engineering request.**
+3. Write what you need (see "What to write" below) and submit.
+4. Within 2-5 minutes a reply appears: the key numbers, the verdict, and links to
+   `report.pdf` and `part.stl` (GitHub shows both directly - the STL as a 3D model you
+   can spin with a finger), plus a download of all files including the interactive viewer.
+5. To change something, add a comment with the new request. The files are saved in the
+   repository under `jobs/`.
+
+**What to write.** The issue understands two kinds of text:
+
+- **Commands or a chatbot reply** - always works, no setup. Get them from any chatbot
+  (route D), or write them yourself:
+
+      ea make enclosure length=100 width=70 height=40 --print petg
+      ea make lid length=100 width=70 --print petg
+      ea analyze beam length=200 width=10 height=20 -m steel_s355 --fix xmin --force xmax 0,0,-500
+
+- **Plain English** ("printable PETG box 100 x 70 x 40 with 2.4 mm walls") - needs an AI
+  model connected to your repository. One-time, 3 minutes, free:
+  1. Get a free Google Gemini key at <https://aistudio.google.com/apikey>.
+  2. In the repository: **Settings > Secrets and variables > Actions**.
+  3. **Secrets** tab > *New repository secret*: name `ENGAGENT_LLM_KEY`, value: the key.
+  4. **Variables** tab > *New repository variable*: `ENGAGENT_LLM_URL` =
+     `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`, and
+     `ENGAGENT_LLM_MODEL` = `gemini-2.5-flash`.
+
+  If the AI needs more information (for an analysis: material, supports, load) it asks in
+  a comment; reply there and it continues. If a request fails, it corrects itself (up to
+  two retries) before answering.
+
+Only you (and collaborators you add) can trigger runs. GitHub's free plan includes
+Actions minutes for private repositories (2 000 a month at the time of writing); a typical
+request uses 2-5.
+
+### B. Windows double-click
+
+1. On the repository page click **Code > Download ZIP**, and extract it to a normal
+   folder such as `C:\Users\You\EngineeringAgent` (not inside OneDrive).
+   (Or `git clone` it if you use Git - then updates are one click.)
+2. Double-click **`START-HERE.cmd`**. The first time it installs everything it needs
+   (Python if missing, the CAD and FEA packages, the solver), runs a self-test and puts an
+   **EngineeringAgent** shortcut on your desktop. No administrator rights needed.
+3. The menu offers:
+   1. describe what you need in plain English (free AI - the first time it helps you pick
+      one: GitHub Models, Ollama on your PC, or a free Gemini key),
+   2. open Claude Code in the folder,
+   3. copy the chatbot prompt for route D,
+   4. run a reply pasted from a chatbot,
+   5. open your results, and switch units, repair or update.
+   After each job the folder and `report.pdf` open automatically.
+
+### C. Claude Code
+
+Open Claude Code in the repository folder (or pick the repository at claude.ai/code or
+in the Claude iPhone app) and just say what you need. It follows `CLAUDE.md`: it installs
+the tools itself if they are missing, builds and checks the part, asks only for missing
+analysis inputs, and sends you the report and STL. Section 3 has the Windows steps.
+
+### D. Any chatbot + copy/paste
+
+1. Copy the whole of [`docs/CHATBOT-PROMPT.md`](CHATBOT-PROMPT.md) (or run `ea prompt`, or
+   menu option 3) and paste it as the first message - or into the custom instructions /
+   Gem / Project - of ChatGPT, Gemini, Copilot, Claude.ai or a local model.
+2. Describe your part. The chatbot answers with a short plan and a block of `ea` lines.
+3. Paste the whole reply into a GitHub issue (route A) or menu option 4 (route B), or
+   save it as a file and run `ea request reply.txt`.
+
+## 3. Claude Code on a Windows PC (step by step)
 
 You need Windows 10 or 11, about 2 GB of free disk space, and a Claude plan that
 includes Claude Code (or see section 8 for free alternatives). No administrator
@@ -66,9 +138,6 @@ Close and reopen PowerShell again.
     cd ~\projects
     git clone https://github.com/ikiyanitsyn/EngineeringAgent.git
     cd EngineeringAgent
-    git checkout claude/wonderful-cerf-u9mbnt
-
-(Skip the last line once you have merged into `main`.)
 
 **Step 5 - run setup** (5 to 10 minutes the first time):
 
@@ -236,6 +305,11 @@ repository folder. Useful ones:
 
 | Command | What it does |
 | --- | --- |
+| `.\ea.cmd ask "printable PETG hook for a 5 kg coat"` | plain English to finished files (needs a free model, section 8) |
+| `.\ea.cmd make l_bracket thickness=6 --print petg` | build a part: STEP, STL, 3MF, print check, report |
+| `.\ea.cmd analyze last -m al_6061_t6 --fix xmin --force xmax 0,0,-300` | one-line FEA of the last part (or a STEP file / template) |
+| `.\ea.cmd request reply.txt` | run a reply pasted from a chatbot |
+| `.\ea.cmd prompt` | print the instructions that turn any chatbot into a request writer |
 | `.\ea.cmd doctor --full` | health check plus the test problem |
 | `.\ea.cmd units imperial` | switch units (or `metric`) |
 | `.\ea.cmd materials` | list the material library |
@@ -249,29 +323,39 @@ repository folder. Useful ones:
 
 ## 8. Using free AI models instead of a Claude subscription
 
-The tools themselves are free and run on your PC. Only the "assistant that drives
-them" changes. Three routes, easiest first. Do sections 3 steps 1, 2, 4 and 5 first
-(you can skip installing Claude Code).
+The tools themselves are free and run on your PC or on GitHub. Only the "assistant that
+drives them" changes. Free models are weaker than Claude at long engineering procedures,
+so the toolkit does the heavy lifting: the model only writes a few `ea` lines, and the
+tool checks the result (hand calculation, mesh convergence, verdict).
 
-Free models are weaker than Claude at following a long engineering procedure. Keep the
-safety net on: always ask for the hand calculation and the convergence check, and
-treat a REVIEW or FAIL verdict seriously.
+### Route 0 - `ea ask` (plain English in, files out)
 
-### Route 1 - any free chatbot, you run the commands (no installation)
+On Windows this is menu option 1 of `START-HERE.cmd`, which walks you through choosing a
+free model the first time. From a terminal:
 
-Works with any free chat AI in a browser. The chatbot writes the job file; you run it.
+    ea ask "printable PETG wall hook for a 5 kg coat, 2 screws"
 
-1. In PowerShell: `.\ea.cmd fea new jobs\01-test -a static` - this creates a working
-   example, `jobs\01-test\job.json`.
-2. Open `docs\job-reference.md` and that `job.json` in Notepad. Paste both into the
-   chatbot with a message like:
-   > This is the input format of an FEA tool and a working example. Rewrite the
-   > example for my problem: [describe part, material, supports, loads]. Reply with
-   > the complete job.json only.
-3. Save the reply over `job.json`, then run
-   `.\ea.cmd fea run jobs\01-test --converge --report`.
-4. If there is an error, paste the error text back to the chatbot. The tool's messages
-   are written to say what is wrong (for example a face selector that matched nothing).
+It sends your words plus the instructions in `docs/CHATBOT-PROMPT.md` to the model, runs
+what comes back, and if the tool reports an error it shows the model the error and lets it
+correct itself (up to two retries). If information is missing for an analysis it asks you.
+
+Choose the model once with environment variables (the Windows menu sets these for you):
+
+| Model | Settings |
+| --- | --- |
+| Google Gemini (free key) | `ENGAGENT_LLM_URL=https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`, `ENGAGENT_LLM_MODEL=gemini-2.5-flash`, `ENGAGENT_LLM_KEY=<key from aistudio.google.com/apikey>` |
+| Ollama on your PC (offline) | `ENGAGENT_LLM_URL=http://localhost:11434/v1/chat/completions`, `ENGAGENT_LLM_MODEL=qwen2.5-coder:14b` |
+| LM Studio | `ENGAGENT_LLM_URL=http://localhost:1234/v1/chat/completions`, `ENGAGENT_LLM_MODEL=<loaded model>` |
+| GitHub Models | `ENGAGENT_LLM_KEY=<GitHub token with Models: read>` (default URL and model) |
+| Groq, OpenRouter, OpenAI... | any `/v1/chat/completions` URL, model name and key |
+
+`ea ask --dry-run "..."` shows what the model would run without running it.
+
+### Route 1 - any free chatbot, copy and paste
+
+Route D in section 2: paste `docs/CHATBOT-PROMPT.md` into ChatGPT, Gemini, Copilot or
+Claude.ai once, describe your part, and paste the reply into a GitHub issue, into menu
+option 4 of `START-HERE.cmd`, or into a file you run with `ea request reply.txt`.
 
 ### Route 2 - a free coding agent that can run commands
 
@@ -317,8 +401,17 @@ FEA, write the report, tolerances). Give file locations as full paths, for examp
 
 ## 9. Using it from an iPhone
 
-An iPhone cannot run the CAD engine or the solver itself. It works as a remote
-control for a computer that can. Two ways:
+An iPhone cannot run the CAD engine or the solver itself; something else does the work
+and the phone is the screen. Three ways, simplest first.
+
+### Way 0 - GitHub app (no install, no subscription)
+
+Use route A from section 2: in the GitHub app open the repository, **Issues > +**, choose
+*Engineering request*, paste the `ea` lines (from any chatbot app such as ChatGPT or
+Gemini, using the prompt in `docs/CHATBOT-PROMPT.md`) or plain English if you set up a
+model key, and submit. The answer arrives as a comment in a few minutes; tap
+`report.pdf` or `part.stl` to view them on the phone. Send the STL to your printer's app
+from the share sheet.
 
 ### Way 1 - cloud session (nothing needs to be switched on at home)
 

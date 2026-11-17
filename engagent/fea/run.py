@@ -264,13 +264,16 @@ def _checks(job: Job, mesh: Mesh, log: RunLog, metrics: dict, info: dict, hand: 
     # 8 linear validity
     if job.analysis in ("static", "thermal_stress") and "max_displacement" in metrics:
         lo, hi = mesh.bbox()
-        small = float((hi - lo).min())
+        small, large = float((hi - lo).min()), float((hi - lo).max())
         d = metrics["max_displacement"]["value"]
+        limit = min(0.02 * large, 0.5 * small)     # 2 % of span, or half the thickness (membrane action)
         notes, st = [], PASS
-        if d > 0.05 * small:
+        if d > limit:
             st = WARN
-            notes.append(f"displacement {U.fmt(d, 'length', s)} exceeds 5 % of the smallest overall "
-                         f"dimension ({U.fmt(small, 'length', s)}): check with analysis 'nonlinear'")
+            notes.append(f"displacement {U.fmt(d, 'length', s)} exceeds {U.fmt(limit, 'length', s)} "
+                         f"(2 % of the span {U.fmt(large, 'length', s)} or half the thickness "
+                         f"{U.fmt(small, 'length', s)}): large-deflection effects may matter - check with "
+                         f"analysis 'nonlinear'")
         sf = metrics.get("safety_factor_yield")
         if sf and sf["value"] < 1.0:
             st = WARN

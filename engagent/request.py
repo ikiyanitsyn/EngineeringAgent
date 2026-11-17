@@ -254,7 +254,8 @@ def _text(res: dict) -> str:
     return "\n".join(out)
 
 
-def to_markdown(res: dict, link_base: str | None = None) -> str:
+def to_markdown(res: dict, link_base: str | None = None, skip=None) -> str:
+    """Markdown summary.  ``skip(path) -> bool`` drops files (e.g. ones not committed)."""
     def link(p: str) -> str:
         r = _rel(p)
         name = Path(r).name
@@ -269,7 +270,8 @@ def to_markdown(res: dict, link_base: str | None = None) -> str:
         if j["attention"]:
             md.append("**Needs attention**\n" + "\n".join(f"- {a}" for a in j["attention"][:8]))
         order = {".pdf": 0, ".stl": 1, ".3mf": 2, ".step": 3, ".html": 4, ".json": 5}
-        files = sorted(dict.fromkeys(j["files"]), key=lambda f: order.get(Path(f).suffix, 9))
+        files = sorted(dict.fromkeys(f for f in j["files"] if not (skip and skip(f))),
+                       key=lambda f: order.get(Path(f).suffix, 9))
         md.append("**Files:** " + " · ".join(link(f) for f in files))
     for cmd, text in res["outputs"]:
         md.append(f"**`{cmd}`**\n```\n{text[:6000]}\n```")

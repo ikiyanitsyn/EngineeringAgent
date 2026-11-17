@@ -24,9 +24,29 @@ The numerical work is done by a tested Python package, not improvised by the AI 
 run. Every analysis type is benchmarked against a closed-form answer
 ([docs/validation.md](docs/validation.md)).
 
-**New here? Read the [user guide](docs/USER-GUIDE.md)** - beginner walkthrough for Windows, iPhone and free AI models.
+## Start in one minute
 
-## Install
+| You have | Do this |
+| --- | --- |
+| **A phone or browser only** | **Issues > New issue > Engineering request**, paste a request, submit. GitHub runs it for free and replies with the numbers, `report.pdf` and `part.stl`. |
+| **A Windows PC** | **Code > Download ZIP**, extract, double-click **`START-HERE.cmd`**. It installs itself, then shows a menu (plain English with a free AI, Claude Code, results). |
+| **Claude Code** | Open it in this repository and say what you need. It installs the tools itself if they are missing. |
+| **ChatGPT / Gemini / Copilot / Claude.ai** | Paste [docs/CHATBOT-PROMPT.md](docs/CHATBOT-PROMPT.md) into the chat once, describe your part, paste the reply into an issue or `START-HERE` option 4. |
+
+A request is a few plain lines - any chatbot can write them, or you can:
+
+    ea make l_bracket thickness=6 --print petg
+    ea analyze last -m al_6061_t6 --fix hole:6.6@40,20,0 --force hole:6.6@0,20,40 -300,0,0 --sf 2
+
+With a free model connected (Gemini key, Ollama, GitHub Models) you can skip that and
+just write plain English: `ea ask "printable PETG wall hook for a 5 kg coat"`, or the same
+sentence in an issue.
+
+**Beginner walkthrough: [docs/USER-GUIDE.md](docs/USER-GUIDE.md)** (Windows, iPhone, free AI models).
+
+## Install (only for running on your own computer)
+
+`START-HERE.cmd` does all of this on Windows. Manually:
 
 Requirements: Git, Python 3.10-3.13 (3.12 recommended), about 2 GB of disk.
 
@@ -96,6 +116,9 @@ Everything the agent does is also a command (`./ea` in Git Bash / Linux / macOS,
     ./ea doctor --full                       # environment check + benchmark
     ./ea units imperial                      # toggle units for everything
     ./ea materials                           # 36 library materials
+    ./ea ask "printable PETG phone stand, 80 mm wide"   # plain English (needs a free model)
+    ./ea make enclosure length=100 width=70 height=40 --print petg
+    ./ea analyze part.step -m al_6061_t6 --fix zmin --force xmax 0,0,-500 --check "..."
     ./ea calc beam.cantilever_end_load P=100 L=100 E="210 GPa" b=10 h=10
     ./ea cad new jobs/01-bracket --template l_bracket -p thickness=6 --stl
     ./ea cad printcheck jobs/01-bracket/part.step -m petg
