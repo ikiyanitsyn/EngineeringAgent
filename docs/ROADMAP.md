@@ -14,7 +14,7 @@ original conversation. Last updated 2026-11-17.
 | Plain English: `ea ask` with any OpenAI-compatible model, error feedback and retry | `engagent/assistant.py` | `tests/test_assistant.py` with a fake model server |
 | GitHub issue bot | `.github/workflows/engineer.yml`, `scripts/issue_bot.py`, `.github/ISSUE_TEMPLATE/` | issue #1 (closed, kept as a worked example): `ea` lines and a Python-geometry request ran on GitHub, results committed (`jobs/01`-`04`), replies posted; same numbers as locally |
 | Default mesh from wall thickness; singularity diagnosis in the convergence check | `engagent/fea/run.py` | bracket example: stress 43 -> 48 MPa with the finer default; corner singularity reported with its location |
-| Windows: `START-HERE.cmd` + `scripts/start.ps1` menu, `scripts/setup.ps1` | | CI job `windows`: parse check, real setup (CalculiX 2.23 download, benchmark 0.795 %), one-liners |
+| Windows: `START-HERE.cmd` + `scripts/start.ps1` menu, `scripts/setup.ps1` | | CI job `windows`: parse check, real setup (CalculiX 2.23 download, benchmark 0.795 %), menu actions via `start.ps1 -Do ...` (request, units, prompt, UTF-8 BOM file), one-liners |
 | MCP server (28 tools incl. one-call `make`, `analyze`, `run_request`) | `engagent/mcp_server.py` | stdio client test (manual, see commit history) |
 | Analysis core, hand calcs, GD&T, reports, viewer | `engagent/` | `pytest -m solver` (22 FEA benchmarks against closed form), `docs/validation.md` |
 
@@ -32,16 +32,15 @@ Run everything: `.venv/bin/python -m pytest -q` then `.venv/bin/python -m pytest
    exists. After item 1, open an issue such as "Printable PETG wall hook for a 5 kg coat" and
    check the model's request, the auto-fix loop and the question path ("analyse my bracket").
    Tune `engagent/prompt.py` from what goes wrong (regenerate the doc with `ea prompt -o docs/CHATBOT-PROMPT.md`).
-3. **3MF export fails on some shapes** (enclosure): `Mesher` rejects the tessellation, STL is
-   still written. Option: write 3MF directly from the STL triangles (3MF is zipped XML).
+3. ~~3MF export fails on some shapes~~ - done: a direct 3MF writer takes over when the mesher
+   refuses (mesh volume checked against CAD).
 4. **More templates** for common print requests: hinge, snap-fit box with lid, knob, gear
    (bd_warehouse), spacer/washer set, cable clip, hose adapter. Each needs a `@template` entry
    and is covered automatically by `tests/test_cad.py`.
 5. **Viewer on the phone.** `viewer.html` is in the run's artifact zip, not committed (size).
    Option: enable GitHub Pages and publish job viewers there; link it from the issue reply.
-6. **Auto hand checks for templates.** One-liners without `--check` end in REVIEW. For
-   `beam` with `--fix xmin` and a force on `xmax` the matching beam formula could be
-   attached automatically.
+6. **Auto hand checks for templates** - done for the `beam` cantilever; other templates
+   (plate under pressure, flange, l_bracket) could get the same treatment in `quick._auto_beam_check`.
 7. **Assemblies in one line** (`ea analyze` with two parts and a tie) - today they need a
    `job.json` (see the `fea-assembly` skill and `examples/12-tied-assembly`).
 8. **Solver threads.** Serial by default because multithreaded CalculiX 2.21 was
