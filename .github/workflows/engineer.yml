@@ -50,6 +50,11 @@ jobs:
           sudo apt-get install -y -qq calculix-ccx libglu1-mesa libgl1 libxrender1 libxcursor1 libxft2 libxinerama1
       - name: Install EngineeringAgent
         run: python -m pip install -q -e .
+      - name: Restore the cached open model (used when no hosted model is available)
+        uses: actions/cache@v4
+        with:
+          path: ~/.ollama/models
+          key: ollama-models-v1-${{ vars.ENGAGENT_LOCAL_MODEL || 'qwen2.5-coder-7b' }}
       - name: Run the request
         id: bot
         env:
@@ -59,6 +64,7 @@ jobs:
           ENGAGENT_LLM_KEY: ${{ secrets.ENGAGENT_LLM_KEY }}
           ENGAGENT_LLM_URL: ${{ vars.ENGAGENT_LLM_URL }}
           ENGAGENT_LLM_MODEL: ${{ vars.ENGAGENT_LLM_MODEL }}
+          ENGAGENT_LOCAL_MODEL: ${{ vars.ENGAGENT_LOCAL_MODEL }}
         run: python scripts/issue_bot.py
       - name: Upload files (STEP, STL, reports, interactive viewer)
         if: always() && steps.bot.outputs.folders != 'jobs/.none'

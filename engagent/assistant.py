@@ -40,9 +40,39 @@ class LLMError(RuntimeError):
     pass
 
 
+OLLAMA = "http://localhost:11434"
+# open models that follow the request format well, best first (any installed model is used otherwise)
+OLLAMA_PREFERRED = ("qwen2.5-coder:32b", "qwen2.5-coder:14b", "qwen2.5:14b", "qwen2.5-coder:7b", "qwen2.5:7b",
+                    "llama3.1:8b", "qwen2.5-coder:3b", "llama3.2:3b")
+LOCAL_DEFAULT_MODEL = "qwen2.5-coder:7b"
+
+
+def ollama_models(timeout: float = 2.0) -> list[str]:
+    """Models installed in a running Ollama on this machine ([] if none is running)."""
+    try:
+        with urllib.request.urlopen(f"{OLLAMA}/api/tags", timeout=timeout) as r:
+            return [m["name"] for m in json.loads(r.read().decode()).get("models", [])]
+    except Exception:
+        return []
+
+
+def pick_local_model(names: list[str]) -> str | None:
+    for want in OLLAMA_PREFERRED:
+        if want in names or f"{want}:latest" in names:
+            return want
+    return names[0] if names else None
+
+
 def settings() -> dict:
+    """Which model to use: explicit settings > a running local Ollama > GitHub Models (token)."""
     cfg = config.load().get("llm") or {}
-    url = os.environ.get("ENGAGENT_LLM_URL") or cfg.get("url") or GITHUB_MODELS
+    url = os.environ.get("ENGAGENT_LLM_URL") or cfg.get("url")
+    if not url and not os.environ.get("ENGAGENT_LLM_KEY"):
+        local = pick_local_model(ollama_models())
+        if local:
+            return {"url": f"{OLLAMA}/v1/chat/completions",
+                    "model": os.environ.get("ENGAGENT_LLM_MODEL") or cfg.get("model") or local, "key": None}
+    url = url or GITHUB_MODELS
     key_env = cfg.get("key_env") or "ENGAGENT_LLM_KEY"
     key = os.environ.get(key_env) or os.environ.get("ENGAGENT_LLM_KEY")
     if not key and "models.github.ai" in url:
@@ -52,7 +82,23 @@ def settings() -> dict:
     return {"url": url, "key": key, "model": model}
 
 
+def _post_ollama(base: str, model: str, messages: list[dict], timeout: float) -> str:
+    """Ollama's native API: lets us raise the context window (its default is too small for the prompt)."""
+    body = json.dumps({"model": model, "messages": messages, "stream": False,
+                       "options": {"num_ctx": 8192, "temperature": 0.1}}).encode()
+    req = urllib.request.Request(base + "/api/chat", data=body, method="POST",
+                                 headers={"Content-Type": "application/json"})
+    with urllib.request.urlopen(req, timeout=max(timeout, 900)) as r:
+        data = json.loads(r.read().decode("utf-8"))
+    if "message" not in data:
+        raise LLMError(f"{model} at {base}: unexpected reply {json.dumps(data)[:300]}")
+    return data["message"].get("content") or ""
+
+
 def _post(url: str, key: str | None, model: str, messages: list[dict], timeout: float) -> str:
+    m = re.match(r"^(https?://[^/]+:11434)(/|$)", url)
+    if m:
+        return _post_ollama(m.group(1), model, messages, timeout)
     body = json.dumps({"model": model, "messages": messages, "temperature": 0.1}).encode()
     headers = {"Content-Type": "application/json", "Accept": "application/json"}
     if key:
@@ -125,6 +171,41 @@ def complete(messages: list[dict], *, model: str | None = None, timeout: float =
             "ENGAGENT_LLM_MODEL=gemini-2.5-flash. In GitHub: Settings > Secrets and variables > Actions "
             "(secret ENGAGENT_LLM_KEY, variables ENGAGENT_LLM_URL and ENGAGENT_LLM_MODEL).")
     raise LLMError("the language model could not be used. " + " | ".join(errors[:3]))
+
+
+def ensure_ollama(model: str = LOCAL_DEFAULT_MODEL, say=print) -> str:
+    """Make a local open model available on this Linux machine (used on GitHub runners).
+
+    Installs Ollama if needed, starts a server whose models live in ~/.ollama/models (so a CI
+    cache can keep them), pulls the model, and returns its name. Needs internet once per model.
+    """
+    import shutil
+    import subprocess
+    home = os.path.expanduser("~/.ollama/models")
+    os.makedirs(home, exist_ok=True)
+    if not ollama_models():
+        if not shutil.which("ollama"):
+            say("installing Ollama (free, open-source model runner) ...")
+            subprocess.run("curl -fsSL https://ollama.com/install.sh | sh", shell=True, check=True,
+                           stdout=subprocess.DEVNULL)
+            subprocess.run("sudo systemctl stop ollama 2>/dev/null || true", shell=True)
+        env = dict(os.environ, OLLAMA_MODELS=home, OLLAMA_CONTEXT_LENGTH="8192", OLLAMA_KEEP_ALIVE="30m")
+        subprocess.Popen(["ollama", "serve"], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                         start_new_session=True)
+        for _ in range(60):
+            time.sleep(1)
+            try:
+                urllib.request.urlopen(f"{OLLAMA}/api/tags", timeout=2)
+                break
+            except Exception:
+                continue
+        else:
+            raise LLMError("the local model server (Ollama) did not start")
+    if model not in ollama_models() and f"{model}:latest" not in ollama_models():
+        say(f"downloading the open model {model} (once; cached afterwards) ...")
+        subprocess.run(["ollama", "pull", model], check=True, stdout=subprocess.DEVNULL,
+                       env=dict(os.environ, OLLAMA_MODELS=home))
+    return model
 
 
 def split_reply(reply: str) -> tuple[str, str]:

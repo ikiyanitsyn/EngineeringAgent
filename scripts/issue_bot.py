@@ -60,6 +60,25 @@ def conversation(issue: dict) -> list[dict]:
         page += 1
 
 
+def _ask_with_fallback(convo: list[dict]) -> dict:
+    """Configured provider / GitHub Models first; if none answers, a free open model on this runner."""
+    try:
+        return assistant.ask(convo)
+    except assistant.LLMError as first:
+        if os.environ.get("ENGAGENT_LLM_KEY") or os.environ.get("ENGAGENT_NO_LOCAL_LLM"):
+            raise
+        print(f"No hosted model answered ({first}); using a local open model on the runner.", file=sys.stderr)
+        model = os.environ.get("ENGAGENT_LOCAL_MODEL") or assistant.LOCAL_DEFAULT_MODEL
+        assistant.ensure_ollama(model, say=lambda m: print(m, file=sys.stderr))
+        os.environ["ENGAGENT_LLM_URL"] = f"{assistant.OLLAMA}/v1/chat/completions"
+        os.environ["ENGAGENT_LLM_MODEL"] = model
+        out = assistant.ask(convo)
+        out["model_note"] = (f"_Answered by the free open model `{model}` running on the GitHub runner "
+                             f"(no key needed). For faster, stronger answers add a free Gemini key - see "
+                             f"docs/USER-GUIDE.md section 2A._")
+        return out
+
+
 def commit(folders: list[str], label: str) -> bool:
     if not folders:
         return False
@@ -105,10 +124,13 @@ def main() -> int:
             result = run_request(latest, link_base=link_base)
             req_text = latest
         else:
-            out = assistant.ask(convo)
+            out = _ask_with_fallback(convo)
             plan = out.get("plan", "")
+            if out.get("model_note"):
+                plan = (plan + "\n\n" + out["model_note"]).strip()
             if out["kind"] == "question":
-                head = (out["reply"].strip() + "\n\n<sub>Reply in a comment below and I will continue. "
+                head = (out["reply"].strip() + ("\n\n" + out["model_note"] if out.get("model_note") else "")
+                        + "\n\n<sub>Reply in a comment below and I will continue. "
                         "Engineering assistance, not sign-off.</sub>")
             else:
                 result = out.get("result")
