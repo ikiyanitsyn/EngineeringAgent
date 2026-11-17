@@ -1,0 +1,63 @@
+{
+ "valid": true,
+ "solids": 1,
+ "faces": 34,
+ "edges": 84,
+ "volume": 17912.516811316666,
+ "area": 16381.157505925965,
+ "bbox_min": [
+  -8.881784197001252e-16,
+  -8.881784197001252e-16,
+  0.0
+ ],
+ "bbox_max": [
+  100.0,
+  70.0,
+  5.4
+ ],
+ "bbox_size": [
+  100.0,
+  70.0,
+  5.4
+ ],
+ "center_of_mass": [
+  49.99999999999996,
+  34.999999999999986,
+  4.014200983867471
+ ],
+ "inertia_unit_density": [
+  [
+   7617327.455294084,
+   -2.2351741790771484e-08,
+   -8.149072527885437e-10
+  ],
+  [
+   -2.2351741790771484e-08,
+   15189224.912119992,
+   -3.4924596548080444e-10
+  ],
+  [
+   -8.149072527885437e-10,
+   -3.4924596548080444e-10,
+   22771955.56029108
+  ]
+ ],
+ "face_types": {
+  "plane": 26,
+  "cylinder": 8
+ },
+ "cylinder_diameters": [
+  {
+   "diameter": 3.4,
+   "faces": 4
+  },
+  {
+   "diameter": 8.0,
+   "faces": 4
+  }
+ ],
+ "files": [
+  "/home/runner/work/EngineeringAgent/EngineeringAgent/jobs/02-electronics-box-lid/part.step"
+ ],
+ "template": "lid"
+}

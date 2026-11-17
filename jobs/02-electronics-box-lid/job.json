@@ -1,0 +1,17 @@
+{
+ "name": "02-electronics-box-lid",
+ "units": "metric",
+ "title": "lid (length=100, width=70)",
+ "geometry": {
+  "template": "lid",
+  "params": {
+   "length": 100,
+   "width": 70
+  }
+ },
+ "material": "petg",
+ "print": {
+  "process": "fdm",
+  "material": "petg"
+ }
+}

@@ -1,0 +1,19 @@
+{
+ "name": "01-electronics-box",
+ "units": "metric",
+ "title": "enclosure (length=100, width=70, height=40, wall=2.4)",
+ "geometry": {
+  "template": "enclosure",
+  "params": {
+   "length": 100,
+   "width": 70,
+   "height": 40,
+   "wall": 2.4
+  }
+ },
+ "material": "petg",
+ "print": {
+  "process": "fdm",
+  "material": "petg"
+ }
+}
