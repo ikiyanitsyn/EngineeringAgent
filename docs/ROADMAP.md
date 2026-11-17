@@ -31,7 +31,12 @@ Run everything: `.venv/bin/python -m pytest -q` then `.venv/bin/python -m pytest
    500 N) when the user gave none, and wrote 500 N for "50 kg". Now guarded in code
    (`engagent/guard.py`): untraceable materials/loads are rejected, the model gets one retry with
    the user's own quantities converted (50 kg = 490.3 N), and only then is the user asked; analysis
-   questions answered with CAD only get a follow-up question. Each CPU model call takes
+   questions answered with CAD only get a follow-up question. On top, `guard.autocorrect` maps the
+   user's material words to a library key (mild steel -> steel_generic, also replacing grades the user
+   never named, e.g. S355) and replaces an invented load magnitude with the single load the user
+   stated, listing each change in the reply; a question the user's messages already answer is pushed
+   back to the model once. Small models still sometimes ask odd questions - the user can always paste
+   `ea` lines, or add a Gemini key. Each CPU model call takes
    roughly 3-6 minutes; a Gemini key (or a faster runner) makes replies ~1 minute.
 3. **Watch the open model on harder requests.** Custom shapes (Python blocks) and multi-step
    analyses are where a 7B model is most likely to stumble; the error-feedback loop helps.
