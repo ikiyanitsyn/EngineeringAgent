@@ -238,6 +238,11 @@ def _checks(job: Job, mesh: Mesh, log: RunLog, metrics: dict, info: dict, hand: 
             err = abs(net) / scale
             add("heat_balance", "Heat flows balance", PASS if err <= 1e-2 else FAIL,
                 f"net {U.fmt(net, 'power', s)} of {U.fmt(scale, 'power', s)} ({err * 100:.3g} %)")
+        elif flows and has_surface_exchange and not job.transient and any(
+                str(h.get("metric", "")).startswith("heat_flow.") and h.get("status") == PASS for h in hand):
+            add("heat_balance", "Heat flows balance", PASS,
+                "the solver does not total convection/radiation, but the heat flow through the boundary "
+                "matches the hand calculation (see below)")
         else:
             add("heat_balance", "Heat flows balance", NOT_DONE if not job.transient else INFO,
                 "transient run (energy is stored)" if job.transient else

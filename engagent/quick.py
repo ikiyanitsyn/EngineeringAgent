@@ -318,14 +318,45 @@ def build_analysis_job(source: str, *, material: str | None, analysis: str = "st
         job["fatigue"] = {"R": 0, "surface": "machined", "required_sf": 1.5}
     if not checks:
         auto = _auto_beam_check(source, params or {}, mat, cons, loads, a, system)
-        checks = [auto] if auto else None
+        checks = (auto if isinstance(auto, list) else [auto]) if auto else None
     if checks:
         job["hand_calcs"] = [link_check(c, job, system) for c in checks]
     return job
 
 
-def _auto_beam_check(source, params, mat, cons, loads, analysis, system) -> str | None:
+def _auto_bar_conduction_check(source, params, mat, cons, loads, analysis, system) -> list[str] | None:
+    """The textbook 1-D bar: beam template, one end held at a temperature, the other end convecting."""
+    if source != "beam" or analysis not in ("thermal", "thermal_steady") or len(cons) != 1 or len(loads) != 1:
+        return None
+    c, l = cons[0], loads[0]
+    if c["type"] != "temperature" or l["type"] != "convection" or {c.get("on"), l.get("on")} != {"xmin", "xmax"}:
+        return None
+    from . import materials
+    try:
+        m = materials.get(mat, system)
+    except Exception:
+        return None
+    k = m.get("k")
+    if m.orthotropic or not k:
+        return None
+    L = U.to_internal(params["length"], "length", system) if "length" in params else 100.0
+    T1 = U.to_internal(c["value"], "temperature", system)
+    Ta = U.to_internal(l["ambient"], "temperature", system)
+    h = U.to_internal(l["h"], "film", system)          # internal mW/(mm^2 K) = kW/(m^2 K)
+    dims = {d: U.to_internal(params[d], "length", system) if d in params else 10.0 for d in ("width", "height")}
+    if str(params.get("section", "rect")) != "rect":
+        return None
+    base = (f'thermal.wall_conduction_convection k="{k:g} W/m/K" L="{L:g} mm" h="{h * 1000:g} W/m^2/K" '
+            f'T_fixed="{T1:g} degC" T_ambient="{Ta:g} degC"')
+    area = dims["width"] * dims["height"]
+    # end temperature, and the heat flow through the held end (this also closes the heat balance)
+    return [base, f'{base} A="{area:g} mm^2" -> heat_flow@heat_flow.{c["on"]}']
+
+
+def _auto_beam_check(source, params, mat, cons, loads, analysis, system) -> str | list[str] | None:
     """The textbook cantilever: beam template, fixed at xmin, one transverse force on xmax."""
+    if analysis in ("thermal", "thermal_steady"):
+        return _auto_bar_conduction_check(source, params, mat, cons, loads, analysis, system)
     if source != "beam" or analysis != "static" or str(params.get("section", "rect")) != "rect":
         return None
     if [c["type"] for c in cons] != ["fixed"] or len(loads) != 1 or loads[0]["type"] != "force":
@@ -420,6 +451,8 @@ def link_check(spec: str, job: dict, system: str | None = None) -> dict:
         elif out_name == "stress":
             metric = "max_von_mises"
             tol = 0.15
+    if target.strip():
+        entry["name"] += f" ({out_name.replace('_', ' ')})"
     entry.update(output=out_name, tol=tol)
     if metric:
         entry["metric"] = metric
@@ -450,7 +483,7 @@ def analyze(source: str, *, name: str | None = None, folder: str | Path | None =
         auto = _auto_beam_check("beam", geo.get("params") or {}, job["material"], job["constraints"],
                                 job["loads"], job["analysis"], system)
         if auto:
-            job["hand_calcs"] = [link_check(auto, job, system)]
+            job["hand_calcs"] = [link_check(c, job, system) for c in (auto if isinstance(auto, list) else [auto])]
     src = Path(source)
     if src.suffix and not src.exists():
         raise FileNotFoundError(f"{source} not found")

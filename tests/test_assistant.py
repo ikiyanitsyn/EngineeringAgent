@@ -244,7 +244,8 @@ def test_local_model_thermal_end_to_end(monkeypatch, tmp_path):
                             "How hot does the cooled end get?")
         assert out["kind"] == "results", out
         fea = out["result"]["jobs"][1]
-        assert fea["verdict"] in ("PASS", "REVIEW"), fea
+        assert fea["verdict"] == "PASS", fea               # automatic 1-D checks: end temperature + heat flow
+        assert sum("Hand calc" in l and "PASS" in l for l in fea["summary"]) == 2
     finally:
         srv.shutdown()
 
