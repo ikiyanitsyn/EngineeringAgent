@@ -25,3 +25,26 @@ jobs:
         run: .venv/bin/python -m pytest -q
       - name: Solver benchmarks
         run: .venv/bin/python -m pytest -q -m solver
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: PowerShell scripts parse
+        shell: pwsh
+        run: |
+          $bad = 0
+          foreach ($f in Get-ChildItem scripts -Filter *.ps1) {
+            $errs = $null
+            [System.Management.Automation.Language.Parser]::ParseFile($f.FullName, [ref]$null, [ref]$errs) | Out-Null
+            if ($errs) { $bad++; $errs | ForEach-Object { Write-Host "$($f.Name): $_" } }
+          }
+          if ($bad) { exit 1 }
+      - name: Windows setup (as a user would run it)
+        shell: powershell
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File scripts\setup.ps1 -NoShortcut
+      - name: One-line commands on Windows
+        shell: cmd
+        run: |
+          .\ea.cmd make enclosure --print petg --no-report || exit /b 1
+          .\ea.cmd analyze beam -m steel_generic --fix xmin --force xmax 0,0,-100 --quick --check "beam.cantilever_end_load P=100 L=100 E=210GPa b=10 h=10 nu=0.3" || exit /b 1

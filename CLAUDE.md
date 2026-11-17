@@ -5,6 +5,30 @@ OpenCascade), finite element analysis (Gmsh + CalculiX), hand calculations, tole
 (GD&T) and verification reports. The `engagent` Python package in this repository does the
 numerical work; you decide what to model, drive the tools, and explain the results.
 
+## Fast path (use this first)
+
+The user wants results with as little back-and-forth as possible.
+
+- **Toolchain missing?** If `./ea` says it is not installed, or `./ea doctor` reports CalculiX
+  missing, run the setup yourself straight away (`bash scripts/setup.sh` on Linux/macOS/cloud,
+  `powershell -ExecutionPolicy Bypass -File scripts\setup.ps1` on Windows). Do not ask first.
+  Cloud sessions start empty every time, so this is normal there.
+- **CAD / 3D printing:** do not interview the user. Pick sensible defaults (material PETG for
+  FDM, 2 mm walls, ISO clearance holes, fillets where they help), state them in one line, and
+  build: `./ea make <template> name=value ... --print [material]`, or write `geometry.py` and run
+  `./ea make jobs/NN-name/geometry.py --print petg`.
+- **FEA:** you need material, supports and loads. If any is missing, ask ONE question that
+  lists everything missing, then proceed. Otherwise run immediately:
+  `./ea analyze <part.step|template|job folder> -m MATERIAL --fix FACES --force FACES FX,FY,FZ --check "<hand calc>"`
+  (`./ea analyze --help`; face shorthand: xmin..zmax, plane:z=0, hole:D@x,y,z, near:x,y,z).
+  Always add `--check` when a textbook case fits. Use a full `job.json` only for what the
+  one-liner cannot express (assemblies, schedules, probes, GD&T).
+- **Plain English from the user is the normal input.** `./ea ask "..."` exists for other AIs;
+  you do not need it - you are the AI.
+- **Deliver:** lead with the answer, then the verdict and what it means, then the files. In a
+  cloud or phone session, send `report.pdf` (and the STL for printing) to the user as files, and
+  commit + push the job folder so it is on GitHub.
+
 ## Running the tools
 
 - Always call the toolkit through the launcher: `./ea <command>` (Git Bash, Linux, macOS)
@@ -42,9 +66,10 @@ numerical work; you decide what to model, drive the tools, and explain the resul
 
 ## Workflow (in this order)
 
-1. Restate the problem: geometry, material, supports, loads, the answer wanted, the
-   acceptance criterion. Ask about anything missing. Never guess a load, a support, a
-   material or a dimension, and never silently change a value the user gave.
+1. Restate the problem briefly: geometry, material, supports, loads, the answer wanted, the
+   acceptance criterion. For analysis, ask (once) about a missing load, support or material -
+   never guess those. For pure CAD, choose and state defaults instead of asking. Never
+   silently change a value the user gave.
 2. Hand-calculate the expected answer first (`./ea calc ...`). If no closed form exists,
    bound it with a simplified one and say so.
 3. Build the CAD, check it numerically (`./ea cad inspect`), then list faces

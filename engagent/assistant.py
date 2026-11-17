@@ -31,6 +31,7 @@ from .prompt import chatbot_prompt
 from .request import parse, run_request
 
 GITHUB_MODELS = "https://models.github.ai/inference/chat/completions"
+GITHUB_MODELS_AZURE = "https://models.inference.ai.azure.com/chat/completions"   # older endpoint, same token
 DEFAULT_MODEL = "openai/gpt-4.1"
 FALLBACK_MODELS = ("openai/gpt-4.1-mini", "openai/gpt-4o-mini")
 
@@ -51,50 +52,70 @@ def settings() -> dict:
     return {"url": url, "key": key, "model": model}
 
 
+def _post(url: str, key: str | None, model: str, messages: list[dict], timeout: float) -> str:
+    body = json.dumps({"model": model, "messages": messages, "temperature": 0.1}).encode()
+    headers = {"Content-Type": "application/json", "Accept": "application/json"}
+    if key:
+        headers["Authorization"] = f"Bearer {key}"
+    req = urllib.request.Request(url, data=body, method="POST", headers=headers)
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        raw = r.read()
+        ctype = r.headers.get("Content-Type", "")
+        status = r.status
+    try:
+        data = json.loads(raw.decode("utf-8"))
+    except ValueError:
+        snippet = raw[:300].decode("utf-8", "replace").replace("\n", " ")
+        raise LLMError(f"{model} at {url}: HTTP {status}, {ctype or 'no content type'}, not JSON: {snippet!r}")
+    if "choices" not in data:
+        raise LLMError(f"{model} at {url}: unexpected reply {json.dumps(data)[:300]}")
+    content = data["choices"][0]["message"].get("content") or ""
+    if isinstance(content, list):                      # some providers return parts
+        content = "".join(p.get("text", "") for p in content if isinstance(p, dict))
+    return content
+
+
 def complete(messages: list[dict], *, model: str | None = None, timeout: float = 180.0) -> str:
-    """One chat completion.  Falls back to smaller GitHub models on rate limits."""
+    """One chat completion.  On GitHub Models, falls back to smaller models and the older endpoint."""
     s = settings()
     if not s["model"] and not model:
         raise LLMError("no model set: set ENGAGENT_LLM_MODEL (e.g. qwen2.5-coder:14b for Ollama)")
-    if "models.github.ai" in s["url"] and not s["key"]:
+    github = "models.github.ai" in s["url"]
+    if github and not s["key"]:
         raise LLMError("GitHub Models needs a token: set ENGAGENT_LLM_KEY to a GitHub personal access "
                        "token with the 'models: read' permission (free), or point ENGAGENT_LLM_URL at "
                        "Ollama / LM Studio / another provider. See docs/USER-GUIDE.md.")
-    models = [model or s["model"]]
-    if "models.github.ai" in s["url"]:
-        models += [m for m in FALLBACK_MODELS if m not in models]
-    last_err = None
-    for m in models:
-        for attempt in range(3):
-            body = json.dumps({"model": m, "messages": messages, "temperature": 0.1}).encode()
-            req = urllib.request.Request(s["url"], data=body, method="POST", headers={
-                "Content-Type": "application/json", **({"Authorization": f"Bearer {s['key']}"} if s["key"] else {})})
+    first = model or s["model"]
+    targets = [(s["url"], first)]
+    if github:
+        targets += [(s["url"], m) for m in FALLBACK_MODELS if m != first]
+        targets += [(GITHUB_MODELS_AZURE, m.split("/", 1)[-1]) for m in (first,) + FALLBACK_MODELS]
+    errors: list[str] = []
+    for url, m in targets:
+        for attempt in range(2):
             try:
-                with urllib.request.urlopen(req, timeout=timeout) as r:
-                    data = json.loads(r.read().decode("utf-8"))
-                msg = data["choices"][0]["message"]
-                content = msg.get("content") or ""
-                if isinstance(content, list):                 # some providers return parts
-                    content = "".join(p.get("text", "") for p in content if isinstance(p, dict))
-                return content
+                return _post(url, s["key"], m, messages, timeout)
             except urllib.error.HTTPError as e:
-                detail = e.read().decode("utf-8", "replace")[:400]
-                last_err = f"{m}: HTTP {e.code} {detail}"
-                if e.code == 429:                             # rate limit: next model
-                    break
-                if e.code >= 500 and attempt < 2:
-                    time.sleep(3 * (attempt + 1))
+                detail = e.read().decode("utf-8", "replace")[:300]
+                errors.append(f"{m} at {url}: HTTP {e.code} {detail}")
+                if e.code >= 500 and attempt == 0:
+                    time.sleep(3)
                     continue
-                if e.code in (400, 404) and "model" in detail.lower():
-                    break                                     # unknown model: try the next
-                raise LLMError(last_err) from e
-            except (urllib.error.URLError, TimeoutError, KeyError, ValueError) as e:
-                last_err = f"{m}: {type(e).__name__}: {e}"
-                if attempt < 2:
-                    time.sleep(3 * (attempt + 1))
+                break                                 # 4xx: try the next model / endpoint
+            except LLMError as e:
+                errors.append(str(e))
+                break
+            except (urllib.error.URLError, TimeoutError, OSError) as e:
+                errors.append(f"{m} at {url}: {type(e).__name__}: {e}")
+                if attempt == 0:
+                    time.sleep(3)
                     continue
                 break
-    raise LLMError(f"the language model could not be reached ({last_err})")
+        if not github:
+            break
+    import sys
+    print("LLM errors:\n  " + "\n  ".join(errors), file=sys.stderr)
+    raise LLMError("the language model could not be used. " + " | ".join(errors[:3]))
 
 
 def split_reply(reply: str) -> tuple[str, str]:

@@ -8,7 +8,8 @@ tools\calculix, then runs the built-in benchmark. Safe to re-run.
 #>
 param(
     [string]$CalculixUrl = "https://www.dhondt.de/calculix_2.23_4win.zip",
-    [switch]$SkipSolver
+    [switch]$SkipSolver,
+    [switch]$NoShortcut
 )
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
@@ -32,9 +33,22 @@ function Find-Python {
 Write-Host "== EngineeringAgent setup ==" -ForegroundColor Cyan
 $py = Find-Python
 if (-not $py) {
-    Write-Host "Python 3.10-3.13 was not found. Install it with:" -ForegroundColor Yellow
-    Write-Host "    winget install --id Python.Python.3.12 -e"
-    Write-Host "then open a new PowerShell window and run this script again."
+    $local = Join-Path $env:LOCALAPPDATA "Programs\Python\Python312\python.exe"
+    if (Test-Path $local) { $py = $local }
+}
+if (-not $py) {
+    if (Get-Command winget -ErrorAction SilentlyContinue) {
+        Write-Host "Python was not found - installing Python 3.12 for your user account (no admin needed) ..." -ForegroundColor Yellow
+        winget install --id Python.Python.3.12 -e --scope user --silent --accept-package-agreements --accept-source-agreements
+        $env:Path = [Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [Environment]::GetEnvironmentVariable("Path", "User")
+        $local = Join-Path $env:LOCALAPPDATA "Programs\Python\Python312\python.exe"
+        if (Test-Path $local) { $py = $local } else { $py = Find-Python }
+    }
+}
+if (-not $py) {
+    Write-Host "Python 3.10-3.13 could not be installed automatically." -ForegroundColor Yellow
+    Write-Host "Install it from https://www.python.org/downloads/ (tick 'Add python.exe to PATH'),"
+    Write-Host "then double-click START-HERE.cmd again."
     exit 1
 }
 Write-Host "Python: $py"
@@ -73,7 +87,19 @@ if (-not $SkipSolver) {
 
 Write-Host ""
 & (Join-Path $root ".venv\Scripts\engagent.exe") doctor --full
-if ($LASTEXITCODE -eq 0) {
+$ok = ($LASTEXITCODE -eq 0)
+if ($ok -and -not $NoShortcut) {
+    try {
+        $desk = [Environment]::GetFolderPath("Desktop")
+        $lnk = (New-Object -ComObject WScript.Shell).CreateShortcut((Join-Path $desk "EngineeringAgent.lnk"))
+        $lnk.TargetPath = Join-Path $root "START-HERE.cmd"
+        $lnk.WorkingDirectory = $root
+        $lnk.Description = "EngineeringAgent - CAD and FEA from plain English"
+        $lnk.Save()
+        Write-Host "Desktop shortcut 'EngineeringAgent' created."
+    } catch { }
+}
+if ($ok) {
     Write-Host ""
     Write-Host "Setup complete. Start Claude Code in this folder (run: claude) and ask for a part or an analysis." -ForegroundColor Green
     Write-Host "Command line:  .\ea.cmd units        .\ea.cmd fea new jobs\01-my-part -a static"
