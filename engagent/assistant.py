@@ -202,6 +202,10 @@ def ensure_ollama(model: str = LOCAL_DEFAULT_MODEL, say=print) -> str:
         else:
             raise LLMError("the local model server (Ollama) did not start")
     if model not in ollama_models() and f"{model}:latest" not in ollama_models():
+        if os.environ.get("GITHUB_ACTIONS") == "true" and shutil.disk_usage(home).free < 20e9:
+            # hosted runners ship ~10 GB of SDKs we never use; the model and its cache copy need the room
+            subprocess.run("sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup "
+                           "/opt/hostedtoolcache/CodeQL 2>/dev/null || true", shell=True)
         say(f"downloading the open model {model} (once; cached afterwards) ...")
         subprocess.run(["ollama", "pull", model], check=True, stdout=subprocess.DEVNULL,
                        env=dict(os.environ, OLLAMA_MODELS=home))
