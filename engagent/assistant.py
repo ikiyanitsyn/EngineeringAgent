@@ -176,6 +176,34 @@ def complete(messages: list[dict], *, model: str | None = None, timeout: float =
     raise LLMError("the language model could not be used. " + " | ".join(errors[:3]))
 
 
+OLLAMA_RELEASE = "https://github.com/ollama/ollama/releases/latest/download/ollama-linux-amd64"
+_INSTALL_STEPS = [
+    # the release archive straight from GitHub (current releases ship .tar.zst only)
+    "command -v zstd >/dev/null || sudo apt-get install -y -qq zstd; "
+    f"curl -fsSL --retry 3 {OLLAMA_RELEASE}.tar.zst | zstd -d | sudo tar -xf - -C /usr/local",
+    f"curl -fsSL --retry 3 {OLLAMA_RELEASE}.tgz | sudo tar -xzf - -C /usr/local",      # older layout
+    "curl -fsSL --retry 3 https://ollama.com/install.sh | sh",                          # official script
+]
+
+
+def _install_ollama(say=print) -> None:
+    """Install Ollama on Linux, trying several sources so one broken download does not stop the bot."""
+    import shutil
+    import subprocess
+    errors = []
+    for attempt in range(2):
+        for step in _INSTALL_STEPS:
+            r = subprocess.run(["bash", "-o", "pipefail", "-c", step], capture_output=True, text=True)
+            if r.returncode == 0 and shutil.which("ollama"):
+                subprocess.run("sudo systemctl stop ollama 2>/dev/null || true", shell=True)
+                return
+            errors.append((r.stderr or r.stdout or "").strip().splitlines()[-1:] or ["failed"])
+        time.sleep(5 * (attempt + 1))
+    raise LLMError("could not install the free local model runner (Ollama): "
+                   + "; ".join(e[0] for e in errors[-3:]) + ". Re-run the request in a few minutes, or add a "
+                   "free Gemini key (docs/USER-GUIDE.md section 2A).")
+
+
 def ensure_ollama(model: str = LOCAL_DEFAULT_MODEL, say=print) -> str:
     """Make a local open model available on this Linux machine (used on GitHub runners).
 
@@ -189,9 +217,7 @@ def ensure_ollama(model: str = LOCAL_DEFAULT_MODEL, say=print) -> str:
     if not ollama_models():
         if not shutil.which("ollama"):
             say("installing Ollama (free, open-source model runner) ...")
-            subprocess.run("curl -fsSL https://ollama.com/install.sh | sh", shell=True, check=True,
-                           stdout=subprocess.DEVNULL)
-            subprocess.run("sudo systemctl stop ollama 2>/dev/null || true", shell=True)
+            _install_ollama(say)
         env = dict(os.environ, OLLAMA_MODELS=home, OLLAMA_CONTEXT_LENGTH="8192", OLLAMA_KEEP_ALIVE="30m")
         subprocess.Popen(["ollama", "serve"], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                          start_new_session=True)
