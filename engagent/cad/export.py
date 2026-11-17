@@ -67,5 +67,47 @@ def write_3mf(shape, path: Path, lin: float, ang: float) -> Path | None:
             return Path(path)
         except Exception:
             continue
-    Path(path).unlink(missing_ok=True)
-    return None
+    try:
+        return _write_3mf_direct(shape, Path(path), lin, ang)
+    except Exception:
+        Path(path).unlink(missing_ok=True)
+        return None
+
+
+def _write_3mf_direct(shape, path: Path, lin: float, ang: float) -> Path:
+    """Minimal 3MF (core spec): one object, merged vertices, millimetres."""
+    import zipfile
+    verts, tris = shape.tessellate(lin, ang)
+    index: dict[tuple, int] = {}
+    pts: list[tuple] = []
+    remap = []
+    for v in verts:
+        key = (round(v.X, 6), round(v.Y, 6), round(v.Z, 6))
+        if key not in index:
+            index[key] = len(pts)
+            pts.append(key)
+        remap.append(index[key])
+    faces = [(remap[a], remap[b], remap[c]) for a, b, c in tris]
+    faces = [f for f in faces if len(set(f)) == 3]
+    vx = "".join(f'<vertex x="{x:g}" y="{y:g}" z="{z:g}"/>' for x, y, z in pts)
+    tx = "".join(f'<triangle v1="{a}" v2="{b}" v3="{c}"/>' for a, b, c in faces)
+    model = ('<?xml version="1.0" encoding="UTF-8"?>'
+             '<model unit="millimeter" xml:lang="en-US" '
+             'xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02">'
+             f'<resources><object id="1" type="model"><mesh><vertices>{vx}</vertices>'
+             f'<triangles>{tx}</triangles></mesh></object></resources>'
+             '<build><item objectid="1"/></build></model>')
+    types = ('<?xml version="1.0" encoding="UTF-8"?>'
+             '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+             '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+             '<Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/>'
+             '</Types>')
+    rels = ('<?xml version="1.0" encoding="UTF-8"?>'
+            '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+            '<Relationship Target="/3D/3dmodel.model" Id="rel0" '
+            'Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/></Relationships>')
+    with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr("[Content_Types].xml", types)
+        z.writestr("_rels/.rels", rels)
+        z.writestr("3D/3dmodel.model", model)
+    return path
