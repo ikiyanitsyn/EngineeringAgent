@@ -63,9 +63,11 @@ GitHub runs the CAD and FEA tools for you on its free servers and answers in the
 
 - **Plain English** ("printable PETG box 100 x 70 x 40 with 2.4 mm walls") - works with
   no setup. With no key configured, GitHub runs a free open AI model (Qwen2.5-Coder 7B) on its
-  own machine to turn your words into a request; nothing is sent to an AI company. It is
-  slower (about 7 minutes for the first request, which downloads the model, then a few
-  minutes) and less capable than large models on unusual requests.
+  own machine to turn your words into a request; nothing is sent to an AI company. It runs
+  on GitHub's small free processors, so a reply takes about 5 to 15 minutes, and it is less
+  capable than large models on unusual requests. A safety check in the tool makes sure it
+  never runs an analysis with a material or load you did not give: if one is missing, it
+  asks you in a comment instead of guessing.
 
   Optional upgrade, 3 minutes, free - faster and smarter answers with Google Gemini:
   1. Get a free Gemini key at <https://aistudio.google.com/apikey>.
