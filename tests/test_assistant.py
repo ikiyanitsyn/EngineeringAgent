@@ -75,3 +75,46 @@ def test_missing_settings_are_explained(monkeypatch):
     monkeypatch.delenv("GH_TOKEN", raising=False)
     with pytest.raises(assistant.LLMError, match="models: read"):
         assistant.complete([{"role": "user", "content": "hi"}])
+
+
+class FakeOllama(BaseHTTPRequestHandler):
+    seen: list = []
+
+    def _send(self, obj):
+        out = json.dumps(obj).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.end_headers()
+        self.wfile.write(out)
+
+    def do_GET(self):
+        self._send({"models": [{"name": "llama3.2:3b"}, {"name": "qwen2.5-coder:7b"}]})
+
+    def do_POST(self):
+        body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+        FakeOllama.seen.append((self.path, body))
+        self._send({"message": {"role": "assistant", "content": QUESTION}})
+
+    def log_message(self, *a):
+        pass
+
+
+def test_local_ollama_is_used_without_any_settings(monkeypatch, tmp_path):
+    try:
+        srv = HTTPServer(("127.0.0.1", 11434), FakeOllama)
+    except OSError:
+        pytest.skip("port 11434 is in use (a real Ollama is running)")
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    for v in ("ENGAGENT_LLM_URL", "ENGAGENT_LLM_KEY", "ENGAGENT_LLM_MODEL"):
+        monkeypatch.delenv(v, raising=False)
+    monkeypatch.setenv("ENGAGENT_ROOT", str(tmp_path))
+    try:
+        s = assistant.settings()
+        assert s["model"] == "qwen2.5-coder:7b" and ":11434" in s["url"]   # preferred over llama3.2:3b
+        out = assistant.ask("analyse my bracket")
+        assert out["kind"] == "question"
+        path, body = FakeOllama.seen[-1]
+        assert path == "/api/chat" and body["options"]["num_ctx"] >= 8192 and body["stream"] is False
+    finally:
+        srv.shutdown()
+        srv.server_close()
