@@ -125,8 +125,8 @@ def needs_model() -> bool:
 
 def main() -> int:
     issue, latest, convo = _inputs()
-    comment_id = None
-    if issue:
+    comment_id = int(os.environ["ENGAGENT_ACK_ID"]) if os.environ.get("ENGAGENT_ACK_ID", "").isdigit() else None
+    if issue and not comment_id:
         c = gh("POST", f"/repos/{REPO}/issues/{issue['number']}/comments",
                {"body": f"{MARK}\n⏳ Working on it - common requests take 1 to 3 minutes; up to 15 if the free built-in AI model is needed. [Live log]({RUN_URL})"})
         comment_id = c["id"]
