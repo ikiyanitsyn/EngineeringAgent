@@ -61,6 +61,14 @@ TEMPLATES (dimensions in mm; defaults shown)
       outer_diameter=10 hole=4.3 height=20 base_diameter=0 base_height=0
   curved_laminate: Curved laminate section (bend of a formed part): arc about the Y axis from the +X direction through arc_deg, with optional straight flanges
       inner_radius=6 thickness=2.24 arc_deg=90 width=20 flange=0
+  lid: Lid for the enclosure template: plate with a locating lip that fits inside the walls, and screw holes over the bosses
+      length=100 width=70 thickness=2.4 wall=2.4 corner_radius=4 lip_height=3 clearance=0.25 boss_diameter=7 screw_hole=3.4
+  pipe_clamp: Pipe / tube clamp (saddle) for a pipe of diameter pipe_d with two screw lugs; pipe axis along Y, mounting face on z = 0
+      pipe_d=25 thickness=4 width=15 lug_length=12 hole=4.5 squeeze=0.5
+  wall_hook: Wall hook: back plate with two screw holes (on z = 0, the wall) and a hook arm
+      plate_height=60 width=20 thickness=5 arm_length=35 lip_height=12 hole=4.5 countersink=8.5
+  phone_stand: Phone / tablet stand: base, reclined back rest and a front lip; device width along Y
+      width=80 base_depth=90 back_height=100 angle_deg=65 thickness=4 lip_height=12 slot_width=12
 
 MATERIALS (-m or --print)
   steel: steel_generic, steel_s235, steel_s355, steel_a36, steel_1045, steel_4140_qt

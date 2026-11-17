@@ -179,6 +179,89 @@ def curved_laminate(inner_radius, thickness, arc_deg, width, flange):
     return p
 
 
+@template("lid", "Lid for the enclosure template: plate with a locating lip that fits inside the walls, "
+          "and screw holes over the bosses",
+          length=100.0, width=70.0, thickness=2.4, wall=2.4, corner_radius=4.0, lip_height=3.0,
+          clearance=0.25, boss_diameter=7.0, screw_hole=3.4)
+def lid(length, width, thickness, wall, corner_radius, lip_height, clearance, boss_diameter, screw_hole):
+    from build123d import Align, Axis, Box, Cylinder, Pos, fillet
+    a = (Align.MIN, Align.MIN, Align.MIN)
+    top = Box(length, width, thickness, align=a)
+    if corner_radius > 0:
+        top = fillet(top.edges().filter_by(Axis.Z), corner_radius)
+    li, wi = length - 2 * (wall + clearance), width - 2 * (wall + clearance)
+    ring = Pos(wall + clearance, wall + clearance, -lip_height) * Box(li, wi, lip_height, align=a)
+    hollow = Pos(wall + clearance + 1.6, wall + clearance + 1.6, -lip_height - 1) * \
+        Box(li - 3.2, wi - 3.2, lip_height + 1, align=a)
+    part = top + (ring - hollow)
+    off = wall + boss_diameter / 2
+    ca = (Align.CENTER, Align.CENTER, Align.MIN)
+    corner = off + boss_diameter / 2 + 1.0          # lip runs along the straight sides only
+    for x in (0.0, length - corner):
+        for y in (0.0, width - corner):
+            part -= Pos(x, y, -lip_height - 1) * Box(corner, corner, lip_height + 1, align=a)
+    for x in (off, length - off):
+        for y in (off, width - off):
+            part -= Pos(x, y, -lip_height - 1) * Cylinder(screw_hole / 2, thickness + lip_height + 2, align=ca)
+    return Pos(0, 0, lip_height) * part
+
+
+@template("pipe_clamp", "Pipe / tube clamp (saddle) for a pipe of diameter pipe_d with two screw lugs; "
+          "pipe axis along Y, mounting face on z = 0",
+          pipe_d=25.0, thickness=4.0, width=15.0, lug_length=12.0, hole=4.5, squeeze=0.5)
+def pipe_clamp(pipe_d, thickness, width, lug_length, hole, squeeze):
+    from build123d import Align, Box, Cylinder, Pos, Rot
+    r_in, r_out = pipe_d / 2, pipe_d / 2 + thickness
+    c = r_in - squeeze                                  # pipe centre height: clamps when screwed down
+    bc = (Align.CENTER, Align.CENTER, Align.MIN)
+    outer = Box(2 * r_out, width, c, align=bc) + Pos(0, 0, c) * Rot(90, 0, 0) * Cylinder(r_out, width)
+    inner = Box(2 * r_in, 2 * width, c, align=bc) + Pos(0, 0, c) * Rot(90, 0, 0) * Cylinder(r_in, 2 * width)
+    span = 2 * (r_out + lug_length)
+    part = outer + Box(span, width, thickness, align=bc) - inner
+    part -= Box(span + 2, 2 * width, r_out + 2, align=(Align.CENTER, Align.CENTER, Align.MAX))
+    for x in (-(r_out + lug_length / 2), r_out + lug_length / 2):
+        part -= Pos(x, 0, 0) * Cylinder(hole / 2, 4 * thickness)
+    return Pos(span / 2, width / 2, 0) * part
+
+
+@template("wall_hook", "Wall hook: back plate with two screw holes (on z = 0, the wall) and a hook arm",
+          plate_height=60.0, width=20.0, thickness=5.0, arm_length=35.0, lip_height=12.0, hole=4.5,
+          countersink=8.5)
+def wall_hook(plate_height, width, thickness, arm_length, lip_height, hole, countersink):
+    from build123d import Align, Box, Cone, Cylinder, Pos
+    a = (Align.MIN, Align.MIN, Align.MIN)
+    plate = Box(width, plate_height, thickness, align=a)
+    arm = Pos(0, 0, thickness) * Box(width, thickness, arm_length, align=a)
+    lip = Pos(0, 0, thickness + arm_length - thickness) * Box(width, lip_height + thickness, thickness, align=a)
+    part = plate + arm + lip
+    for y in (plate_height * 0.45, plate_height * 0.85):
+        part -= Pos(width / 2, y, -1) * Cylinder(hole / 2, thickness + 2, align=(Align.CENTER, Align.CENTER, Align.MIN))
+        if countersink > hole:
+            part -= Pos(width / 2, y, thickness - (countersink - hole) / 2) * \
+                Cone(hole / 2, countersink / 2, (countersink - hole) / 2 + 0.01, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    return part
+
+
+@template("phone_stand", "Phone / tablet stand: base, reclined back rest and a front lip; device width along Y",
+          width=80.0, base_depth=90.0, back_height=100.0, angle_deg=65.0, thickness=4.0, lip_height=12.0,
+          slot_width=12.0)
+def phone_stand(width, base_depth, back_height, angle_deg, thickness, lip_height, slot_width):
+    import math
+    from build123d import Align, Box, Plane, Polygon, Pos, extrude
+    t = thickness
+    a = math.radians(angle_deg)
+    x0 = base_depth * 0.35
+    bx, bz = x0 + back_height * math.cos(a), back_height * math.sin(a)
+    nx, nz = -math.sin(a) * t, math.cos(a) * t          # thickness normal of the back rest
+    side = Polygon((0, 0), (base_depth, 0), (base_depth, t), (x0 + t, t), (bx + t, bz),
+                   (bx + t + nx, bz + nz), (x0 - nx * 0 + nx, t + nz), (t, t), (t, lip_height),
+                   (0, lip_height), align=None)
+    body = extrude(Plane.XZ * side, -width)
+    if slot_width > 0:                                   # cable slot through the front lip and base
+        body -= Pos(-1, (width - slot_width) / 2, -1) * Box(x0, slot_width, lip_height + 2, align=(Align.MIN, Align.MIN, Align.MIN))
+    return body
+
+
 def build(name: str, params: dict | None = None, system: str | None = None):
     """Build a template with overrides given in the active unit system."""
     if name not in TEMPLATES:
