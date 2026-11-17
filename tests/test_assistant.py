@@ -53,7 +53,7 @@ def test_question_is_returned_not_guessed(llm):
 
 def test_dry_run_returns_request(llm):
     llm.replies = [GOOD]
-    out = assistant.ask("a plate", run=False)
+    out = assistant.ask("aluminium 6061 plate 80 mm, fixed at one end, 10 N down at the other", run=False)
     assert out["kind"] == "request" and parse(out["request"])["commands"][0].startswith("make plate")
 
 
