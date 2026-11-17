@@ -82,10 +82,13 @@ def settings() -> dict:
     return {"url": url, "key": key, "model": model}
 
 
-def _post_ollama(base: str, model: str, messages: list[dict], timeout: float) -> str:
-    """Ollama's native API: lets us raise the context window (its default is too small for the prompt)."""
-    body = json.dumps({"model": model, "messages": messages, "stream": False,
-                       "options": {"num_ctx": 8192, "temperature": 0.1}}).encode()
+def _post_ollama(base: str, model: str, messages: list[dict], timeout: float, fmt: dict | None = None) -> str:
+    """Ollama's native API: lets us raise the context window and constrain the reply to a JSON schema."""
+    payload = {"model": model, "messages": messages, "stream": False,
+               "options": {"num_ctx": 8192, "temperature": 0.1}}
+    if fmt:
+        payload["format"] = fmt
+    body = json.dumps(payload).encode()
     req = urllib.request.Request(base + "/api/chat", data=body, method="POST",
                                  headers={"Content-Type": "application/json"})
     with urllib.request.urlopen(req, timeout=max(timeout, 900)) as r:
@@ -225,6 +228,40 @@ def _has_analysis(reply: str) -> bool:
         any('"analysis"' in j or '"loads"' in j for j in req["json"])
 
 
+def _ask_structured(conversation: list[dict], say, run: bool) -> dict:
+    """Small local model: fill a JSON form (schema-constrained); the code writes the request."""
+    from . import structured
+    from .guard import check_request, question
+    s = settings()
+    base = re.match(r"^(https?://[^/]+:11434)", s["url"]).group(1)
+    user_text = "\n".join(m["content"] for m in conversation if m.get("role") == "user")
+    say("thinking", 0)
+    raw = _post_ollama(base, s["model"], [{"role": "system", "content": structured.prompt()}] + conversation,
+                       180, fmt=structured.schema())
+    form = structured.parse_form(raw)
+    out: dict = {"attempts": 1, "form": form, "plan": ""}
+    bad = structured.magnitudes_from_user(form, user_text) if form.get("action") == "analyze" else []
+    if bad:
+        out.update(kind="question", reply=question(bad))
+        return out
+    req, q = structured.build_request(form, user_text)
+    if q:
+        out.update(kind="question", reply=q)
+        return out
+    invented = check_request(req, user_text)
+    if invented:
+        out.update(kind="question", reply=question(invented), request=req)
+        return out
+    out.update(request="```bash\n" + req + "\n```", reply=req)
+    if not run:
+        out["kind"] = "request"
+        return out
+    say("running", 0)
+    res = run_request(out["request"])
+    out.update(result=res, kind="results" if not res["errors"] else "error")
+    return out
+
+
 def ask(conversation: list[dict] | str, *, max_fixes: int = 2, run: bool = True, model: str | None = None,
         on_event=None) -> dict:
     """Turn a conversation (or one message) into results.
@@ -236,6 +273,8 @@ def ask(conversation: list[dict] | str, *, max_fixes: int = 2, run: bool = True,
     if isinstance(conversation, str):
         conversation = [{"role": "user", "content": conversation}]
     local = ":11434" in settings()["url"]           # small CPU model: shorter instructions, faster
+    if local and os.environ.get("ENGAGENT_FREEFORM") != "1":
+        return _ask_structured(conversation, say, run)
     messages = [{"role": "system", "content": chatbot_prompt(compact=local)}] + conversation
     out: dict = {"attempts": 0}
     for attempt in range(max_fixes + 1):

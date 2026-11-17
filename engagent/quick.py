@@ -443,6 +443,12 @@ def analyze(source: str, *, name: str | None = None, folder: str | Path | None =
         system = U.normalize_system(keep.get("units", system))
     job = build_analysis_job(source, system=system, **{k: v for k, v in kw.items() if k != "system"})
     job.update(keep)
+    geo = job.get("geometry") or {}
+    if not job.get("hand_calcs") and geo.get("template") == "beam":     # part made earlier with `make beam`
+        auto = _auto_beam_check("beam", geo.get("params") or {}, job["material"], job["constraints"],
+                                job["loads"], job["analysis"], system)
+        if auto:
+            job["hand_calcs"] = [link_check(auto, job, system)]
     src = Path(source)
     if src.suffix and not src.exists():
         raise FileNotFoundError(f"{source} not found")

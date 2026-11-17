@@ -154,3 +154,47 @@ def test_needless_question_is_pushed_back_once(llm):
                         "from the free end. How much does it bend?")
     assert out["kind"] == "results" and out["attempts"] == 2
     assert "steel_generic" in llm.seen[1]["messages"][-1]["content"]
+
+
+class FormOllama(FakeOllama):
+    form: dict = {}
+
+    def do_POST(self):
+        body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+        FakeOllama.seen.append((self.path, body))
+        self._send({"message": {"role": "assistant", "content": json.dumps(FormOllama.form)}})
+
+
+def _form_server(monkeypatch, tmp_path):
+    try:
+        srv = HTTPServer(("127.0.0.1", 11434), FormOllama)
+    except OSError:
+        pytest.skip("port 11434 is in use")
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    for v in ("ENGAGENT_LLM_URL", "ENGAGENT_LLM_KEY", "ENGAGENT_LLM_MODEL"):
+        monkeypatch.delenv(v, raising=False)
+    monkeypatch.setenv("ENGAGENT_ROOT", str(tmp_path))
+    return srv
+
+
+@pytest.mark.solver
+def test_local_model_fills_a_form_and_the_code_writes_the_request(monkeypatch, tmp_path):
+    srv = _form_server(monkeypatch, tmp_path)
+    try:
+        FormOllama.form = {"action": "analyze", "template": "beam", "params": {"length": 200, "width": 10, "height": 20},
+                           "material_words": "mild steel", "fixed_faces": ["xmin"],
+                           "loads": [{"face": "xmax", "kind": "force", "direction": "-z", "magnitude": 50, "unit": "kg"}]}
+        out = assistant.ask("Mild steel bar 200 x 10 x 20 mm bolted to a wall at one end; a 50 kg weight hangs from "
+                            "the free end. How much does it bend?")
+        assert out["kind"] == "results", out
+        assert "--force xmax 0,0,-490.332" in out["request"] and "-m steel_generic" in out["request"]
+        fea = out["result"]["jobs"][1]
+        assert any("Hand calc" in l and "PASS" in l for l in fea["summary"])    # automatic beam check
+        assert FakeOllama.seen[-1][1]["format"]["properties"]["action"]["enum"] == ["make", "analyze", "question"]
+        # an invented magnitude is refused before anything runs
+        FormOllama.form["loads"][0].update(magnitude=500, unit="N")
+        out = assistant.ask("Mild steel bar 200 x 10 x 20 mm bolted to a wall at one end. How much does it bend?")
+        assert out["kind"] == "question" and "500" in out["reply"]
+    finally:
+        srv.shutdown()
+        srv.server_close()
