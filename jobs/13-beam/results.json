@@ -1,0 +1,398 @@
+{
+ "engagent_version": "0.1.0",
+ "name": "13-beam",
+ "title": "thermal steady analysis of part",
+ "description": "",
+ "analysis": "thermal_steady",
+ "units": "metric",
+ "standard": "iso",
+ "status": "ok",
+ "verdict": "PASS",
+ "solver": {
+  "version": "2.21",
+  "seconds": 0.11,
+  "errors": [],
+  "warnings": [],
+  "command": "ccx -i job",
+  "tail": ""
+ },
+ "mesh": {
+  "nodes": 2025,
+  "elements": 948,
+  "element_type": "C3D10",
+  "size_mm": 4.039801975344831,
+  "parts": [
+   "part"
+  ],
+  "bbox_min": [
+   0.0,
+   -5.0,
+   -5.0
+  ],
+  "bbox_max": [
+   100.0,
+   5.0,
+   5.0
+  ],
+  "volume_mm3": 10000.0,
+  "quality_min": 0.5888159268608282,
+  "quality_mean": 0.8229759721039347,
+  "quality_below_0p1": 0
+ },
+ "parts": [
+  {
+   "name": "part",
+   "geometry": "part.step",
+   "material": {
+    "key": "steel_generic",
+    "name": "Structural steel (generic)",
+    "family": "steel",
+    "orthotropic": false,
+    "properties": {
+     "E": "210 GPa",
+     "nu": "0.3",
+     "density": "7850 kg/m^3",
+     "cte": "12 um/m/K",
+     "k": "50 W/m/K",
+     "cp": "480 J/kg/K",
+     "yield": "250 MPa",
+     "uts": "400 MPa",
+     "elongation": "0.2",
+     "endurance": "200 MPa"
+    },
+    "meta": {
+     "spec": "generic, guide default"
+    }
+   },
+   "orientation": null
+  }
+ ],
+ "sets": {
+  "xmin": {
+   "area": 100.00000000000001,
+   "faces": [
+    5
+   ],
+   "nodes": 65,
+   "centroid": [
+    0.0,
+    -7.105427357601001e-17,
+    -3.5527136788005004e-17
+   ]
+  },
+  "xmax": {
+   "area": 100.00000000000001,
+   "faces": [
+    6
+   ],
+   "nodes": 65,
+   "centroid": [
+    99.99999999999999,
+    -7.105427357601001e-17,
+    -3.5527136788005004e-17
+   ]
+  }
+ },
+ "constraints": [
+  "Temperature on 'xmin': 100 degC"
+ ],
+ "loads": [
+  "Convection h=25 W/m^2/K on 'xmax', ambient 20 degC"
+ ],
+ "interactions": [],
+ "notes": [],
+ "initial_temperature": 20.0,
+ "metrics": {
+  "max_temperature": {
+   "value": 100.0,
+   "kind": "temperature",
+   "label": "Maximum temperature",
+   "location": [
+    0.0,
+    -5.0,
+    -5.0
+   ]
+  },
+  "min_temperature": {
+   "value": 96.1905,
+   "kind": "temperature",
+   "label": "Minimum temperature",
+   "location": [
+    100.0,
+    -5.0,
+    -5.0
+   ]
+  },
+  "max_heat_flux": {
+   "value": 1.90474,
+   "kind": "heat_flux",
+   "label": "Maximum heat flux",
+   "location": [
+    0.0,
+    -5.0,
+    -5.0
+   ]
+  },
+  "heat_flow.xmin": {
+   "value": 190.4762,
+   "kind": "power",
+   "label": "Heat flow into the model at 'xmin'"
+  },
+  "probe.xmax.temperature": {
+   "value": 96.1905,
+   "kind": "temperature",
+   "label": "Temperature at probe 'xmax'",
+   "location": [
+    100.0,
+    2.842170943040401e-15,
+    -0.0004262540359534661
+   ]
+  }
+ },
+ "hand_calcs": [
+  {
+   "name": "Hand check: Slab with fixed temperature on one face, convection on the other",
+   "calc": "thermal.wall_conduction_convection",
+   "output": "T_surface",
+   "formulas": [
+    "q'' = (T_fixed - T_inf) / (L/k + 1/h)",
+    "T_surface = T_inf + q'' / h",
+    "Bi = h L / k"
+   ],
+   "reference": "Incropera, Fundamentals of Heat and Mass Transfer, 7th ed., Sec. 3.1.3 (thermal circuit)",
+   "inputs": {
+    "k": "50 W/m/K",
+    "L": "100 mm",
+    "h": "25 W/m^2/K",
+    "T_fixed": "100 degC",
+    "T_ambient": "20 degC"
+   },
+   "notes": [],
+   "all_outputs": {
+    "T_surface": "96.19 degC",
+    "heat_flux": "1905 W/m^2",
+    "biot": "0.05"
+   },
+   "expected": 96.19047619047618,
+   "kind": "temperature",
+   "metric": "probe.xmax.temperature",
+   "fea": 96.1905,
+   "diff": 2.976190478065632e-07,
+   "tol": 0.02,
+   "status": "PASS"
+  },
+  {
+   "name": "Hand check: Slab with fixed temperature on one face, convection on the other (heat flow)",
+   "calc": "thermal.wall_conduction_convection",
+   "output": "heat_flow",
+   "formulas": [
+    "q'' = (T_fixed - T_inf) / (L/k + 1/h)",
+    "T_surface = T_inf + q'' / h",
+    "Bi = h L / k"
+   ],
+   "reference": "Incropera, Fundamentals of Heat and Mass Transfer, 7th ed., Sec. 3.1.3 (thermal circuit)",
+   "inputs": {
+    "k": "50 W/m/K",
+    "L": "100 mm",
+    "h": "25 W/m^2/K",
+    "T_fixed": "100 degC",
+    "T_ambient": "20 degC",
+    "A": "100 mm^2"
+   },
+   "notes": [],
+   "all_outputs": {
+    "T_surface": "96.19 degC",
+    "heat_flux": "1905 W/m^2",
+    "biot": "0.05",
+    "heat_flow": "0.1905 W"
+   },
+   "expected": 190.47619047619045,
+   "kind": "power",
+   "metric": "heat_flow.xmin",
+   "fea": 190.4762,
+   "diff": 5.000000015087381e-08,
+   "tol": 0.05,
+   "status": "PASS"
+  }
+ ],
+ "checks": [
+  {
+   "id": "solver",
+   "name": "Solver finished without errors",
+   "status": "PASS",
+   "detail": "CalculiX 2.21, 0.1 s, no warnings"
+  },
+  {
+   "id": "units",
+   "name": "Unit set and material values",
+   "status": "PASS",
+   "detail": "deck written in mm, tonne, s, N, MPa, mJ, mW, degC; inputs read as metric"
+  },
+  {
+   "id": "mesh",
+   "name": "Mesh quality",
+   "status": "PASS",
+   "detail": "2,025 nodes, 948 C3D10, size 4.04 mm, min quality (SICN) 0.59"
+  },
+  {
+   "id": "heat_balance",
+   "name": "Heat flows balance",
+   "status": "PASS",
+   "detail": "the solver does not total convection/radiation, but the heat flow through the boundary matches the hand calculation (see below)"
+  },
+  {
+   "id": "hand_calc",
+   "name": "Agreement with hand calculation",
+   "status": "PASS",
+   "detail": "Hand check: Slab with fixed temperature on one face, convection on the other: 0.00 % (tol 2 %); Hand check: Slab with fixed temperature on one face, convection on the other (heat flow): 0.00 % (tol 5 %)"
+  },
+  {
+   "id": "convergence",
+   "name": "Mesh convergence (size x0.5, change < 5 %)",
+   "status": "PASS",
+   "detail": "max_temperature: 0.00 %; min_temperature: 0.00 %; max_heat_flux: 0.00 %; heat_flow.xmin: 0.00 %; probe.xmax.temperature: 0.00 %"
+  },
+  {
+   "id": "sanity",
+   "name": "Temperatures within boundary values",
+   "status": "PASS",
+   "detail": "96.19 degC to 100 degC (boundaries 20 degC to 100 degC)"
+  }
+ ],
+ "convergence": {
+  "ratio": 0.5,
+  "tol": 0.05,
+  "rows": [
+   {
+    "metric": "max_temperature",
+    "coarse": 100.0,
+    "fine": 100.0,
+    "kind": "temperature",
+    "change": 0.0,
+    "required": true
+   },
+   {
+    "metric": "min_temperature",
+    "coarse": 96.1905,
+    "fine": 96.1905,
+    "kind": "temperature",
+    "change": 0.0,
+    "required": true
+   },
+   {
+    "metric": "max_heat_flux",
+    "coarse": 1.90474,
+    "fine": 1.90474,
+    "kind": "heat_flux",
+    "change": 0.0,
+    "required": true
+   },
+   {
+    "metric": "heat_flow.xmin",
+    "coarse": 190.4762,
+    "fine": 190.4762,
+    "kind": "power",
+    "change": 0.0,
+    "required": true
+   },
+   {
+    "metric": "probe.xmax.temperature",
+    "coarse": 96.1905,
+    "fine": 96.19050000000001,
+    "kind": "temperature",
+    "change": 3.730372677569761e-15,
+    "required": true
+   }
+  ],
+  "coarse": {
+   "size": 4.039801975344831,
+   "nodes": 2025,
+   "elements": 948
+  },
+  "fine": {
+   "size": 2.0199009876724157,
+   "nodes": 11270,
+   "elements": 6487
+  }
+ },
+ "fatigue": null,
+ "history": null,
+ "frequencies": [],
+ "buckling_factors": [],
+ "exclusion": {
+  "distance": 8.079603950689663,
+  "sets": []
+ },
+ "criteria": {},
+ "gdt": null,
+ "runtime_s": 1.8,
+ "job": {
+  "name": "13-beam",
+  "units": "metric",
+  "analysis": "thermal_steady",
+  "title": "thermal steady analysis of part",
+  "geometry": {
+   "template": "beam",
+   "params": {
+    "length": 100
+   }
+  },
+  "material": "steel_generic",
+  "sets": {
+   "xmin": "xmin",
+   "xmax": "xmax"
+  },
+  "constraints": [
+   {
+    "type": "temperature",
+    "on": "xmin",
+    "value": 100.0
+   }
+  ],
+  "loads": [
+   {
+    "type": "convection",
+    "on": "xmax",
+    "h": 25.0,
+    "ambient": 20.0
+   }
+  ],
+  "probes": {
+   "xmax": {
+    "set": "xmax"
+   }
+  },
+  "hand_calcs": [
+   {
+    "name": "Hand check: Slab with fixed temperature on one face, convection on the other",
+    "calc": "thermal.wall_conduction_convection",
+    "inputs": {
+     "k": "50 W/m/K",
+     "L": "100 mm",
+     "h": "25 W/m^2/K",
+     "T_fixed": "100 degC",
+     "T_ambient": "20 degC"
+    },
+    "span": "80",
+    "output": "T_surface",
+    "tol": 0.02,
+    "metric": "probe.xmax.temperature"
+   },
+   {
+    "name": "Hand check: Slab with fixed temperature on one face, convection on the other (heat flow)",
+    "calc": "thermal.wall_conduction_convection",
+    "inputs": {
+     "k": "50 W/m/K",
+     "L": "100 mm",
+     "h": "25 W/m^2/K",
+     "T_fixed": "100 degC",
+     "T_ambient": "20 degC",
+     "A": "100 mm^2"
+    },
+    "output": "heat_flow",
+    "tol": 0.05,
+    "metric": "heat_flow.xmin"
+   }
+  ]
+ }
+}

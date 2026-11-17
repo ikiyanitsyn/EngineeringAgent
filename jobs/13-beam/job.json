@@ -1,0 +1,69 @@
+{
+ "name": "13-beam",
+ "units": "metric",
+ "analysis": "thermal_steady",
+ "title": "thermal steady analysis of part",
+ "geometry": {
+  "template": "beam",
+  "params": {
+   "length": 100
+  }
+ },
+ "material": "steel_generic",
+ "sets": {
+  "xmin": "xmin",
+  "xmax": "xmax"
+ },
+ "constraints": [
+  {
+   "type": "temperature",
+   "on": "xmin",
+   "value": 100.0
+  }
+ ],
+ "loads": [
+  {
+   "type": "convection",
+   "on": "xmax",
+   "h": 25.0,
+   "ambient": 20.0
+  }
+ ],
+ "probes": {
+  "xmax": {
+   "set": "xmax"
+  }
+ },
+ "hand_calcs": [
+  {
+   "name": "Hand check: Slab with fixed temperature on one face, convection on the other",
+   "calc": "thermal.wall_conduction_convection",
+   "inputs": {
+    "k": "50 W/m/K",
+    "L": "100 mm",
+    "h": "25 W/m^2/K",
+    "T_fixed": "100 degC",
+    "T_ambient": "20 degC"
+   },
+   "span": "80",
+   "output": "T_surface",
+   "tol": 0.02,
+   "metric": "probe.xmax.temperature"
+  },
+  {
+   "name": "Hand check: Slab with fixed temperature on one face, convection on the other (heat flow)",
+   "calc": "thermal.wall_conduction_convection",
+   "inputs": {
+    "k": "50 W/m/K",
+    "L": "100 mm",
+    "h": "25 W/m^2/K",
+    "T_fixed": "100 degC",
+    "T_ambient": "20 degC",
+    "A": "100 mm^2"
+   },
+   "output": "heat_flow",
+   "tol": 0.05,
+   "metric": "heat_flow.xmin"
+  }
+ ]
+}

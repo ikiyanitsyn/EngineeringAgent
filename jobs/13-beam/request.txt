@@ -1,0 +1,4 @@
+```bash
+ea make beam length=100 --name "beam"
+ea analyze last -m steel_generic -a thermal --temp xmin 100 --convect xmax 25 20
+```
