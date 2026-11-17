@@ -198,3 +198,51 @@ def test_local_model_fills_a_form_and_the_code_writes_the_request(monkeypatch, t
     finally:
         srv.shutdown()
         srv.server_close()
+
+
+def test_form_builds_thermal_and_thermal_stress_requests():
+    from engagent import structured
+    text = "Steel bar 100 mm long, one end held at 100 C, the other end in air at 20 C with h = 25. How hot is the middle?"
+    form = {"action": "analyze", "template": "beam", "params": {"length": 100}, "analysis": "thermal",
+            "material_words": "steel", "temperatures": [{"face": "xmin", "value": 100, "unit": "C"}],
+            "convection": [{"face": "xmax", "h": 25, "ambient": 20, "unit": "C"}]}
+    assert structured.magnitudes_from_user(form, text) == []
+    req, q = structured.build_request(form, text)
+    assert q is None and "-a thermal --temp xmin 100 --convect xmax 25 20" in req and "-m steel_generic" in req
+    # Fahrenheit converted; an invented h refused
+    textf = "aluminium plate, bottom at 212 F, top cooled by air at 68 F with h = 10"
+    form = {"action": "analyze", "template": "plate", "analysis": "thermal", "material_words": "aluminium",
+            "temperatures": [{"face": "zmin", "value": 212, "unit": "F"}],
+            "convection": [{"face": "zmax", "h": 10, "ambient": 68, "unit": "F"}]}
+    req, q = structured.build_request(form, textf)
+    assert "--temp zmin 100 " in req and "--convect zmax 10 20" in req
+    form["convection"][0]["h"] = 50
+    assert any("50" in b for b in structured.magnitudes_from_user(form, textf))
+    # nothing says how heat leaves -> a question, not a guess
+    form.pop("convection")
+    form["temperatures"] = []
+    form["heat"] = [{"face": "zmin", "watts": 5}]
+    req, q = structured.build_request(form, "aluminium plate with 5 W into the bottom")
+    assert req is None and "heat leaves" in q
+    # thermal stress
+    texts = "PEEK plate clamped on both ends, cooled from 200 C to 20 C. Stress?"
+    form = {"action": "analyze", "template": "plate", "analysis": "thermal_stress", "material_words": "peek",
+            "fixed_faces": ["xmin", "xmax"], "temperature_change": {"start": 200, "end": 20, "unit": "C"}}
+    req, q = structured.build_request(form, texts)
+    assert q is None and "-a thermal_stress --fix xmin --fix xmax --t0 200 --dT 20" in req
+
+
+@pytest.mark.solver
+def test_local_model_thermal_end_to_end(monkeypatch, tmp_path):
+    srv = _form_server(monkeypatch, tmp_path)
+    try:
+        FormOllama.form = {"action": "analyze", "template": "beam", "analysis": "thermal", "material_words": "steel",
+                           "temperatures": [{"face": "xmin", "value": 100, "unit": "C"}],
+                           "convection": [{"face": "xmax", "h": 25, "ambient": 20, "unit": "C"}]}
+        out = assistant.ask("Steel bar, one end held at 100 C, the other end cooled by air at 20 C with h = 25. "
+                            "How hot does the cooled end get?")
+        assert out["kind"] == "results", out
+        fea = out["result"]["jobs"][1]
+        assert fea["verdict"] in ("PASS", "REVIEW"), fea
+    finally:
+        srv.shutdown()

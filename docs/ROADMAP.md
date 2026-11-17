@@ -44,7 +44,9 @@ Run everything: `.venv/bin/python -m pytest -q` then `.venv/bin/python -m pytest
    loads on the end face, builds the `ea` commands and checks every magnitude. Live result (issue #4):
    "mild steel bar 200 x 10 x 20, bolted to a wall at one end, 50 kg hanging from the free end" ->
    SF 1.79, 0.94 mm, hand check 0.5 %, PASS, ~5 minutes, no key. Covers templates with supports and
-   forces/pressures; custom shapes, thermal and assemblies need a hosted model or a pasted request.
+   forces/pressures, steady heat flow (--temp/--convect/--heat, deg F converted) and thermal stress
+   (--t0/--dT); every temperature, h and wattage is checked against the user's words. Custom shapes
+   and assemblies need a hosted model or a pasted request.
 3. **Watch the open model on harder requests.** Custom shapes (Python blocks) and multi-step
    analyses are where a 7B model is most likely to stumble; the error-feedback loop helps.
    If quality is poor, try `vars.ENGAGENT_LOCAL_MODEL = qwen2.5-coder:14b` (slower) or a key.

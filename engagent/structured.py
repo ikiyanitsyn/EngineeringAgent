@@ -53,7 +53,18 @@ def schema() -> dict:
         "material_words": {"type": "string"},
         "fixed_faces": {"type": "array", "items": {"enum": FACES}},
         "loads": {"type": "array", "items": load},
-        "analysis": {"enum": ["static", "modal", "buckling"]}},
+        "temperatures": {"type": "array", "items": {"type": "object", "properties": {
+            "face": {"enum": FACES}, "value": {"type": "number"}, "unit": {"enum": ["C", "F"]}},
+            "required": ["face", "value", "unit"]}},
+        "convection": {"type": "array", "items": {"type": "object", "properties": {
+            "face": {"enum": FACES}, "h": {"type": "number"}, "ambient": {"type": "number"},
+            "unit": {"enum": ["C", "F"]}}, "required": ["face", "h", "ambient", "unit"]}},
+        "heat": {"type": "array", "items": {"type": "object", "properties": {
+            "face": {"enum": FACES}, "watts": {"type": "number"}}, "required": ["face", "watts"]}},
+        "temperature_change": {"type": "object", "properties": {
+            "start": {"type": "number"}, "end": {"type": "number"}, "unit": {"enum": ["C", "F"]}},
+            "required": ["start", "end", "unit"]},
+        "analysis": {"enum": ["static", "modal", "buckling", "thermal", "thermal_stress"]}},
         "required": ["action"]}
 
 
@@ -75,6 +86,11 @@ def prompt() -> str:
         "- 'params': only dimensions the user gave, in mm (convert inches x 25.4). Leave others out.\n"
         "- 'fixed_faces': the faces that are bolted/clamped/held. 'loads.face': where the load acts.\n"
         "- For 3D printing set 'print_material' (pla, petg, abs, asa, pa12_sls, pc); default petg.\n"
+        "- Heat questions (how hot, temperature, cooling): analysis 'thermal'; 'temperatures' = faces held at a "
+        "temperature, 'convection' = faces cooled by air/fluid (h in W/m2K and ambient temperature), 'heat' = "
+        "watts put into a face. No 'loads' or 'fixed_faces' needed.\n"
+        "- Thermal stress/expansion from heating or cooling the whole part: analysis 'thermal_stress', "
+        "'temperature_change' start/end, plus 'fixed_faces'.\n"
         "TEMPLATES\n" + "\n".join(rows) + "\n"
         "EXAMPLE (values are only an example): 'aluminium plate 100 x 60 x 4, clamped along one short edge, "
         "2 kg pushing down on the top' -> {\"action\": \"analyze\", \"template\": \"plate\", \"params\": "
@@ -107,6 +123,11 @@ def build_request(form: dict, user_text: str) -> tuple[str | None, str | None]:
     if not mat:
         missing.append("the material")
     fixed = [f for f in form.get("fixed_faces") or [] if f in FACES]
+    analysis = form.get("analysis")
+    if analysis == "thermal":
+        return _thermal_request(form, tmpl, pstr, name, mat, missing)
+    if analysis == "thermal_stress":
+        return _thermal_stress_request(form, tmpl, pstr, name, mat, missing, fixed)
     if not fixed:
         missing.append("where the part is held (bolted, clamped)")
     loads = [l for l in form.get("loads") or [] if isinstance(l, dict)]
@@ -140,10 +161,48 @@ def build_request(form: dict, user_text: str) -> tuple[str | None, str | None]:
             parts[-1] += f" --force {l['face']} " + ",".join(f"{v:g}" for v in vec)
         else:
             return None, f"Is the load of {mag:g} {unit} a force or a pressure? Please state it with its unit."
-    analysis = form.get("analysis")
     if analysis in ("modal", "buckling"):
         parts[-1] += f" -a {analysis}"
     return "\n".join(parts), None
+
+
+def _degc(v, unit) -> float:
+    return (float(v) - 32) * 5 / 9 if unit == "F" else float(v)
+
+
+def _ask_missing(missing):
+    return None, ("To run the analysis I still need: " + "; ".join(missing)
+                  + ". Please reply with those - I will not guess them.")
+
+
+def _thermal_request(form, tmpl, pstr, name, mat, missing):
+    temps = [t for t in form.get("temperatures") or [] if isinstance(t, dict) and t.get("face") in FACES]
+    conv = [c for c in form.get("convection") or [] if isinstance(c, dict) and c.get("face") in FACES]
+    heat = [h for h in form.get("heat") or [] if isinstance(h, dict) and h.get("face") in FACES]
+    if not temps and not heat:
+        missing.append("what heats the part (a face held at a temperature, or the watts put in)")
+    if not temps and not conv:
+        missing.append("how the heat leaves (a face held at a temperature, or air cooling with h and the air temperature)")
+    if missing:
+        return _ask_missing(missing)
+    line = f"ea analyze last -m {mat} -a thermal"
+    line += "".join(f" --temp {t['face']} {_degc(t['value'], t.get('unit')):g}" for t in temps)
+    line += "".join(f" --convect {c['face']} {float(c['h']):g} {_degc(c['ambient'], c.get('unit')):g}" for c in conv)
+    line += "".join(f" --heat {h['face']} {float(h['watts']):g}" for h in heat)
+    return f'ea make {tmpl} {pstr} --name "{name}"'.replace("  ", " ") + "\n" + line, None
+
+
+def _thermal_stress_request(form, tmpl, pstr, name, mat, missing, fixed):
+    tc = form.get("temperature_change") if isinstance(form.get("temperature_change"), dict) else {}
+    if not fixed:
+        missing.append("where the part is held (bolted, clamped)")
+    if "start" not in tc or "end" not in tc:
+        missing.append("the starting and final temperature")
+    if missing:
+        return _ask_missing(missing)
+    line = (f"ea analyze last -m {mat} -a thermal_stress " + " ".join(f"--fix {f}" for f in dict.fromkeys(fixed))
+            + f" --t0 {_degc(tc['start'], tc.get('unit')):g} --dT {_degc(tc['end'], tc.get('unit')):g}")
+    return f'ea make {tmpl} {pstr} --name "{name}"'.replace("  ", " ") + "\n" + line, None
 
 
 def magnitudes_from_user(form: dict, user_text: str) -> list[str]:
@@ -159,6 +218,22 @@ def magnitudes_from_user(form: dict, user_text: str) -> list[str]:
             continue
         if m and not any(abs(m - u) <= 0.01 * m for u in nums):
             bad.append(f"the load ({m:g} {l.get('unit')} was not in your message)")
+    vals = [("temperature", t.get("value")) for t in form.get("temperatures") or [] if isinstance(t, dict)]
+    for c in form.get("convection") or []:
+        if isinstance(c, dict):
+            vals += [("convection coefficient h", c.get("h")), ("air temperature", c.get("ambient"))]
+    vals += [("heat input", h.get("watts")) for h in form.get("heat") or [] if isinstance(h, dict)]
+    tc = form.get("temperature_change")
+    if isinstance(tc, dict):
+        vals += [("starting temperature", tc.get("start")), ("final temperature", tc.get("end"))]
+    for label, v in vals:
+        try:
+            m = abs(float(v))
+        except (TypeError, ValueError):
+            bad.append(f"the {label}")
+            continue
+        if m and not any(abs(m - abs(u)) <= 0.01 * m for u in nums):
+            bad.append(f"the {label} ({m:g} was not in your message)")
     return bad
 
 

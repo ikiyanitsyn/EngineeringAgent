@@ -72,7 +72,8 @@ GitHub runs the CAD and FEA tools for you on its free servers and answers in the
 
   The free built-in model covers the ready-made part types (beam, plate, bracket, flange,
   enclosure and lid, standoff, pipe clamp, wall hook, phone stand) with supports and forces or
-  pressures. Custom shapes, thermal analyses and assemblies need a stronger model: add the
+  pressures, heat flow (a face held hot, air cooling, watts in) and thermal stress from a
+  temperature change. Custom shapes and assemblies need a stronger model: add the
   Gemini key below, use Claude Code, or paste a reply from any chatbot (route D).
 
   Optional upgrade, 3 minutes, free - faster and smarter answers with Google Gemini:
