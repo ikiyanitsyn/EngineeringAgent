@@ -65,9 +65,15 @@ GitHub runs the CAD and FEA tools for you on its free servers and answers in the
   no setup. With no key configured, GitHub runs a free open AI model (Qwen2.5-Coder 7B) on its
   own machine to turn your words into a request; nothing is sent to an AI company. It runs
   on GitHub's small free processors, so a reply takes about 5 to 15 minutes, and it is less
-  capable than large models on unusual requests. A safety check in the tool makes sure it
-  never runs an analysis with a material or load you did not give: if one is missing, it
-  asks you in a comment instead of guessing.
+  capable than large models. The small model only fills in a form (which part, which
+  dimensions, what material, which faces are held, which loads); the tool builds the job from
+  it and checks every material and load against your own words, so it never runs an analysis
+  on values you did not give - if one is missing, it asks you in a comment.
+
+  The free built-in model covers the ready-made part types (beam, plate, bracket, flange,
+  enclosure and lid, standoff, pipe clamp, wall hook, phone stand) with supports and forces or
+  pressures. Custom shapes, thermal analyses and assemblies need a stronger model: add the
+  Gemini key below, use Claude Code, or paste a reply from any chatbot (route D).
 
   Optional upgrade, 3 minutes, free - faster and smarter answers with Google Gemini:
   1. Get a free Gemini key at <https://aistudio.google.com/apikey>.
