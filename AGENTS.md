@@ -9,6 +9,12 @@ they apply to every AI agent, not only Claude. Read it first. Summary:
 Run everything through the launcher: `./ea ...` (bash) or `.\ea.cmd ...` (PowerShell).
 Add `--json` for machine-readable output.
 
+    ./ea make <template|geometry.py> k=v --print [material]      ONE LINE: part + STL/3MF + print check + report
+    ./ea analyze <part.step|template|last|jobs/NN> -m MAT --fix FACES --force FACES FX,FY,FZ --check "<calc>"
+                                              ONE LINE: FEA with hand check, report and viewer
+    ./ea request reply.txt                    run `ea` lines / ```json / ```python blocks (e.g. a chatbot reply)
+    ./ea ask "plain English"                  needs a model (ENGAGENT_LLM_URL/MODEL/KEY); writes and runs the request
+    ./ea prompt                               the request-writing instructions (docs/CHATBOT-PROMPT.md)
     ./ea doctor --full                        check the installation, run the benchmark
     ./ea units [metric|imperial]              show / switch the unit system for everything
     ./ea materials [key]                      material library
@@ -23,7 +29,9 @@ Add `--json` for machine-readable output.
 
 ## Rules
 
-1. Never invent loads, supports, materials or dimensions. Ask.
+0. Read docs/CHATBOT-PROMPT.md for the one-line syntax and face selectors; prefer `make` / `analyze`.
+1. Never invent loads, supports or materials. Ask once for what is missing. For pure CAD, pick
+   sensible defaults instead of asking and say what you chose.
 2. Check the unit system first (`./ea units`). Bare numbers follow it; strings may carry
    units ("0.25 in"). Never convert to solver units by hand.
 3. Hand-calculate before running FEA and link it in the job's `hand_calcs`.
