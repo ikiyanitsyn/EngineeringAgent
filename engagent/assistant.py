@@ -241,6 +241,13 @@ def ask(conversation: list[dict] | str, *, max_fixes: int = 2, run: bool = True,
         if not (req["commands"] or req["json"] or req["python"]):
             out["kind"] = "question"
             return out
+        user_text = "\n".join(m["content"] for m in conversation if m.get("role") == "user")
+        from .guard import check_request, question
+        invented = check_request(reply, user_text)
+        if invented:                                   # never run on inputs the user did not give
+            out.update(kind="question", reply=question(invented), plan="", invented=invented,
+                       request=reply)
+            return out
         out["request"] = reply
         if not run:
             out["kind"] = "request"
