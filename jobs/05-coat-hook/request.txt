@@ -1,0 +1,3 @@
+```bash
+ea make wall_hook arm_length=50 --print petg --name "coat hook"
+```

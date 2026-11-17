@@ -1,0 +1,16 @@
+{
+ "name": "05-coat-hook",
+ "units": "metric",
+ "title": "wall_hook (arm_length=50)",
+ "geometry": {
+  "template": "wall_hook",
+  "params": {
+   "arm_length": 50
+  }
+ },
+ "material": "petg",
+ "print": {
+  "process": "fdm",
+  "material": "petg"
+ }
+}

@@ -1,0 +1,60 @@
+{
+ "valid": true,
+ "solids": 1,
+ "faces": 14,
+ "edges": 34,
+ "volume": 11968.100683280461,
+ "area": 6355.1067052335875,
+ "bbox_min": [
+  0.0,
+  0.0,
+  0.0
+ ],
+ "bbox_max": [
+  20.0,
+  60.0,
+  55.0
+ ],
+ "bbox_size": [
+  20.0,
+  60.0,
+  55.0
+ ],
+ "center_of_mass": [
+  10.000000000000007,
+  16.43167381794073,
+  18.990809254886518
+ ],
+ "inertia_unit_density": [
+  [
+   8365861.309297655,
+   1.6298145055770874e-09,
+   3.259629011154175e-09
+  ],
+  [
+   1.6298145055770874e-09,
+   4988759.712679476,
+   2244582.4202551553
+  ],
+  [
+   3.259629011154175e-09,
+   2244582.4202551553,
+   4189364.4286505524
+  ]
+ ],
+ "face_types": {
+  "plane": 10,
+  "cylinder": 2,
+  "cone": 2
+ },
+ "cylinder_diameters": [
+  {
+   "diameter": 4.5,
+   "faces": 2
+  }
+ ],
+ "files": [
+  "/home/runner/work/EngineeringAgent/EngineeringAgent/jobs/05-coat-hook/part.step"
+ ],
+ "template": "wall_hook"
+}
