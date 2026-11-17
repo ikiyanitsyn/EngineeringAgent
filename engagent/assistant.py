@@ -254,6 +254,17 @@ def _has_analysis(reply: str) -> bool:
         any('"analysis"' in j or '"loads"' in j for j in req["json"])
 
 
+def _inputs_given(user_text: str) -> bool:
+    """True when the user's own words already hold an analysis's inputs (mechanical or thermal)."""
+    from .guard import analysis_intent, material_from_words, missing_for_analysis
+    if not analysis_intent(user_text) or not material_from_words(user_text):
+        return False
+    t = user_text.lower()
+    thermal = re.search(r"\d\s*(°|deg|degrees)?\s*[cf]\b", t) and re.search(
+        r"\b(hot|heat|temperature|cool|thermal|warm)", t)
+    return bool(thermal) or not missing_for_analysis(user_text)
+
+
 def _ask_structured(conversation: list[dict], say, run: bool) -> dict:
     """Small local model: fill a JSON form (schema-constrained); the code writes the request."""
     from . import structured
@@ -266,6 +277,21 @@ def _ask_structured(conversation: list[dict], say, run: bool) -> dict:
                        180, fmt=structured.schema())
     form = structured.parse_form(raw)
     out: dict = {"attempts": 1, "form": form, "plan": ""}
+    if form.get("action") not in ("make", "analyze") and _inputs_given(user_text):
+        # small models ask needless questions (e.g. for the very temperature the user wants to know).
+        # The user's words hold what is needed, so fill the form as an analysis; the code below
+        # still asks for anything that is really missing.
+        say("fixing", 0)
+        sch = structured.schema()
+        sch["properties"]["action"] = {"enum": ["analyze"]}
+        sch["required"] = ["action", "template"]
+        raw = _post_ollama(base, s["model"], [{"role": "system", "content": structured.prompt()}] + conversation
+                           + [{"role": "assistant", "content": raw},
+                              {"role": "user", "content": "Everything needed is in my message - do not ask. Fill "
+                               "the form as an analysis using only my numbers. The value I am asking about is the "
+                               "result, not an input."}], 180, fmt=sch)
+        form = structured.parse_form(raw)
+        out.update(attempts=2, form=form)
     bad = structured.magnitudes_from_user(form, user_text) if form.get("action") == "analyze" else []
     if bad:
         out.update(kind="question", reply=question(bad))

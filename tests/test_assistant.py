@@ -162,7 +162,8 @@ class FormOllama(FakeOllama):
     def do_POST(self):
         body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
         FakeOllama.seen.append((self.path, body))
-        self._send({"message": {"role": "assistant", "content": json.dumps(FormOllama.form)}})
+        form = FormOllama.form.pop(0) if isinstance(FormOllama.form, list) else FormOllama.form
+        self._send({"message": {"role": "assistant", "content": json.dumps(form)}})
 
 
 def _form_server(monkeypatch, tmp_path):
@@ -244,5 +245,28 @@ def test_local_model_thermal_end_to_end(monkeypatch, tmp_path):
         assert out["kind"] == "results", out
         fea = out["result"]["jobs"][1]
         assert fea["verdict"] in ("PASS", "REVIEW"), fea
+    finally:
+        srv.shutdown()
+
+
+def test_needless_question_is_retried_with_a_forced_form(monkeypatch, tmp_path):
+    srv = _form_server(monkeypatch, tmp_path)
+    try:
+        FormOllama.form = [
+            {"action": "question", "question": "What temperature should the cooled end be held at?"},
+            {"action": "analyze", "template": "beam", "analysis": "thermal", "material_words": "steel",
+             "temperatures": [{"face": "xmin", "value": 100, "unit": "C"}],
+             "convection": [{"face": "xmax", "h": 25, "ambient": 20, "unit": "C"}]}]
+        text = ("Steel bar 100 mm long. One end is held at 100 C, the other end is cooled by air at 20 C with "
+                "h = 25. How hot does the cooled end get?")
+        out = assistant.ask(text, run=False)
+        assert out["kind"] == "request" and out["attempts"] == 2, out
+        assert "--temp xmin 100 --convect xmax 25 20" in out["request"]
+        assert FakeOllama.seen[-1][1]["format"]["properties"]["action"]["enum"] == ["analyze"]
+        # a real gap is still asked about, without a second model call
+        FormOllama.form = [{"action": "question", "question": "Which material?"}]
+        n = len(FakeOllama.seen)
+        out = assistant.ask("A bar, one end at 100 C, air at 20 C. How hot is the other end?", run=False)
+        assert out["kind"] == "question" and len(FakeOllama.seen) == n + 1
     finally:
         srv.shutdown()
