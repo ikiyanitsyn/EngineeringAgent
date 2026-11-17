@@ -47,6 +47,18 @@ Run everything: `.venv/bin/python -m pytest -q` then `.venv/bin/python -m pytest
    forces/pressures, steady heat flow (--temp/--convect/--heat, deg F converted) and thermal stress
    (--t0/--dT); every temperature, h and wattage is checked against the user's words. Custom shapes
    and assemblies need a hosted model or a pasted request.
+   **Live thermal test (issue #5, "how hot does the end of a steel bar get"):** found and fixed
+   three problems. (a) Ollama's installer fell back to a `.tgz` that releases no longer ship:
+   `assistant._install_ollama` now takes the `.tar.zst` from the GitHub release, then `.tgz`,
+   then the script. (b) The model asked for the very temperature the user wanted: a needless
+   question is retried once with the form forced to `analyze` (`assistant._inputs_given`).
+   (c) Forced, it read "100 C" as a 100 kg force: `structured.magnitudes_from_user` now requires
+   every value to appear in the user's words with a unit of the same kind. The 1-D hot-end /
+   cooled-end bar gets automatic hand checks (end temperature + heat flow, which also closes the
+   heat balance): locally 96.19 degC, both 0.0 %, PASS.
+   **Next for a follow-up session:** confirm issue #5 ends in a thermal PASS; if the 7B model
+   still misfills thermal forms, add a deterministic pre-fill from the user's words (temperatures
+   with units, "h = N", "held at" / "cooled by" -> faces) and let the model only pick the template.
 3. **Watch the open model on harder requests.** Custom shapes (Python blocks) and multi-step
    analyses are where a 7B model is most likely to stumble; the error-feedback loop helps.
    If quality is poor, try `vars.ENGAGENT_LOCAL_MODEL = qwen2.5-coder:14b` (slower) or a key.
