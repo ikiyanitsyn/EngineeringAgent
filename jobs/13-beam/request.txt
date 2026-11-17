@@ -1,4 +1,0 @@
-```bash
-ea make beam length=100 --name "beam"
-ea analyze last -m steel_generic --fix xmin --force xmax 0,0,-980.665
-```
