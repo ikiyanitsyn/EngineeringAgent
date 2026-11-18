@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import subprocess
 import sys
 import time
@@ -120,6 +121,10 @@ def needs_model() -> bool:
     d = parse(latest)
     if d["commands"] or d["json"] or d["python"] or os.environ.get("ENGAGENT_LLM_KEY"):
         return False
+    from engagent.cadinput import find_inputs
+    f = find_inputs(latest, ROOT)
+    if f["urls"] or f["paths"]:                        # the user's own parts: measured, no model
+        return False
     return form_from_words("\n".join(m["content"] for m in convo if m["role"] == "user")) is None
 
 
@@ -133,6 +138,9 @@ def main() -> int:
                {"body": f"{MARK}\n⏳ Working on it - common requests take 1 to 3 minutes; up to 15 if the free built-in AI model is needed. [Live log]({RUN_URL})"})
         comment_id = c["id"]
 
+    cad = _cad_parts(latest, issue, comment_id)       # the user's own STEP parts: list faces, ask what to join
+    if cad is not None:
+        return cad
     link_base = f"{SERVER}/{REPO}/blob/{BRANCH}"
     head, result, plan, req_text, followup = "", None, "", "", ""
     out_by_rules = False
@@ -175,6 +183,61 @@ def main() -> int:
     except Exception as e:  # still answer the user
         head = f"### ❌ Unexpected error while saving results\n`{type(e).__name__}: {e}`\n\n[Log]({RUN_URL})"
     _finish(head + _model_footer(direct, out_by_rules), comment_id, folders)
+    return 0
+
+
+def _cad_parts(latest: str, issue, comment_id):
+    """Stage 1 of 'design an adapter between my two parts': fetch the STEP files, list the numbered
+    faces and hole patterns with pictures, and ask which faces to join. None when there are no parts."""
+    from engagent import cadinput, quick
+    d = parse(latest)
+    if d["commands"] or d["json"] or d["python"]:      # `ea ...` lines that name a STEP file run as written
+        return None
+    found = cadinput.find_inputs(latest, ROOT)
+    if not (found["urls"] or found["paths"]):
+        return None
+    folders: list[str] = []
+    try:
+        folder = quick.next_job_folder("parts")
+        parts = []
+        for pth in found["paths"]:
+            dst = folder / cadinput._safe_name(pth)
+            shutil.copy(ROOT / pth, dst)
+            parts.append(dst)
+        problems = []
+        for url in found["urls"]:
+            try:
+                parts += cadinput.fetch(url, folder / "parts", TOKEN)
+            except Exception as e:
+                problems.append(f"{url.rsplit('/', 1)[-1]}: {e}")
+        for p in list(parts):
+            if p.parent != folder:
+                shutil.move(str(p), folder / p.name)
+                parts[parts.index(p)] = folder / p.name
+        shutil.rmtree(folder / "parts", ignore_errors=True)
+        if not parts:
+            shutil.rmtree(folder, ignore_errors=True)
+            head = ("### ❌ I could not read your CAD files\n" + "\n".join(f"- {x}" for x in problems)
+                    + "\n\nGitHub does not accept `.step` attachments: put the STEP files in a **.zip** and "
+                    "attach that, or upload them to the repository (e.g. an `inbox/` folder) and write their "
+                    "paths here, like `inbox/camera.step`.")
+        else:
+            (folder / "request.txt").write_text(latest, encoding="utf-8")
+            data, md = cadinput.list_parts(parts, folder)
+            rel = os.path.relpath(folder, ROOT)
+            folders = [rel]
+            pushed = commit(folders, f"#{issue['number']} parts" if issue else "parts")
+            raw = f"{SERVER}/{REPO}/blob/{BRANCH}/{rel}/plots"
+            pics = " ".join(f'<img src="{raw}/faces_{n}.png?raw=true" alt="{n}" width="420">' for n in data) \
+                if pushed else ""
+            names = list(data) + ["other_part"] * 2
+            head = ("### 🔩 Your parts, measured\n" + md + "\n\n" + pics
+                    + ("\n\n⚠️ " + "; ".join(problems) if problems else "")
+                    + "\n\n" + cadinput.QUESTION.format(a=names[0], b=names[1])
+                    + f"\n\n<sub>Parts saved in `{rel}`. Engineering assistance, not sign-off.</sub>")
+    except Exception as e:
+        head = f"### ❌ Unexpected error while reading your parts\n`{type(e).__name__}: {e}`\n\n[Log]({RUN_URL})"
+    _finish(head + "\n\n<sub>Answered by: built-in CAD measurement (no AI model)</sub>", comment_id, folders)
     return 0
 
 

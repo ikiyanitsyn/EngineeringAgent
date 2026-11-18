@@ -213,6 +213,15 @@ def cmd_cad_faces(a):
     _out(a, faces, lines)
 
 
+def cmd_cad_features(a):
+    from .cad.features import describe, mount_features, picture
+    feat = mount_features(a.file)
+    lines = [l.replace("**", "") for l in describe(feat)]
+    if a.png:
+        lines.append(f"Picture: {picture(a.file, feat, a.png)}")
+    _out(a, feat, lines)
+
+
 def cmd_cad_export(a):
     from .cad.export import convert
     files = convert(a.file, stl=a.stl or not a.threemf, threemf=a.threemf, quality=a.quality, scale=a.scale)
@@ -582,6 +591,8 @@ def build_parser() -> argparse.ArgumentParser:
     q.add_argument("file"); q.add_argument("--material", "-m")
     q = add(cad, "faces", cmd_cad_faces, "list CAD faces with coordinates (for supports and loads)")
     q.add_argument("file")
+    q = add(cad, "features", cmd_cad_features, "mounting faces and hole patterns (screw sizes) of a STEP part")
+    q.add_argument("file"); q.add_argument("--png", help="also draw a picture with the face numbers")
     q = add(cad, "export", cmd_cad_export, "convert STEP to STL / 3MF")
     q.add_argument("file"); q.add_argument("--stl", action="store_true"); q.add_argument("--3mf", dest="threemf", action="store_true")
     q.add_argument("--quality", default="fine", choices=["draft", "standard", "fine", "ultra"]); q.add_argument("--scale", type=float, default=1.0)
