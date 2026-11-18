@@ -213,8 +213,10 @@ def _simply_supported(t: str, form: dict, forces) -> dict | None:
             "pound": "lb", "pounds": "lb"}.get(unit, "kg")
     d = _direction(t) or ("-z" if unit in ("kg", "lb") else None)
     missing = []
-    if not {"width", "height", "length"} <= set(p):
-        missing.append("the beam's length and cross-section (e.g. 1 m long, 40 x 80 mm)")
+    if "length" not in p:
+        missing.append("the beam's length (span between the supports)")
+    if not {"width", "height"} <= set(p):
+        missing.append("the beam's cross-section (width x height, e.g. 40 x 80 mm)")
     if d not in ("-z", "+z"):
         missing.append(f"the direction of the {mag} {unit} load (e.g. straight down)")
     if missing:

@@ -45,7 +45,6 @@ def test_plate_edges():
 
 @pytest.mark.parametrize("text", [
     "aluminum L-bracket with 300 N on it, is it strong enough?",                     # bracket: model
-    "steel beam 1 m long, both ends supported, 2 kN in the middle - stress?",        # mid-span: model
     "a bar at one end with 50 kg hanging at the end, how much does it bend?",       # no material
     "how strong is a bar",
     "steel bar, one end 100 C, how hot is the other end?",                           # no h
@@ -226,3 +225,9 @@ def test_simply_supported_beam_uses_half_model_symmetry():
     assert "length=500" in r and "--slide xmin z" in r and "--slide xmax x" in r and "0,0,-1000" in r
     assert "--fix" not in r and "simply_supported_center_load P=2000 L=1000" in r
     assert form_from_words(t.replace("rests on supports", "is welded")) is None    # fixed ends: not this case
+
+
+def test_simply_supported_beam_asks_only_for_what_is_missing():
+    f = form_from_words("steel beam 1 m long, both ends supported, 2 kN in the middle - stress?")
+    q = f["question"]
+    assert f["action"] == "question" and "cross-section" in q and "direction" in q and "length" not in q
