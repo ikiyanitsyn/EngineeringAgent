@@ -353,10 +353,40 @@ def _auto_bar_conduction_check(source, params, mat, cons, loads, analysis, syste
     return [base, f'{base} A="{area:g} mm^2" -> heat_flow@heat_flow.{c["on"]}']
 
 
+def _auto_plate_check(params, mat, cons, loads, system) -> str | None:
+    """Plate clamped along one edge with a force spread over the top: a wide cantilever, uniform load."""
+    if [c["type"] for c in cons] != ["fixed"] or len(loads) != 1 or loads[0]["type"] != "force":
+        return None
+    edge, on = cons[0].get("on"), loads[0].get("on")
+    if edge not in ("xmin", "ymin") or on != "zmax":
+        return None
+    if any(float(params.get(k, 0) or 0) for k in ("hole_diameter", "center_hole", "corner_radius")):
+        return None
+    from . import materials
+    try:
+        m = materials.get(mat, system)
+    except Exception:
+        return None
+    E, nu = m.get("E"), m.get("nu") or 0.3
+    if m.orthotropic or not E:
+        return None
+    fx, fy, fz = (U.to_internal(v, "force", system) for v in loads[0]["value"])
+    if abs(fx) > 1e-9 * abs(fz) or abs(fy) > 1e-9 * abs(fz) or not fz:
+        return None
+    d = {k: U.to_internal(params[k], "length", system) if k in params else v
+         for k, v in (("length", 100.0), ("width", 60.0), ("thickness", 5.0))}
+    span, b = (d["length"], d["width"]) if edge == "xmin" else (d["width"], d["length"])
+    E_eff = E / (1 - nu ** 2) if b >= span else E      # a wide plate bends like a plate (D), a narrow one like a beam
+    return (f'beam.cantilever_udl w="{abs(fz) / span:g} N/mm" L="{span:g} mm" E="{E_eff:g} MPa" b="{b:g} mm" '
+            f'h="{d["thickness"]:g} mm" nu={nu:g} -> deflection@max_displacement tol=0.1')
+
+
 def _auto_beam_check(source, params, mat, cons, loads, analysis, system) -> str | list[str] | None:
     """The textbook cantilever: beam template, fixed at xmin, one transverse force on xmax."""
     if analysis in ("thermal", "thermal_steady"):
         return _auto_bar_conduction_check(source, params, mat, cons, loads, analysis, system)
+    if source == "plate" and analysis == "static":
+        return _auto_plate_check(params, mat, cons, loads, system)
     if source != "beam" or analysis != "static" or str(params.get("section", "rect")) != "rect":
         return None
     if [c["type"] for c in cons] != ["fixed"] or len(loads) != 1 or loads[0]["type"] != "force":
@@ -394,6 +424,9 @@ def link_check(spec: str, job: dict, system: str | None = None) -> dict:
     import shlex
     from . import handcalc
     head, _, target = spec.partition("->")
+    tol_m = re.search(r"\s+tol=([\d.]+)\s*$", target)          # optional "-> out@metric tol=0.1"
+    if tol_m:
+        target = target[:tol_m.start()]
     toks = shlex.split(head)
     if not toks:
         raise ValueError("--check needs a calculation name, e.g. beam.cantilever_end_load P=100 L=100 ...")
@@ -453,7 +486,7 @@ def link_check(spec: str, job: dict, system: str | None = None) -> dict:
             tol = 0.15
     if target.strip():
         entry["name"] += f" ({out_name.replace('_', ' ')})"
-    entry.update(output=out_name, tol=tol)
+    entry.update(output=out_name, tol=float(tol_m.group(1)) if tol_m else tol)
     if metric:
         entry["metric"] = metric
     return entry
@@ -479,8 +512,8 @@ def analyze(source: str, *, name: str | None = None, folder: str | Path | None =
     job = build_analysis_job(source, system=system, **{k: v for k, v in kw.items() if k != "system"})
     job.update(keep)
     geo = job.get("geometry") or {}
-    if not job.get("hand_calcs") and geo.get("template") == "beam":     # part made earlier with `make beam`
-        auto = _auto_beam_check("beam", geo.get("params") or {}, job["material"], job["constraints"],
+    if not job.get("hand_calcs") and geo.get("template") in ("beam", "plate"):   # part made earlier with `make`
+        auto = _auto_beam_check(geo["template"], geo.get("params") or {}, job["material"], job["constraints"],
                                 job["loads"], job["analysis"], system)
         if auto:
             job["hand_calcs"] = [link_check(c, job, system) for c in (auto if isinstance(auto, list) else [auto])]
