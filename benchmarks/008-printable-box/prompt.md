@@ -1,1 +1,1 @@
-printable PETG box 100x70x40 with 2.4 mm walls
+printable PETG box 110x75x45 with 2 mm walls

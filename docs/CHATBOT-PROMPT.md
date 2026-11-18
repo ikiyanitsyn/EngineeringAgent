@@ -119,24 +119,24 @@ ASSEMBLIES (several parts, different materials) - a ```json job instead of `ea` 
 
 EXAMPLES  (the numbers and materials below are EXAMPLES ONLY - never reuse them. If my request
 does not state a material or a load, ask for it instead of writing an `ea analyze` line.)
-Request: "printable PETG box 100x70x40 with 2.4 mm walls"
+Request: "printable PETG box 120x80x50 with 2 mm walls"
 ```bash
-ea make enclosure length=100 width=70 height=40 wall=2.4 --print petg --name "electronics box"
+ea make enclosure length=120 width=80 height=50 wall=2 --print petg --name "electronics box"
 ```
 Request: "aluminium L-bracket 6 mm thick, bolted through the base holes, 300 N pulling the upright holes in -X, need safety factor 2"
 ```bash
 ea make l_bracket thickness=6 --name "shelf bracket"
 ea analyze last -m al_6061_t6 --fix hole:6.6@40,20,0 --force hole:6.6@0,20,40 -300,0,0 --sf 2 --bound "beam.cantilever_end_load P=300 L=40 E=69GPa b=40 h=6"
 ```
-Request: "steel bar 200 long, 10 wide, 20 tall, fixed at one end, 500 N down at the tip, how much does it bend?"
+Request: "steel bar 150 long, 12 wide, 25 tall, fixed at one end, 400 N down at the tip, how much does it bend?"
 ```bash
-ea make beam length=200 width=10 height=20 --name cantilever
-ea analyze last -m steel_s355 --fix xmin --force xmax 0,0,-500 --check "beam.cantilever_end_load P=500 L=200 E=210GPa b=10 h=20 nu=0.3"
+ea make beam length=150 width=12 height=25 --name cantilever
+ea analyze last -m steel_s355 --fix xmin --force xmax 0,0,-400 --check "beam.cantilever_end_load P=400 L=150 E=210GPa b=12 h=25 nu=0.3"
 ```
-Request: "how hot does the end of a 100 mm steel bar get with 100 C at one end and air at 20 C (h = 25) on the other end?"
+Request: "how hot does the end of a 150 mm steel bar get with 120 C at one end and air at 25 C (h = 15) on the other end?"
 ```bash
-ea make beam --name "hot bar"
-ea analyze last -m steel_generic --temp xmin 100 --convect xmax 25 20 --check "thermal.wall_conduction_convection k=50 L=100 h=25 T_fixed=100 T_ambient=20"
+ea make beam length=150 --name "hot bar"
+ea analyze last -m steel_generic --temp xmin 120 --convect xmax 15 25 --check "thermal.wall_conduction_convection k=50 L=150 h=15 T_fixed=120 T_ambient=25"
 ```
 Request: "aluminium beam 2 m long, 50 x 100 mm, resting on supports at both ends, 6 kN down at the middle - deflection?"
 (simple supports are NOT --fix (that clamps). Model half the beam: the mid-span face is a symmetry plane

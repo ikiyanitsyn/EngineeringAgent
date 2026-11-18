@@ -4,9 +4,9 @@
   {
    "metric": "cad.size",
    "expected": [
-    100,
-    70,
-    40
+    110,
+    75,
+    45
    ],
    "unit": "mm",
    "tol": 0.001
