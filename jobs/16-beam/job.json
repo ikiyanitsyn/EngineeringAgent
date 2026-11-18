@@ -1,0 +1,61 @@
+{
+ "name": "16-beam",
+ "units": "metric",
+ "analysis": "static",
+ "title": "static analysis of part",
+ "geometry": {
+  "template": "beam",
+  "params": {
+   "length": 150,
+   "width": 12,
+   "height": 25
+  }
+ },
+ "material": "steel_generic",
+ "sets": {
+  "xmin": "xmin",
+  "xmax": "xmax"
+ },
+ "constraints": [
+  {
+   "type": "fixed",
+   "on": "xmin"
+  }
+ ],
+ "loads": [
+  {
+   "type": "force",
+   "on": "xmax",
+   "value": [
+    0.0,
+    0.0,
+    -196.133
+   ]
+  }
+ ],
+ "probes": {
+  "xmax": {
+   "set": "xmax"
+  }
+ },
+ "criteria": {
+  "yield_sf": 1.5
+ },
+ "hand_calcs": [
+  {
+   "name": "Hand check: Cantilever, point load P at the free end",
+   "calc": "beam.cantilever_end_load",
+   "inputs": {
+    "P": "196.133 N",
+    "L": "150 mm",
+    "E": "210000 MPa",
+    "b": "12 mm",
+    "h": "25 mm",
+    "nu": 0.3
+   },
+   "output": "deflection",
+   "tol": 0.05,
+   "metric": "probe.xmax.displacement"
+  }
+ ]
+}

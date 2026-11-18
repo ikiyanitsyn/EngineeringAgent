@@ -1,0 +1,53 @@
+{
+ "valid": true,
+ "solids": 1,
+ "faces": 6,
+ "edges": 12,
+ "volume": 45000.0,
+ "area": 11700.0,
+ "bbox_min": [
+  0.0,
+  -6.0,
+  -12.5
+ ],
+ "bbox_max": [
+  150.0,
+  6.0,
+  12.5
+ ],
+ "bbox_size": [
+  150.0,
+  12.0,
+  25.0
+ ],
+ "center_of_mass": [
+  75.0,
+  9.992007221626408e-18,
+  -1.578983857244667e-17
+ ],
+ "inertia_unit_density": [
+  [
+   2883750.0,
+   5.595524044110789e-12,
+   0.0
+  ],
+  [
+   5.595524044110789e-12,
+   86718750.0,
+   -7.099748146989106e-30
+  ],
+  [
+   0.0,
+   -7.099748146989106e-30,
+   84915000.0
+  ]
+ ],
+ "face_types": {
+  "plane": 6
+ },
+ "cylinder_diameters": [],
+ "files": [
+  "/home/runner/work/EngineeringAgent/EngineeringAgent/jobs/16-beam/part.step"
+ ],
+ "template": "beam"
+}
