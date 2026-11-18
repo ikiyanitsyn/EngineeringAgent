@@ -64,6 +64,12 @@ Run everything: `.venv/bin/python -m pytest -q` then `.venv/bin/python -m pytest
    any template with sizes) are read from the user's words with no model, in 1-3 minutes, and go
    through the same checks. Anything the rules are unsure of (no load direction, mid-span loads,
    brackets, several loads) goes to the model. `ENGAGENT_NO_RULES=1` turns it off.
+   **Confirmed live (issue #6):** "aluminium plate 300 x 200 x 6 mm, clamped along one long edge, 10 kg
+   on top" -> answered with no model, 0.242 mm, SF 58.5, ~6.5 min (the FEA on a thin plate is most
+   of it). Automatic wide-plate check added afterwards: 3.0 % from FEA, PASS (locally).
+   **Bot plumbing found live:** apt-get hung on two runners for 7+ min -> the solver's .deb files
+   are cached by warm-model.yml and installed offline (10 s); the "working on it" comment is posted
+   before setup; a failed or cancelled run edits it into a retry notice.
 3. **Watch the open model on harder requests.** Custom shapes (Python blocks) and multi-step
    analyses are where a 7B model is most likely to stumble; the error-feedback loop helps.
    If quality is poor, try `vars.ENGAGENT_LOCAL_MODEL = qwen2.5-coder:14b` (slower) or a key.

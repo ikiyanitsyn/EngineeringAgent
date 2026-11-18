@@ -68,3 +68,14 @@ def test_rules_run_end_to_end_without_any_model(monkeypatch, tmp_path):
     assert fea["verdict"] == "PASS", fea
     out = assistant.ask(HOT)
     assert out["kind"] == "results" and out["result"]["jobs"][1]["verdict"] == "PASS"
+
+
+def test_plate_and_bar_get_automatic_hand_checks():
+    from engagent import quick
+    job = quick.build_analysis_job("plate", material="al_6061_t6", fix=["ymin"], forces=[["zmax", "0,0,-98.0665"]],
+                                   params={"length": 300, "width": 200, "thickness": 6})
+    hc = job["hand_calcs"][0]
+    assert hc["calc"] == "beam.cantilever_udl" and hc["metric"] == "max_displacement" and hc["tol"] == 0.1
+    job = quick.build_analysis_job("beam", material="steel_generic", analysis="thermal", temps=[["xmin", "100"]],
+                                   convects=[["xmax", "25", "20"]], params={"length": 100})
+    assert [h["output"] for h in job["hand_calcs"]] == ["T_surface", "heat_flow"]
