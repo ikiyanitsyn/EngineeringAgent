@@ -1,0 +1,138 @@
+{
+ "name": "27-adapter-check-i16",
+ "units": "metric",
+ "analysis": "static",
+ "title": "static analysis of adapter",
+ "geometry": {
+  "step": "adapter.step"
+ },
+ "material": "al_6061_t6",
+ "sets": {
+  "hole_6_6_at_17_68_17_68": [
+   {
+    "cylinder": {
+     "diameter": 6.6,
+     "near": [
+      -17.68,
+      17.68,
+      5.5
+     ]
+    }
+   },
+   {
+    "cylinder": {
+     "diameter": 6.6,
+     "near": [
+      -17.68,
+      -17.68,
+      5.5
+     ]
+    }
+   },
+   {
+    "cylinder": {
+     "diameter": 6.6,
+     "near": [
+      17.68,
+      17.68,
+      5.5
+     ]
+    }
+   },
+   {
+    "cylinder": {
+     "diameter": 6.6,
+     "near": [
+      17.68,
+      -17.68,
+      5.5
+     ]
+    }
+   }
+  ],
+  "hole_6_6_at_56_75_3_536": [
+   {
+    "cylinder": {
+     "diameter": 6.6,
+     "near": [
+      56.75,
+      -3.536,
+      5.5
+     ]
+    }
+   },
+   {
+    "cylinder": {
+     "diameter": 6.6,
+     "near": [
+      28.46,
+      24.75,
+      5.5
+     ]
+    }
+   },
+   {
+    "cylinder": {
+     "diameter": 6.6,
+     "near": [
+      35.54,
+      -24.75,
+      5.5
+     ]
+    }
+   },
+   {
+    "cylinder": {
+     "diameter": 6.6,
+     "near": [
+      7.251,
+      3.536,
+      5.5
+     ]
+    }
+   }
+  ]
+ },
+ "constraints": [
+  {
+   "type": "fixed",
+   "on": "hole_6_6_at_17_68_17_68"
+  }
+ ],
+ "loads": [
+  {
+   "type": "force",
+   "on": "hole_6_6_at_56_75_3_536",
+   "value": [
+    0.0,
+    0.0,
+    -15.69
+   ]
+  }
+ ],
+ "probes": {
+  "hole_6_6_at_56_75_3_536": {
+   "set": "hole_6_6_at_56_75_3_536"
+  }
+ },
+ "criteria": {
+  "yield_sf": 2.0
+ },
+ "hand_calcs": [
+  {
+   "name": "Estimate: Cantilever, point load P at the free end",
+   "calc": "beam.cantilever_end_load",
+   "inputs": {
+    "P": 15.69,
+    "L": 32,
+    "E": "68900MPa",
+    "b": 68.5,
+    "h": 11
+   },
+   "output": "deflection",
+   "tol": 0.05,
+   "bound": "order",
+   "metric": "probe.hole_6_6_at_56_75_3_536.displacement"
+  }
+ ]
+}

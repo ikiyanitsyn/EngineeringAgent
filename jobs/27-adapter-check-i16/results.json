@@ -1,0 +1,662 @@
+{
+ "engagent_version": "0.1.0",
+ "name": "27-adapter-check-i16",
+ "title": "static analysis of adapter",
+ "description": "",
+ "analysis": "static",
+ "units": "metric",
+ "standard": "iso",
+ "status": "ok",
+ "verdict": "PASS",
+ "solver": {
+  "version": "2.21",
+  "seconds": 6.9,
+  "errors": [],
+  "warnings": [],
+  "command": "ccx -i job",
+  "tail": ""
+ },
+ "mesh": {
+  "nodes": 25379,
+  "elements": 14672,
+  "element_type": "C3D10",
+  "size_mm": 4.6547004266768255,
+  "parts": [
+   "part"
+  ],
+  "bbox_min": [
+   -27.17766952966,
+   -34.24873734152,
+   0.0
+  ],
+  "bbox_max": [
+   66.248737341529,
+   34.248737341529,
+   11.0
+  ],
+  "volume_mm3": 64063.44035564733,
+  "quality_min": 0.2827463293346955,
+  "quality_mean": 0.778216964216148,
+  "quality_below_0p1": 0
+ },
+ "parts": [
+  {
+   "name": "part",
+   "geometry": "adapter.step",
+   "material": {
+    "key": "al_6061_t6",
+    "name": "Aluminium 6061-T6",
+    "family": "aluminium",
+    "orthotropic": false,
+    "properties": {
+     "E": "68.9 GPa",
+     "nu": "0.33",
+     "density": "2700 kg/m^3",
+     "cte": "23.6 um/m/K",
+     "k": "167 W/m/K",
+     "cp": "896 J/kg/K",
+     "yield": "276 MPa",
+     "uts": "310 MPa",
+     "elongation": "0.12",
+     "endurance": "96.5 MPa"
+    },
+    "meta": {
+     "spec": "ASTM B209 6061-T6"
+    }
+   },
+   "orientation": null
+  }
+ ],
+ "sets": {
+  "hole_6_6_at_17_68_17_68": {
+   "area": 370.0056656533973,
+   "faces": [
+    24,
+    19,
+    25,
+    20
+   ],
+   "nodes": 736,
+   "centroid": [
+    0.006406336817743885,
+    -2.050830424166266e-05,
+    2.2499765818385113
+   ]
+  },
+  "hole_6_6_at_56_75_3_536": {
+   "area": 370.04137846071944,
+   "faces": [
+    14,
+    18,
+    13,
+    15
+   ],
+   "nodes": 740,
+   "centroid": [
+    32.00547275196063,
+    0.002822313617299797,
+    8.750050164498541
+   ]
+  }
+ },
+ "constraints": [
+  "Fixed (all translations) on 'hole_6_6_at_17_68_17_68'"
+ ],
+ "loads": [
+  "Force (0, 0, -15.69) N on 'hole_6_6_at_56_75_3_536' (area 370 mm^2)"
+ ],
+ "interactions": [],
+ "notes": [],
+ "initial_temperature": null,
+ "metrics": {
+  "max_displacement": {
+   "value": 0.000561959888468178,
+   "kind": "length",
+   "label": "Maximum displacement",
+   "location": [
+    66.248737341529,
+    -11.222127102952118,
+    11.0
+   ],
+   "vector": [
+    8.54645e-05,
+    1.62966e-07,
+    -0.000555423
+   ]
+  },
+  "max_ux": {
+   "value": 8.89586e-05,
+   "kind": "length",
+   "label": "Largest ux",
+   "location": [
+    53.56118211477508,
+    -4.38963675477133,
+    11.0
+   ]
+  },
+  "max_uy": {
+   "value": 1.67547e-05,
+   "kind": "length",
+   "label": "Largest uy",
+   "location": [
+    66.248737341529,
+    15.710977944143764,
+    0.0
+   ]
+  },
+  "max_uz": {
+   "value": -0.000556066,
+   "kind": "length",
+   "label": "Largest uz",
+   "location": [
+    66.248737341529,
+    -8.977701682360792,
+    3.8874588622633213
+   ]
+  },
+  "peak_von_mises": {
+   "value": 1.124222627045017,
+   "kind": "pressure",
+   "label": "Peak von Mises stress (anywhere)",
+   "location": [
+    20.865224756415927,
+    -16.82356668082168,
+    0.0
+   ],
+   "in_exclusion": true
+  },
+  "max_von_mises": {
+   "value": 0.2350473363974159,
+   "kind": "pressure",
+   "label": "Design von Mises stress (away from supports/contacts)",
+   "location": [
+    26.814466094067004,
+    21.89085350904035,
+    11.0
+   ]
+  },
+  "max_principal": {
+   "value": 0.23454621879929224,
+   "kind": "pressure",
+   "label": "Maximum principal stress (design zone)",
+   "location": [
+    26.814466094067004,
+    21.89085350904035,
+    11.0
+   ]
+  },
+  "min_principal": {
+   "value": -0.1916949468939309,
+   "kind": "pressure",
+   "label": "Minimum principal stress (design zone)",
+   "location": [
+    59.93629256828292,
+    -4.389636754771319,
+    11.0
+   ]
+  },
+  "safety_factor_yield": {
+   "value": 1174.2315579077301,
+   "kind": "ratio",
+   "label": "Safety factor on yield (design stress)",
+   "part": "part",
+   "yield_strength": 276.0
+  },
+  "reaction.hole_6_6_at_17_68_17_68": {
+   "value": 15.69,
+   "kind": "force",
+   "label": "Reaction force on 'hole_6_6_at_17_68_17_68'",
+   "vector": [
+    -1.9151e-13,
+    1.09153e-12,
+    15.69
+   ]
+  },
+  "reaction_total": {
+   "value": 15.69,
+   "kind": "force",
+   "label": "Total reaction force",
+   "vector": [
+    -1.9151e-13,
+    1.09153e-12,
+    15.69
+   ]
+  },
+  "applied_force": {
+   "value": 15.69,
+   "kind": "force",
+   "label": "Total applied force",
+   "vector": [
+    0.0,
+    0.0,
+    -15.69
+   ]
+  },
+  "probe.hole_6_6_at_56_75_3_536.ux": {
+   "value": 3.911262579729729e-05,
+   "kind": "length",
+   "label": "ux at probe 'hole_6_6_at_56_75_3_536'",
+   "location": [
+    32.22995130371997,
+    0.14095808977738192,
+    8.75831316205165
+   ]
+  },
+  "probe.hole_6_6_at_56_75_3_536.uy": {
+   "value": -1.7259542403243241e-06,
+   "kind": "length",
+   "label": "uy at probe 'hole_6_6_at_56_75_3_536'",
+   "location": [
+    32.22995130371997,
+    0.14095808977738192,
+    8.75831316205165
+   ]
+  },
+  "probe.hole_6_6_at_56_75_3_536.uz": {
+   "value": -0.0001781651673513513,
+   "kind": "length",
+   "label": "uz at probe 'hole_6_6_at_56_75_3_536'",
+   "location": [
+    32.22995130371997,
+    0.14095808977738192,
+    8.75831316205165
+   ]
+  },
+  "probe.hole_6_6_at_56_75_3_536.displacement": {
+   "value": 0.00018241601703834594,
+   "kind": "length",
+   "label": "Displacement at probe 'hole_6_6_at_56_75_3_536'",
+   "location": [
+    32.22995130371997,
+    0.14095808977738192,
+    8.75831316205165
+   ]
+  },
+  "probe.hole_6_6_at_56_75_3_536.sxx": {
+   "value": 0.027097984776351357,
+   "kind": "pressure",
+   "label": "sxx at probe 'hole_6_6_at_56_75_3_536'",
+   "location": [
+    32.22995130371997,
+    0.14095808977738192,
+    8.75831316205165
+   ]
+  },
+  "probe.hole_6_6_at_56_75_3_536.syy": {
+   "value": -0.005276810664594597,
+   "kind": "pressure",
+   "label": "syy at probe 'hole_6_6_at_56_75_3_536'",
+   "location": [
+    32.22995130371997,
+    0.14095808977738192,
+    8.75831316205165
+   ]
+  },
+  "probe.hole_6_6_at_56_75_3_536.szz": {
+   "value": -0.002978526083783786,
+   "kind": "pressure",
+   "label": "szz at probe 'hole_6_6_at_56_75_3_536'",
+   "location": [
+    32.22995130371997,
+    0.14095808977738192,
+    8.75831316205165
+   ]
+  },
+  "probe.hole_6_6_at_56_75_3_536.sxy": {
+   "value": -0.004199198344324325,
+   "kind": "pressure",
+   "label": "sxy at probe 'hole_6_6_at_56_75_3_536'",
+   "location": [
+    32.22995130371997,
+    0.14095808977738192,
+    8.75831316205165
+   ]
+  },
+  "probe.hole_6_6_at_56_75_3_536.syz": {
+   "value": -0.0009380289774324337,
+   "kind": "pressure",
+   "label": "syz at probe 'hole_6_6_at_56_75_3_536'",
+   "location": [
+    32.22995130371997,
+    0.14095808977738192,
+    8.75831316205165
+   ]
+  },
+  "probe.hole_6_6_at_56_75_3_536.szx": {
+   "value": -0.00013268239135134945,
+   "kind": "pressure",
+   "label": "szx at probe 'hole_6_6_at_56_75_3_536'",
+   "location": [
+    32.22995130371997,
+    0.14095808977738192,
+    8.75831316205165
+   ]
+  },
+  "probe.hole_6_6_at_56_75_3_536.von_mises": {
+   "value": 0.03216512564614071,
+   "kind": "pressure",
+   "label": "von Mises at probe 'hole_6_6_at_56_75_3_536'",
+   "location": [
+    32.22995130371997,
+    0.14095808977738192,
+    8.75831316205165
+   ]
+  }
+ },
+ "hand_calcs": [
+  {
+   "name": "Estimate: Cantilever, point load P at the free end",
+   "calc": "beam.cantilever_end_load",
+   "output": "deflection",
+   "formulas": [
+    "delta = P L^3 / (3 E I)",
+    "M_max = P L (at the support)",
+    "M(x) = P (L - x)",
+    "theta = P L^2 / (2 E I)",
+    "sigma = M c / I",
+    "delta_shear = (shear term) / (kappa A G)"
+   ],
+   "reference": "Roark's Formulas for Stress and Strain, 8th ed., Table 8.1; Shigley's Mechanical Engineering Design, 10th ed., Table A-9",
+   "inputs": {
+    "P": "15.69 N",
+    "L": "32 mm",
+    "E": "68900 MPa",
+    "b": "68.5 mm",
+    "h": "11 mm"
+   },
+   "notes": [
+    "Small deflection, linear elastic, plane sections remain plane.",
+    "Pass nu to include shear deflection (Timoshenko)."
+   ],
+   "all_outputs": {
+    "deflection_bending": "0.0003274 mm",
+    "moment": "0.5021 N*m",
+    "shear_force": "15.69 N",
+    "I": "7598 mm^4",
+    "deflection": "0.0003274 mm",
+    "stress": "0.3635 MPa",
+    "shear_stress_avg": "0.02082 MPa",
+    "slope": "0.0008792 deg",
+    "reaction": "15.69 N"
+   },
+   "expected": 0.00032737463030719995,
+   "kind": "length",
+   "metric": "probe.hole_6_6_at_56_75_3_536.displacement",
+   "fea": 0.00018241601703834594,
+   "bound": "order",
+   "ratio": 0.557208775973787,
+   "status": "PASS"
+  }
+ ],
+ "checks": [
+  {
+   "id": "solver",
+   "name": "Solver finished without errors",
+   "status": "PASS",
+   "detail": "CalculiX 2.21, 6.9 s, no warnings"
+  },
+  {
+   "id": "units",
+   "name": "Unit set and material values",
+   "status": "PASS",
+   "detail": "deck written in mm, tonne, s, N, MPa, mJ, mW, degC; inputs read as metric"
+  },
+  {
+   "id": "mesh",
+   "name": "Mesh quality",
+   "status": "PASS",
+   "detail": "25,379 nodes, 14,672 C3D10, size 4.655 mm, min quality (SICN) 0.28"
+  },
+  {
+   "id": "equilibrium",
+   "name": "Reactions balance the applied load",
+   "status": "PASS",
+   "detail": "applied (0, 0, -15.69) N, reactions (0, 0, 15.69) N, imbalance 7.06e-12 %"
+  },
+  {
+   "id": "hand_calc",
+   "name": "Agreement with hand calculation (simplified estimate)",
+   "status": "PASS",
+   "detail": "Estimate: Cantilever, point load P at the free end is a simplified estimate (expected: FEA of the same order as it): FEA = 0.557 x estimate, consistent"
+  },
+  {
+   "id": "convergence",
+   "name": "Mesh convergence (size x0.5, change < 5 %)",
+   "status": "PASS",
+   "detail": "max_displacement: 0.22 %; max_von_mises: 0.93 %; probe.hole_6_6_at_56_75_3_536.displacement: 1.00 %"
+  },
+  {
+   "id": "singularity",
+   "name": "Stress singularities identified and excluded",
+   "status": "PASS",
+   "detail": "peak 1.124 MPa lies within 9.309 mm of a support/contact (sets: hole_6_6_at_17_68_17_68) and is mesh-dependent, so it is not a design value; design stress 0.235 MPa is taken outside that zone; peak changed 2.2 % on refinement"
+  },
+  {
+   "id": "linearity",
+   "name": "Linear analysis is valid",
+   "status": "PASS",
+   "detail": "small displacement and stress below yield"
+  },
+  {
+   "id": "sanity",
+   "name": "Displacement follows the load direction",
+   "status": "PASS",
+   "detail": "cosine between peak displacement and net load = 0.99"
+  },
+  {
+   "id": "criteria",
+   "name": "Safety factor on yield >= 2",
+   "status": "PASS",
+   "detail": "achieved 1.17e+03"
+  }
+ ],
+ "convergence": {
+  "ratio": 0.5,
+  "tol": 0.05,
+  "rows": [
+   {
+    "metric": "max_displacement",
+    "coarse": 0.000561959888468178,
+    "fine": 0.0005632268946467511,
+    "kind": "length",
+    "change": 0.002249548433527329,
+    "required": true
+   },
+   {
+    "metric": "max_von_mises",
+    "coarse": 0.2350473363974159,
+    "fine": 0.2372543955234339,
+    "kind": "pressure",
+    "change": 0.009302500470639295,
+    "required": true
+   },
+   {
+    "metric": "peak_von_mises",
+    "coarse": 1.124222627045017,
+    "fine": 1.100496745006956,
+    "kind": "pressure",
+    "change": 0.02155924780850766,
+    "required": false
+   },
+   {
+    "metric": "probe.hole_6_6_at_56_75_3_536.displacement",
+    "coarse": 0.00018241601703834594,
+    "fine": 0.00018426096030097643,
+    "kind": "length",
+    "change": 0.010012664970468632,
+    "required": true
+   },
+   {
+    "metric": "probe.hole_6_6_at_56_75_3_536.von_mises",
+    "coarse": 0.03216512564614071,
+    "fine": 0.03174052068685207,
+    "kind": "pressure",
+    "change": 0.013377378508618117,
+    "required": false
+   }
+  ],
+  "coarse": {
+   "size": 4.6547004266768255,
+   "nodes": 25379,
+   "elements": 14672
+  },
+  "fine": {
+   "size": 2.3273502133384127,
+   "nodes": 52920,
+   "elements": 32188
+  }
+ },
+ "fatigue": null,
+ "history": null,
+ "frequencies": [],
+ "buckling_factors": [],
+ "exclusion": {
+  "distance": 9.309400853353651,
+  "sets": [
+   "hole_6_6_at_17_68_17_68"
+  ]
+ },
+ "criteria": {
+  "yield_sf": 2.0
+ },
+ "gdt": null,
+ "runtime_s": 43.9,
+ "job": {
+  "name": "27-adapter-check-i16",
+  "units": "metric",
+  "analysis": "static",
+  "title": "static analysis of adapter",
+  "geometry": {
+   "step": "adapter.step"
+  },
+  "material": "al_6061_t6",
+  "sets": {
+   "hole_6_6_at_17_68_17_68": [
+    {
+     "cylinder": {
+      "diameter": 6.6,
+      "near": [
+       -17.68,
+       17.68,
+       5.5
+      ]
+     }
+    },
+    {
+     "cylinder": {
+      "diameter": 6.6,
+      "near": [
+       -17.68,
+       -17.68,
+       5.5
+      ]
+     }
+    },
+    {
+     "cylinder": {
+      "diameter": 6.6,
+      "near": [
+       17.68,
+       17.68,
+       5.5
+      ]
+     }
+    },
+    {
+     "cylinder": {
+      "diameter": 6.6,
+      "near": [
+       17.68,
+       -17.68,
+       5.5
+      ]
+     }
+    }
+   ],
+   "hole_6_6_at_56_75_3_536": [
+    {
+     "cylinder": {
+      "diameter": 6.6,
+      "near": [
+       56.75,
+       -3.536,
+       5.5
+      ]
+     }
+    },
+    {
+     "cylinder": {
+      "diameter": 6.6,
+      "near": [
+       28.46,
+       24.75,
+       5.5
+      ]
+     }
+    },
+    {
+     "cylinder": {
+      "diameter": 6.6,
+      "near": [
+       35.54,
+       -24.75,
+       5.5
+      ]
+     }
+    },
+    {
+     "cylinder": {
+      "diameter": 6.6,
+      "near": [
+       7.251,
+       3.536,
+       5.5
+      ]
+     }
+    }
+   ]
+  },
+  "constraints": [
+   {
+    "type": "fixed",
+    "on": "hole_6_6_at_17_68_17_68"
+   }
+  ],
+  "loads": [
+   {
+    "type": "force",
+    "on": "hole_6_6_at_56_75_3_536",
+    "value": [
+     0.0,
+     0.0,
+     -15.69
+    ]
+   }
+  ],
+  "probes": {
+   "hole_6_6_at_56_75_3_536": {
+    "set": "hole_6_6_at_56_75_3_536"
+   }
+  },
+  "criteria": {
+   "yield_sf": 2.0
+  },
+  "hand_calcs": [
+   {
+    "name": "Estimate: Cantilever, point load P at the free end",
+    "calc": "beam.cantilever_end_load",
+    "inputs": {
+     "P": 15.69,
+     "L": 32,
+     "E": "68900MPa",
+     "b": 68.5,
+     "h": 11
+    },
+    "output": "deflection",
+    "tol": 0.05,
+    "bound": "order",
+    "metric": "probe.hole_6_6_at_56_75_3_536.displacement"
+   }
+  ]
+ }
+}
