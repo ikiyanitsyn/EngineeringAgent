@@ -65,8 +65,8 @@ def _ask_with_fallback(convo: list[dict]) -> dict:
     try:
         return assistant.ask(convo)
     except assistant.LLMError as first:
-        if os.environ.get("ENGAGENT_LLM_KEY") or os.environ.get("ENGAGENT_NO_LOCAL_LLM"):
-            raise
+        if os.environ.get("ENGAGENT_NO_LOCAL_LLM") or ":11434" in (os.environ.get("ENGAGENT_LLM_URL") or ""):
+            raise                       # local fallback switched off, or the local model is what just failed
         print(f"No hosted model answered ({first}); using a local open model on the runner.", file=sys.stderr)
         model = os.environ.get("ENGAGENT_LOCAL_MODEL") or assistant.LOCAL_DEFAULT_MODEL
         assistant.ensure_ollama(model, say=lambda m: print(m, file=sys.stderr))

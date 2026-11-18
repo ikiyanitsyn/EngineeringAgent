@@ -47,6 +47,20 @@ OLLAMA_PREFERRED = ("qwen2.5-coder:32b", "qwen2.5-coder:14b", "qwen2.5:14b", "qw
 LOCAL_DEFAULT_MODEL = "qwen2.5-coder:7b"
 
 
+RETRIES = 3                      # tries per model before moving to the next one
+RETRY_WAIT = (4.0, 12.0)         # seconds to wait after the 1st and 2nd failed try
+# Gemini model ids to try, in order, when the configured one is busy (503), rate limited (429) or retired (404)
+GEMINI_FALLBACK_MODELS = ("gemini-3.5-flash", "gemini-flash-latest", "gemini-3.5-flash-lite")
+
+
+def fallback_models(url: str) -> list[str]:
+    """Extra models to try on the same endpoint. ENGAGENT_LLM_FALLBACK_MODELS (comma-separated) overrides."""
+    env = os.environ.get("ENGAGENT_LLM_FALLBACK_MODELS")
+    if env is not None:
+        return [m.strip() for m in env.split(",") if m.strip()]
+    return list(GEMINI_FALLBACK_MODELS) if "generativelanguage.googleapis.com" in url else []
+
+
 def ollama_models(timeout: float = 2.0) -> list[str]:
     """Models installed in a running Ollama on this machine ([] if none is running)."""
     try:
@@ -139,29 +153,31 @@ def complete(messages: list[dict], *, model: str | None = None, timeout: float =
     if github:
         targets += [(s["url"], m) for m in FALLBACK_MODELS if m != first]
         targets += [(GITHUB_MODELS_AZURE, m.split("/", 1)[-1]) for m in (first,) + FALLBACK_MODELS]
+    else:
+        # other providers: same endpoint and key, next model in the fallback list
+        targets += [(s["url"], m) for m in fallback_models(s["url"]) if m != first]
     errors: list[str] = []
     for url, m in targets:
-        for attempt in range(2):
+        for attempt in range(RETRIES):
+            wait = RETRY_WAIT[min(attempt, len(RETRY_WAIT) - 1)]
             try:
                 return _post(url, s["key"], m, messages, timeout)
             except urllib.error.HTTPError as e:
                 detail = e.read().decode("utf-8", "replace")[:300]
                 errors.append(f"{m} at {url}: HTTP {e.code} {detail}")
-                if e.code >= 500 and attempt == 0:
-                    time.sleep(3)
+                if (e.code >= 500 or e.code in (408, 429)) and attempt < RETRIES - 1:
+                    time.sleep(wait)                  # busy / rate limited: wait and retry the same model
                     continue
-                break                                 # 4xx: try the next model / endpoint
+                break                                 # other 4xx or retries used up: next model / endpoint
             except LLMError as e:
                 errors.append(str(e))
                 break
             except (urllib.error.URLError, TimeoutError, OSError) as e:
                 errors.append(f"{m} at {url}: {type(e).__name__}: {e}")
-                if attempt == 0:
-                    time.sleep(3)
+                if attempt < RETRIES - 1:
+                    time.sleep(wait)
                     continue
                 break
-        if not github:
-            break
     import sys
     print("LLM errors:\n  " + "\n  ".join(errors), file=sys.stderr)
     if github and all("not JSON" in e or "Name or service" in e or "HTTP 401" in e or "HTTP 403" in e
