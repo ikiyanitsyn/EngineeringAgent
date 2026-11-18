@@ -317,9 +317,9 @@ def build_box(p: dict, folder: str | Path, step_a, step_b, wall: float = 4.0) ->
     cavity = Box(w - 2 * wall, l - 2 * wall, inner_h, align=(Align.CENTER, Align.CENTER, Align.MIN))
     box -= Pos(cx, cy, tf) * fillet(cavity.edges(), 2.0)   # rounded inside corners (no stress singularity)
     win_w = max(w - 2 * wall - 8.0, 10.0)                # windows through the two walls facing +/-Y
-    win_h = max(inner_h - 4.0, 8.0)
+    win_h = max(inner_h - 6.0, 8.0)                     # keep 3 mm clear of the rounded inside corners
     win = Box(win_w, l + 2, win_h, align=(Align.CENTER, Align.CENTER, Align.MIN))
-    box -= Pos(cx, cy, tf + 2.0) * fillet(win.edges().filter_by(Axis.Y), min(4.0, win_h / 2 - 0.5))
+    box -= Pos(cx, cy, tf + 3.0) * fillet(win.edges().filter_by(Axis.Y), min(4.0, win_h / 2 - 0.5))
     for x, y in pa:
         box -= Pos(x, y, -1) * Cylinder(da / 2, tf + 2, align=(Align.CENTER, Align.CENTER, Align.MIN))
     for x, y in pb:
