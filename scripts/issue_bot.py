@@ -74,6 +74,13 @@ def _ask_with_fallback(convo: list[dict]) -> dict:
     except assistant.LLMError as first:
         if os.environ.get("ENGAGENT_NO_LOCAL_LLM") or ":11434" in (os.environ.get("ENGAGENT_LLM_URL") or ""):
             raise                       # local fallback switched off, or the local model is what just failed
+        from engagent.rules import template_of
+        user_text = " ".join(m["content"] for m in convo if m["role"] == "user").lower()
+        if not template_of(user_text):   # a custom shape: the small local model would only guess a template
+            raise assistant.LLMError(
+                "the hosted AI model is busy or unavailable right now, and this request needs a custom "
+                "shape, which the small backup model on the runner cannot design reliably (it would only "
+                f"guess a standard part). Please post the request again in a few minutes. Details: {first}")
         if assistant.time_left() < 600:  # not enough time left to start the slow local model
             raise assistant.LLMError(f"{first} - and too little time was left to try the local model; "
                                      "post the request again in a few minutes")
@@ -189,8 +196,16 @@ def main() -> int:
                 if out["attempts"] > 1:
                     plan += f"\n\n_(The first attempt had errors; corrected automatically, {out['attempts']} attempts.)_"
     except assistant.LLMError as e:
-        head = (f"### ❌ The language model could not be used\n{e}\n\nYou can still paste a request made by any "
-                f"chatbot (see `docs/CHATBOT-PROMPT.md`) or `ea` command lines into a comment.")
+        msg = str(e)
+        busy = re.search(r"HTTP (503|429)|high demand|busy|did not answer in time", msg)
+        lead = msg.split(" Details:")[0] if "custom shape" in msg else (
+            "The AI service (Gemini) is overloaded or over its free quota right now, so I could not read your "
+            "request." if busy else "The AI model could not be used.")
+        head = (f"### {'⏳ The AI service is busy' if busy else '❌ The language model could not be used'}\n"
+                f"{lead}\n\n**What to do:** reply *try again* in a few minutes. Requests the built-in rules "
+                f"understand (bars, plates, brackets, boxes, washers, heat in a bar...) and pasted `ea` command "
+                f"lines work even while the AI service is down."
+                f"\n\n<details><summary>Technical details</summary>\n\n```\n{msg[:1500]}\n```\n</details>")
     except Exception as e:  # never leave the user without an answer
         head = f"### ❌ Unexpected error\n`{type(e).__name__}: {e}`\n\n[Log]({RUN_URL})"
 

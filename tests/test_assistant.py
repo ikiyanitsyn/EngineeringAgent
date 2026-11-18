@@ -319,3 +319,49 @@ def test_geometry_script_time_limit(monkeypatch, tmp_path):
     monkeypatch.setenv("ENGAGENT_SCRIPT_TIMEOUT", "1")
     with pytest.raises(RuntimeError, match="took longer than 1 s"):
         run_script(script)
+
+
+class Busy(BaseHTTPRequestHandler):
+    calls = 0
+    fail_first = 0
+
+    def do_POST(self):
+        self.rfile.read(int(self.headers["Content-Length"]))
+        Busy.calls += 1
+        if Busy.calls <= Busy.fail_first:
+            body = b'{"error": {"code": 503, "message": "high demand"}}'
+            self.send_response(503)
+        else:
+            body = json.dumps({"choices": [{"message": {"role": "assistant", "content": "OK"}}]}).encode()
+            self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, *a):
+        pass
+
+
+def test_a_busy_provider_is_waited_out_within_the_budget(monkeypatch):
+    """Live issue #18: Gemini answered 503 'high demand' for minutes; the bot must keep trying, not guess."""
+    import time as _t
+    srv = HTTPServer(("127.0.0.1", 0), Busy)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    try:
+        Busy.calls, Busy.fail_first = 0, 7                      # more than one full round of tries
+        monkeypatch.setenv("ENGAGENT_LLM_URL", f"http://127.0.0.1:{srv.server_port}/v1/chat/completions")
+        monkeypatch.setenv("ENGAGENT_LLM_MODEL", "m1")
+        monkeypatch.setenv("ENGAGENT_LLM_KEY", "k")
+        monkeypatch.setenv("ENGAGENT_LLM_FALLBACK_MODELS", "m2")
+        monkeypatch.setenv("ENGAGENT_DEADLINE", str(_t.time() + 3600))
+        monkeypatch.setattr(assistant.time, "sleep", lambda s: None)
+        assert assistant.complete([{"role": "user", "content": "hi"}]) == "OK"
+        assert Busy.calls == 8
+        # without a deadline (command line) there is one round only
+        Busy.calls = 0
+        monkeypatch.delenv("ENGAGENT_DEADLINE")
+        with pytest.raises(assistant.LLMError):
+            assistant.complete([{"role": "user", "content": "hi"}])
+    finally:
+        srv.shutdown()

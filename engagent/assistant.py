@@ -170,6 +170,24 @@ def complete(messages: list[dict], *, model: str | None = None, timeout: float =
         targets += [(s["url"], m) for m in fallback_models(s["url"]) if m != first]
     errors: list[str] = []
     import sys
+    rounds = 4 if os.environ.get("ENGAGENT_DEADLINE") else 1      # the bot waits out outages; the CLI does not
+    for rnd in range(rounds):                          # whole rounds: a provider-wide 'high demand' (503)
+        if rnd:                                       # usually clears within minutes - wait it out
+            busy = all(re.search(r"HTTP (5\d\d|429|408)|Timeout|timed out", e) for e in errors[-len(targets):])
+            if not busy or time_left() < 300:
+                break
+            pause = min(60 * rnd, time_left() - 240)
+            print(f"[{time.strftime('%H:%M:%S')}] all models busy - waiting {pause:.0f} s and trying again",
+                  file=sys.stderr, flush=True)
+            time.sleep(pause)
+        text = _try_targets(targets, s, messages, timeout, errors)
+        if text is not None:
+            return text
+    _raise_llm(errors, github)
+
+
+def _try_targets(targets, s, messages, timeout, errors):
+    import sys
     for url, m in targets:
         for attempt in range(RETRIES):
             wait = RETRY_WAIT[min(attempt, len(RETRY_WAIT) - 1)]
@@ -198,6 +216,10 @@ def complete(messages: list[dict], *, model: str | None = None, timeout: float =
                     time.sleep(wait)
                     continue
                 break
+    return None
+
+
+def _raise_llm(errors, github):
     import sys
     print("LLM errors:\n  " + "\n  ".join(errors), file=sys.stderr)
     if github and all("not JSON" in e or "Name or service" in e or "HTTP 401" in e or "HTTP 403" in e
