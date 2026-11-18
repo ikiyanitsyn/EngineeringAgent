@@ -1,0 +1,51 @@
+{
+ "name": "41-arm-flange-check-i22",
+ "units": "metric",
+ "analysis": "static",
+ "title": "static analysis of arm_flange",
+ "geometry": {
+  "step": "arm_flange.step"
+ },
+ "material": "al_6061_t6",
+ "sets": {
+  "near_3_388_20_72_0": {
+   "near": [
+    -3.388,
+    -20.72,
+    0.0
+   ]
+  },
+  "near_12_83_12_62_12": {
+   "near": [
+    12.83,
+    -12.62,
+    12.0
+   ]
+  }
+ },
+ "constraints": [
+  {
+   "type": "fixed",
+   "on": "near_3_388_20_72_0"
+  }
+ ],
+ "loads": [
+  {
+   "type": "force",
+   "on": "near_12_83_12_62_12",
+   "value": [
+    0.0,
+    0.0,
+    -2000.0
+   ]
+  }
+ ],
+ "probes": {
+  "near_12_83_12_62_12": {
+   "set": "near_12_83_12_62_12"
+  }
+ },
+ "criteria": {
+  "yield_sf": 1.5
+ }
+}

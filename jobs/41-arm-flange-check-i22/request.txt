@@ -1,0 +1,1 @@
+ea analyze jobs/40-parts-i22/arm_flange.step -m al_6061_t6 --fix near:-3.388,-20.72,0 --force near:12.83,-12.62,12 0,0,-2000 --name "arm_flange check"
