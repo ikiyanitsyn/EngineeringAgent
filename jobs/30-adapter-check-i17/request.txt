@@ -1,0 +1,1 @@
+ea analyze jobs/29-adapter-i17/adapter.step -m al_6061_t6 --fix hole:6.6@-17.68,17.68,2.5+hole:6.6@-17.68,-17.68,2.5+hole:6.6@17.68,17.68,2.5+hole:6.6@17.68,-17.68,2.5 --force hole:6.6@15,-20,29.5+hole:6.6@15,20,29.5+hole:6.6@-15,-20,29.5+hole:6.6@-15,20,29.5 0,0,-15.69 --sf 2 --name "adapter check" --bound "beam.fixed_fixed_center_load P=15.69 L=51.36 E=68900MPa b=64 h=5 order"

@@ -1,0 +1,138 @@
+{
+ "name": "30-adapter-check-i17",
+ "units": "metric",
+ "analysis": "static",
+ "title": "static analysis of adapter",
+ "geometry": {
+  "step": "adapter.step"
+ },
+ "material": "al_6061_t6",
+ "sets": {
+  "hole_6_6_at_17_68_17_68": [
+   {
+    "cylinder": {
+     "diameter": 6.6,
+     "near": [
+      -17.68,
+      17.68,
+      2.5
+     ]
+    }
+   },
+   {
+    "cylinder": {
+     "diameter": 6.6,
+     "near": [
+      -17.68,
+      -17.68,
+      2.5
+     ]
+    }
+   },
+   {
+    "cylinder": {
+     "diameter": 6.6,
+     "near": [
+      17.68,
+      17.68,
+      2.5
+     ]
+    }
+   },
+   {
+    "cylinder": {
+     "diameter": 6.6,
+     "near": [
+      17.68,
+      -17.68,
+      2.5
+     ]
+    }
+   }
+  ],
+  "hole_6_6_at_15_20_29_5_h": [
+   {
+    "cylinder": {
+     "diameter": 6.6,
+     "near": [
+      15.0,
+      -20.0,
+      29.5
+     ]
+    }
+   },
+   {
+    "cylinder": {
+     "diameter": 6.6,
+     "near": [
+      15.0,
+      20.0,
+      29.5
+     ]
+    }
+   },
+   {
+    "cylinder": {
+     "diameter": 6.6,
+     "near": [
+      -15.0,
+      -20.0,
+      29.5
+     ]
+    }
+   },
+   {
+    "cylinder": {
+     "diameter": 6.6,
+     "near": [
+      -15.0,
+      20.0,
+      29.5
+     ]
+    }
+   }
+  ]
+ },
+ "constraints": [
+  {
+   "type": "fixed",
+   "on": "hole_6_6_at_17_68_17_68"
+  }
+ ],
+ "loads": [
+  {
+   "type": "force",
+   "on": "hole_6_6_at_15_20_29_5_h",
+   "value": [
+    0.0,
+    0.0,
+    -15.69
+   ]
+  }
+ ],
+ "probes": {
+  "hole_6_6_at_15_20_29_5_h": {
+   "set": "hole_6_6_at_15_20_29_5_h"
+  }
+ },
+ "criteria": {
+  "yield_sf": 2.0
+ },
+ "hand_calcs": [
+  {
+   "name": "Estimate: Both ends fixed, point load P at mid-span",
+   "calc": "beam.fixed_fixed_center_load",
+   "inputs": {
+    "P": 15.69,
+    "L": 51.36,
+    "E": "68900MPa",
+    "b": 64,
+    "h": 5
+   },
+   "output": "deflection",
+   "tol": 0.05,
+   "bound": "order",
+   "metric": "probe.hole_6_6_at_15_20_29_5_h.displacement"
+  }
+ ]
+}
