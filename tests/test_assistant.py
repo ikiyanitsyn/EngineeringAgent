@@ -365,3 +365,12 @@ def test_a_busy_provider_is_waited_out_within_the_budget(monkeypatch):
             assistant.complete([{"role": "user", "content": "hi"}])
     finally:
         srv.shutdown()
+
+
+def test_a_design_request_question_is_pushed_back(llm):
+    """Benchmark 010: Gemini asked for a load on a pure 3D-print request; it gets one push to just design it."""
+    llm.replies = ["What load should be applied to the clip?",
+                   "Plan: a clip.\n```bash\nea make standoff --print petg --name clip\n```"]
+    out = assistant.ask("A 3D-printable cable organizer clip in PETG for three 6 mm cables", run=False)
+    assert out["kind"] == "request" and out["attempts"] == 2
+    assert "no analysis was asked for" in llm.seen[-1]["messages"][-1]["content"]

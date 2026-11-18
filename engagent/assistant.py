@@ -453,6 +453,15 @@ def ask(conversation: list[dict] | str, *, max_fixes: int = 2, run: bool = True,
                               f"Loads I stated: {', '.join(stated_quantities(user_text)) or 'see my words'}. "
                               "A weight hanging down is a force in -Z. Use the supports I described."}]
                 continue
+            if attempt < max_fixes and not analysis_intent(user_text):
+                say("fixing", attempt)                 # a design / print request: no load is needed
+                messages += [{"role": "assistant", "content": reply},
+                             {"role": "user", "content":
+                              "This is a design (CAD / 3D-printing) request - no analysis was asked for, so no "
+                              "load, support or material question is needed. Choose sensible defaults, state them "
+                              "in the plan, and write the REQUEST now (`ea make` with a template, or a ```python "
+                              "block plus `ea make geometry.py --print petg`)."}]
+                continue
             out["kind"] = "question"
             return out
         user_text = "\n".join(m["content"] for m in conversation if m.get("role") == "user")
