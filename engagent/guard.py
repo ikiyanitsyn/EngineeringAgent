@@ -135,6 +135,10 @@ def check_request(request_text: str, user_text: str) -> list[str]:
         if job.get("material") and not _material_supported(json.dumps(job["material"]) if isinstance(job["material"], dict)
                                                            else str(job["material"]), user_text):
             missing.append(f"the material (the request assumed {job['material']})")
+        for part in job.get("parts") or []:
+            m = part.get("material") if isinstance(part, dict) else None
+            if m and not _material_supported(json.dumps(m) if isinstance(m, dict) else str(m), user_text):
+                missing.append(f"the material of '{part.get('name', 'a part')}' (the request assumed {m})")
         for load in job.get("loads", []):
             for v in (load.get("value") if isinstance(load.get("value"), list) else [load.get("value")]):
                 for n in _numbers(str(v or "")):
@@ -156,7 +160,8 @@ def question(missing: list[str]) -> str:
 
 INTENT = ("bend", "deflect", "sag", "stress", "strength", "strong", "hold", "break", "fail", "safety factor",
           "safe", "carry", "support the", "vibrat", "frequency", "resonan", "buckl", "temperature", "how hot",
-          "heat", "cool", "thermal", "fatigue", "analy", "fea", "stiff", "deform", "crack")
+          "heat", "cool", "thermal", "fatigue", "analy", "fea", "stiff", "deform", "crack", "stretch", "elongat",
+          "compress", "twist", "torsion", "displace", "move under", "yield", "load capacity")
 LOAD_UNITS = r"(n|kn|kg|g|lb|lbs|lbf|kip|psi|ksi|mpa|kpa|bar|pa|w|kw|nm|n\.?m|n\*m|°c|°f|degc|degf|c|f|k|newtons?|kilos?|pounds?)\b"
 SUPPORT_WORDS = ("fix", "bolt", "clamp", "held", "hold", "mount", "support", "wall", "weld", "screw", "rest",
                  "sits", "attached", "cantilever", "pinned", "both ends", "one end")

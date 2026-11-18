@@ -74,6 +74,11 @@ Run everything: `.venv/bin/python -m pytest -q` then `.venv/bin/python -m pytest
    **Simple print shapes (issue #9):** washers, spacers, tubes, discs, blocks and cubes are read from
    the words too ("a spacer for an M5 bolt, 12 mm diameter, 15 mm long" -> 5.5 mm ISO clearance);
    live: STEP/STL/3MF + print check PASS in 65 s, no model.
+   **Assemblies without a model:** template parts can now be placed (`"position"`, `"rotation"`), so an
+   assembly is pure JSON - the chatbot prompt teaches it, and the rules turn "a steel bar and an
+   aluminium bar ... bonded end to end ... pulled with 5 kN" into a tied two-part job (locally PASS,
+   series-stiffness hand check 0.3 %). "stretch", "compress", "twist" etc. now count as analysis
+   questions (before, "how much does it stretch?" silently got a CAD-only answer).
    **Speed, measured:** a thin 300 x 200 x 6 plate needs 133k nodes, and the convergence re-run at
    344k nodes takes ~300 s of serial CalculiX; the iterative solver was slower (427 s). Kept as is:
    the convergence run is what makes the result trustworthy.

@@ -286,11 +286,20 @@ def build(name: str, params: dict | None = None, system: str | None = None):
 
 
 def build_to_step(name: str, params: dict | None, step: str | Path, system: str | None = None,
-                  stl: bool = False, threemf: bool = False) -> dict:
+                  stl: bool = False, threemf: bool = False, position=None, rotation=None) -> dict:
+    """Build a template and export it. ``position`` [x, y, z] (lengths in the active units, or strings
+    with units) and ``rotation`` [rx, ry, rz] (degrees, applied first) place it - for assemblies."""
     import json
     from .export import export
     from .inspect import inspect_shape
     part = build(name, params, system)
+    if rotation:
+        from build123d import Rot
+        part = Rot(*[float(a) for a in rotation]) * part
+    if position:
+        from build123d import Pos
+        from .. import units as U
+        part = Pos(*[U.to_internal(v, "length", system) for v in position]) * part
     info = inspect_shape(part)
     if not info["valid"] or info["solids"] != 1:
         raise ValueError(f"template {name!r} with these parameters does not give one valid solid "

@@ -101,6 +101,16 @@ save(part)                                                    # must be the last
   Then use it:  ea make geometry.py --print petg   (and/or)   ea analyze last -m ... --fix ...
   Keep the part in the +X/+Y/+Z region starting at the origin so faces are easy to select.
 
+ASSEMBLIES (several parts, different materials) - a ```json job instead of `ea` lines:
+  "parts": [{"name": "a", "material": KEY, "geometry": {"template": "beam", "params": {...}}},
+            {"name": "b", "material": KEY, "geometry": {"template": "plate", "params": {...},
+                                                        "position": [X, Y, Z], "rotation": [RX, RY, RZ]}}],
+  "sets": {"joint_a": {"part": "a", "plane": "x", "at": 50}, "joint_b": {"part": "b", "plane": "x", "at": 50},
+           "fixed": {"part": "a", "plane": "x", "at": 0}, "tip": {"part": "b", "plane": "x", "at": 100}},
+  "interactions": [{"type": "tie", "master": "joint_a", "slave": "joint_b"}]   (bonded; or "contact" with "friction")
+  plus "analysis", "constraints" [{"type": "fixed", "on": "fixed"}], "loads" [{"type": "force", "on": "tip",
+  "value": [FX, FY, FZ]}] and "hand_calcs". The beam template is centred on Y and Z; the others start at the origin.
+
 EXAMPLES  (the numbers and materials below are EXAMPLES ONLY - never reuse them. If my request
 does not state a material or a load, ask for it instead of writing an `ea analyze` line.)
 Request: "printable PETG box 100x70x40 with 2.4 mm walls"

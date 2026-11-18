@@ -109,7 +109,8 @@ def _resolve_geometry(spec: Any, folder: Path, name: str, rebuild: bool = False,
     if "template" in spec:
         from ..cad import templates
         step = (folder / spec.get("step", f"{name}.step")).resolve()
-        templates.build_to_step(spec["template"], spec.get("params", {}), step, system)
+        templates.build_to_step(spec["template"], spec.get("params", {}), step, system,
+                                position=spec.get("position"), rotation=spec.get("rotation"))
         return step
     if "step" in spec:
         return (folder / spec["step"]).resolve()

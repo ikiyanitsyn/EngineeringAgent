@@ -35,6 +35,8 @@ the value is a string with a unit (`"0.25 in"`, `"210 GPa"`, `"150 degF"`).
     "geometry": {"step": "part.step"}
     "geometry": {"script": "geometry.py", "params": {"length": 120}}     // build123d script, re-run when changed
     "geometry": {"template": "l_bracket", "params": {"thickness": 6}}     // ./ea cad templates
+    "geometry": {"template": "beam", "params": {"length": 50}, "position": [50, 0, 0], "rotation": [0, 0, 90]}
+                                       // assemblies: place a template part (rotation in degrees, applied first)
 
 Scripts must end with `engagent.cad.save(part)`. STEP files are in mm.
 

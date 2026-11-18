@@ -304,7 +304,11 @@ def _run_form(form: dict, user_text: str, say, run: bool, out: dict) -> dict:
     if bad:
         out.update(kind="question", reply=question(bad))
         return out
-    req, q = structured.build_request(form, user_text)
+    if form.get("action") == "job":                      # a whole job (e.g. an assembly) from the rules
+        import json as _json
+        req, q = "```json\n" + _json.dumps(form["job"], indent=1) + "\n```", None
+    else:
+        req, q = structured.build_request(form, user_text)
     if form.get("_notes"):
         out["corrections"] = form["_notes"]
     if q:
@@ -314,7 +318,7 @@ def _run_form(form: dict, user_text: str, say, run: bool, out: dict) -> dict:
     if invented:
         out.update(kind="question", reply=question(invented), request=req)
         return out
-    out.update(request="```bash\n" + req + "\n```", reply=req)
+    out.update(request=req if req.startswith("```") else "```bash\n" + req + "\n```", reply=req)
     if not run:
         out["kind"] = "request"
         return out

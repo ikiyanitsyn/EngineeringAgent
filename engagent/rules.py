@@ -201,9 +201,92 @@ def _thermal(t: str, tmpl: str, form: dict) -> dict | None:
     return form
 
 
+def materials_in_order(user_text: str) -> list[str]:
+    """Library materials named in the text, in the order they are mentioned."""
+    from .guard import MATERIAL_MAP
+    t = " " + user_text.lower() + " "
+    hits = []
+    for words, key in MATERIAL_MAP:
+        pos = [t.find(w) for w in words if w in t]
+        if pos:
+            hits.append((min(pos), key))
+    out = []
+    for _, key in sorted(hits):
+        if key not in out:
+            out.append(key)
+    return out
+
+
+def _joined_bars(user_text: str, t: str) -> dict | None:
+    """Two bars of different materials joined end to end, held at one end, pulled or pushed at the
+    other: a tied two-part assembly with the series-stiffness hand check."""
+    if not re.search(r"\b(joined|bonded|glued|welded|brazed|soldered|fused|attached)\b", t) or \
+            not re.search(r"\bend[- ]to[- ]end\b", t):
+        return None
+    mats = materials_in_order(user_text)
+    if len(mats) != 2:
+        return None
+    sec = re.search(NUM + LEN_UNIT + r"\s*[x×*]\s*" + NUM + LEN_UNIT + r"(?!\s*[x×*])", t)
+    each = re.search(NUM + LEN_UNIT + r"\s*long each\b|\beach\s*" + NUM + LEN_UNIT + r"\s*long\b", t)
+    if not sec or not each:
+        return None
+    b = _mm(float(sec.group(1)), sec.group(2) or sec.group(4))
+    h = _mm(float(sec.group(3)), sec.group(4) or sec.group(2))
+    g = [x for x in each.groups() if x is not None]
+    L = _mm(float(g[0]), g[1] if len(g) > 1 else None)
+    if not re.search(r"\b(one end|an end|fixed at|held at|clamped at|bolted at)\b", t):
+        return None
+    forces = re.findall(FORCE_RX, t)
+    if len(forces) != 1:
+        return None
+    if re.search(r"\b(pull|pulled|pulling|tension|stretch)", t):
+        sign = 1
+    elif re.search(r"\b(push|pushed|pushing|compress)", t):
+        sign = -1
+    else:
+        return None
+    mag, unit = forces[0]
+    from .structured import TO_N
+    unit = {"n": "N", "newton": "N", "newtons": "N", "kn": "kN", "lbf": "lbf", "lb": "lb", "lbs": "lb",
+            "pound": "lb", "pounds": "lb"}.get(unit, "kg")
+    P = float(mag) * TO_N[unit]
+    from . import materials
+    E1, E2 = (materials.get(m, "metric").get("E") for m in mats)
+    A = b * h
+    delta = P * L / (A * E1) + P * L / (A * E2)
+    names = [m.split("_")[0] for m in mats]
+    if names[0] == names[1]:
+        names = ["part1", "part2"]
+    job = {
+        "name": "joined-bars", "units": "metric", "analysis": "static",
+        "title": f"{mats[0]} and {mats[1]} bars joined end to end",
+        "parts": [
+            {"name": names[0], "material": mats[0], "geometry": {
+                "template": "beam", "params": {"length": L, "width": b, "height": h}, "step": f"{names[0]}.step"}},
+            {"name": names[1], "material": mats[1], "geometry": {
+                "template": "beam", "params": {"length": L, "width": b, "height": h}, "position": [L, 0, 0],
+                "step": f"{names[1]}.step"}}],
+        "sets": {"fixed": {"part": names[0], "plane": "x", "at": 0},
+                 "joint_a": {"part": names[0], "plane": "x", "at": L},
+                 "joint_b": {"part": names[1], "plane": "x", "at": L},
+                 "tip": {"part": names[1], "plane": "x", "at": 2 * L}},
+        "interactions": [{"type": "tie", "master": "joint_a", "slave": "joint_b"}],
+        "constraints": [{"type": "fixed", "on": "fixed"}],
+        "loads": [{"type": "force", "on": "tip", "value": [sign * P, 0, 0]}],
+        "probes": {"tip": {"set": "tip"}},
+        "hand_calcs": [{"name": "Series elongation P L1/(A E1) + P L2/(A E2)", "expected": f"{sign * delta:.6g} mm",
+                        "kind": "length", "formula": "delta = P L1 / (A E1) + P L2 / (A E2)",
+                        "metric": "probe.tip.ux", "tol": 0.03}]}
+    return {"action": "job", "job": job, "name": "joined bars"}
+
+
 def form_from_words(user_text: str) -> dict | None:
     """A complete form for a common request, or None when the rules are not sure."""
     t = " " + user_text.lower().replace("×", "x") + " "
+    if analysis_intent(user_text):
+        joined = _joined_bars(user_text, t)
+        if joined:
+            return joined
     tmpl = template_of(t)
     if not tmpl:
         return None

@@ -104,3 +104,38 @@ def test_the_body_names_the_part_not_the_title():
 ])
 def test_simple_shapes_from_words(text, expected):
     assert _req(text) == expected
+
+
+JOINED = ("A steel bar and an aluminium bar, 10 x 10 mm, 50 mm long each, are bonded end to end. The steel end is "
+          "fixed at one end and the aluminium end is pulled with 5 kN. How much does it stretch?")
+
+
+def test_joined_bars_become_a_tied_assembly():
+    from engagent.guard import check_request
+    import json
+    f = form_from_words(JOINED)
+    assert f["action"] == "job"
+    job = f["job"]
+    assert [p["material"] for p in job["parts"]] == ["steel_generic", "al_6061_t6"]
+    assert job["parts"][1]["geometry"]["position"] == [50.0, 0, 0]
+    assert job["loads"][0]["value"] == [5000.0, 0, 0] and job["interactions"][0]["type"] == "tie"
+    assert check_request("```json\n" + json.dumps(job) + "\n```", JOINED) == []
+    # a material the user never named is refused
+    job["parts"][1]["material"] = "ti_6al4v"
+    assert check_request("```json\n" + json.dumps(job) + "\n```", JOINED)
+
+
+def test_stretch_is_an_analysis_question():
+    f = form_from_words("steel bar 100 x 10 x 10 mm fixed at one end, pulled with 2 kN at the free end, how much "
+                        "does it stretch?")
+    assert f is None or f["action"] != "make"          # never a silent CAD-only answer
+
+
+@pytest.mark.solver
+def test_joined_bars_end_to_end(monkeypatch, tmp_path):
+    monkeypatch.setenv("ENGAGENT_LLM_URL", "http://127.0.0.1:9/never")
+    monkeypatch.setenv("ENGAGENT_ROOT", str(tmp_path))
+    out = assistant.ask(JOINED)
+    assert out["kind"] == "results" and out["by_rules"]
+    fea = out["result"]["jobs"][0]
+    assert fea["verdict"] == "PASS" and any("Series elongation" in l and "PASS" in l for l in fea["summary"])
