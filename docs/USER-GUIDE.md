@@ -335,7 +335,7 @@ If the hand calculation and the computer disagree, one of them is wrong. Ask:
 - **Never a false FAIL:** an estimate can ask for a review, but it never fails a correct FEA.
 
 **On a phone.** The reply shows the stress plot and an animated GIF of the part deforming, right in the
-issue. On a computer the reply also links the interactive 3D viewer. Open it, choose *Download raw file*,
+issue (confirmed in the GitHub iPhone app). On a computer the reply also links the interactive 3D viewer. Open it, choose *Download raw file*,
 then open the file in your browser. Two-finger pinch zooms on touch screens.
 
 ## 6. Units: metric or inches

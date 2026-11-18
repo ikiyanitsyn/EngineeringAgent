@@ -86,7 +86,8 @@ Run everything: `.venv/bin/python -m pytest -q` then `.venv/bin/python -m pytest
    - Cantilever (#14): the rules ask for a missing section or load direction instead of assuming
      10 x 10 mm. The print check runs only when printing is mentioned. Answered 60 x 120 mm, the
      result is PASS, hand check 0.3 %.
-   - Viewing: an animated deformation GIF and plots are embedded in replies (phone-friendly); the
+   - Viewing: an animated deformation GIF and plots are embedded in replies - confirmed by the user in the
+     GitHub iPhone app; the
      viewer is committed and takes pinch zoom. GitHub Pages is not available for a private repo on
      the Free plan.
    - Queues: one per issue, so separate requests run in parallel; job folders carry the issue number.
