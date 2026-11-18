@@ -119,6 +119,13 @@ Request: "how hot does the end of a 100 mm steel bar get with 100 C at one end a
 ea make beam --name "hot bar"
 ea analyze last -m steel_generic --temp xmin 100 --convect xmax 25 20 --check "thermal.wall_conduction_convection k=50 L=100 h=25 T_fixed=100 T_ambient=20"
 ```
+Request: "steel beam 1 m long, 40 x 80 mm, resting on supports at both ends, 2 kN down at the middle - deflection?"
+(simple supports are NOT --fix (that clamps). Model half the beam: the mid-span face is a symmetry plane
+ carrying half the load; the end is held vertically only, so it can rotate.)
+```bash
+ea make beam length=500 width=40 height=80 --name "simply supported beam (half)"
+ea analyze last -m steel_generic --slide xmin z --slide xmax x --slide xmax y --force xmax 0,0,-1000 --check "beam.simply_supported_center_load P=2000 L=1000 E=210GPa b=40 h=80"
+```
 Request: "first natural frequency of a 100x10x10 mm steel cantilever"
 ```bash
 ea analyze beam -m steel_generic -a modal --fix xmin --check "beam.natural_frequency L=100 E=210GPa b=10 h=10 density=7850"

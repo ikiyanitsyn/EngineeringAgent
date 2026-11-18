@@ -214,3 +214,15 @@ def test_a_follow_up_comment_never_changes_the_part():
     c = "run a simple cantilever beam loaded at one end 500 newtons, material is steel, length is 2meters"
     f = form_from_words(c + "\n60 x 120 mm, straight down", first=c)
     assert f["action"] == "analyze" and f["params"]["height"] == 120
+
+
+def test_simply_supported_beam_uses_half_model_symmetry():
+    """Benchmark 002: Gemini clamped both ends (--fix xmin --fix xmax) - 86 % off the textbook."""
+    t = ("A steel beam 1 m long with a 40 x 80 mm cross-section (80 mm tall) rests on supports at both ends and "
+         "carries 2 kN straight down at the middle. How much does it deflect?")
+    f = form_from_words(t)
+    assert f["action"] == "raw"
+    r = f["request"]
+    assert "length=500" in r and "--slide xmin z" in r and "--slide xmax x" in r and "0,0,-1000" in r
+    assert "--fix" not in r and "simply_supported_center_load P=2000 L=1000" in r
+    assert form_from_words(t.replace("rests on supports", "is welded")) is None    # fixed ends: not this case

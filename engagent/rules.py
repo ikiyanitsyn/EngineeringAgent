@@ -148,8 +148,8 @@ def _mechanical(t: str, tmpl: str, form: dict) -> dict | None:
     if len(forces) + len(pressures) != 1:                # none, or several loads: let the model handle it
         return None
     if tmpl == "beam":
-        if re.search(r"\bboth ends\b|\beach end\b", t):
-            return None                                  # mid-span loads need a point selector: model/Claude
+        if re.search(r"\bboth ends\b|\beach end\b|simply supported|\btwo supports\b", t):
+            return _simply_supported(t, form, forces)
         if not re.search(r"\b(one end|an end|cantilever|to a wall|into a wall|wall at|clamped at|fixed at|"
                          r"bolted at|welded at|built[- ]in)\b", t):
             return None
@@ -195,6 +195,51 @@ def _mechanical(t: str, tmpl: str, form: dict) -> dict | None:
                 "unit": {"mpa": "MPa", "kpa": "kPa", "bar": "bar", "psi": "psi"}[unit]}
     form.update(fixed_faces=fixed, loads=[load], analysis="static")
     return form
+
+
+def _simply_supported(t: str, form: dict, forces) -> dict | None:
+    """A beam resting on supports at both ends with a load at the middle, modelled as HALF the beam:
+    the mid-span face is a symmetry plane (cannot move along the beam) carrying half the load, and the
+    far end is a simple support (held vertically only, free to rotate). Same mid-span deflection as the
+    whole beam, with no point-load singularity, and a textbook hand check."""
+    if re.search(r"\b(clamped|fixed|welded|built[- ]in|bolted)\b", t):
+        return None                                      # fixed ends: not a simple support - model/Claude
+    if not re.search(r"\b(middle|centre|center|mid-?span|halfway)\b", t) or len(forces) != 1:
+        return None
+    p = form["params"]
+    mag, unit = forces[0]
+    from .structured import TO_N
+    unit = {"n": "N", "newton": "N", "newtons": "N", "kn": "kN", "lbf": "lbf", "lb": "lb", "lbs": "lb",
+            "pound": "lb", "pounds": "lb"}.get(unit, "kg")
+    d = _direction(t) or ("-z" if unit in ("kg", "lb") else None)
+    missing = []
+    if not {"width", "height", "length"} <= set(p):
+        missing.append("the beam's length and cross-section (e.g. 1 m long, 40 x 80 mm)")
+    if d not in ("-z", "+z"):
+        missing.append(f"the direction of the {mag} {unit} load (e.g. straight down)")
+    if missing:
+        return {"action": "question", "question": "To run this analysis I still need: " + "; ".join(missing)
+                + ". Reply in a comment and I will run it."}
+    P = float(mag) * TO_N[unit]
+    sgn = -1 if d == "-z" else 1
+    L, b, h = p["length"], p["width"], p["height"]
+    from .guard import material_from_words
+    mat = material_from_words(t)
+    req = (f'ea make beam length={L / 2:g} width={b:g} height={h:g} --name "simply supported beam (half, symmetry)"\n'
+           f'ea analyze last -m {mat} --slide xmin z --slide xmax x --slide xmax y '
+           f'--force xmax 0,0,{sgn * P / 2:g} '
+           f'--check "beam.simply_supported_center_load P={P:g} L={L:g} E={_E(mat)} b={b:g} h={h:g}"')
+    return {"action": "raw", "request": req,
+            "plan": "_Modelled as half the beam using symmetry: the mid-span face carries half the load and "
+                    "cannot move along the beam; the end support holds the beam up but lets it rotate._"}
+
+
+def _E(mat: str) -> str:
+    from . import materials
+    try:
+        return f'{materials.get(mat, "metric").get("E"):g}MPa'
+    except Exception:
+        return "210GPa"
 
 
 def _thermal(t: str, tmpl: str, form: dict) -> dict | None:

@@ -362,6 +362,23 @@ def _run_form(form: dict, user_text: str, say, run: bool, out: dict) -> dict:
     if bad:
         out.update(kind="question", reply=question(bad))
         return out
+    if form.get("action") == "raw":                      # ready `ea` lines from the rules (e.g. symmetry)
+        from .guard import check_request, question
+        invented = check_request(form["request"], user_text)
+        if invented:
+            out.update(kind="question", reply=question(invented))
+            return out
+        if form.get("plan"):
+            out["plan"] = (out.get("plan", "") + "\n\n" + form["plan"]).strip()
+        req = form["request"]
+        out.update(request="```bash\n" + req + "\n```", reply=req)
+        if not run:
+            out["kind"] = "request"
+            return out
+        say("running", 0)
+        res = run_request(out["request"])
+        out.update(result=res, kind="results" if not res["errors"] else "error")
+        return out
     if form.get("action") == "job":                      # a whole job (e.g. an assembly) from the rules
         import json as _json
         req, q = "```json\n" + _json.dumps(form["job"], indent=1) + "\n```", None
