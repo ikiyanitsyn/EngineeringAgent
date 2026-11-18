@@ -1,0 +1,6 @@
+I will create a 6 mm thick aluminum L-bracket using the `l_bracket` template and run a static FEA stress analysis with a 300 N sideways load on the upright holes, fixed at the base holes, using Al 6061-T6 material properties.
+
+```bash
+ea make l_bracket thickness=6 --name "l_bracket_6mm"
+ea analyze last -m al_6061_t6 --fix hole:6.6@40,20,0 --force hole:6.6@0,20,40 0,300,0 --sf 2
+```
