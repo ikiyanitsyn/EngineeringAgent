@@ -1,0 +1,4 @@
+```bash
+ea make plate length=300 width=200 thickness=6 --name "plate"
+ea analyze last -m al_6061_t6 --fix ymin --force zmax 0,0,-98.0665
+```

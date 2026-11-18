@@ -1,0 +1,61 @@
+{
+ "name": "15-plate",
+ "units": "metric",
+ "analysis": "static",
+ "title": "static analysis of part",
+ "geometry": {
+  "template": "plate",
+  "params": {
+   "length": 300,
+   "width": 200,
+   "thickness": 6
+  }
+ },
+ "material": "al_6061_t6",
+ "sets": {
+  "ymin": "ymin",
+  "zmax": "zmax"
+ },
+ "constraints": [
+  {
+   "type": "fixed",
+   "on": "ymin"
+  }
+ ],
+ "loads": [
+  {
+   "type": "force",
+   "on": "zmax",
+   "value": [
+    0.0,
+    0.0,
+    -98.0665
+   ]
+  }
+ ],
+ "probes": {
+  "zmax": {
+   "set": "zmax"
+  }
+ },
+ "criteria": {
+  "yield_sf": 1.5
+ },
+ "hand_calcs": [
+  {
+   "name": "Hand check: Cantilever, uniform load w per unit length (deflection)",
+   "calc": "beam.cantilever_udl",
+   "inputs": {
+    "w": "0.490333 N/mm",
+    "L": "200 mm",
+    "E": "77320.2 MPa",
+    "b": "300 mm",
+    "h": "6 mm",
+    "nu": 0.33
+   },
+   "output": "deflection",
+   "tol": 0.1,
+   "metric": "max_displacement"
+  }
+ ]
+}
