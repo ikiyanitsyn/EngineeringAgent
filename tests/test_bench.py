@@ -1,0 +1,30 @@
+"""Benchmark loop: cases are well formed and the judge scores fairly."""
+import json
+
+from engagent import bench
+
+
+def test_cases_are_well_formed():
+    cs = bench.cases()
+    assert len(cs) >= 10
+    for c in cs:
+        exp = json.loads((c / "expected.json").read_text())
+        assert exp["source"] and exp["expect"]
+        prompt = (c / "prompt.md").read_text()
+        for e in exp["expect"]:                      # the answer must never leak into the prompt
+            if isinstance(e["expected"], float):
+                assert f"{e['expected']:.3g}" not in prompt
+
+
+def test_judge_scores_by_magnitude_and_tolerance():
+    assert bench._judge({"expected": -126.0, "tol": 0.15}, 120.0)[0]          # compressive stress, by size
+    assert not bench._judge({"expected": 0.94, "tol": 0.05}, 1.2)[0]
+    assert bench._judge({"expected": [100, 70, 40], "tol": 0.001}, [100.0, 70.0, 40.0])[0]
+    assert not bench._judge({"expected": 1.0, "tol": 0.05}, None)[0]
+    assert bench._judge({"expected": True, "tol": 0}, True)[0]
+
+
+def test_scoreboard_counts_passes():
+    rows = [{"case": "a", "outcome": "PASS", "seconds": 3}, {"case": "b", "outcome": "ASKED", "seconds": 1}]
+    md = bench.scoreboard(rows)
+    assert "1 / 2 PASS" in md and "| b | ASKED |" in md

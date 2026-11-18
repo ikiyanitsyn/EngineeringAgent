@@ -1,0 +1,59 @@
+# Benchmark loop (phase 1): solve every case in benchmarks/ blind, exactly as the issue bot would
+# (rules first, then the configured model - your Gemini key), score it against the source's answer,
+# and commit benchmarks/SCOREBOARD.md. Manual only (Actions tab > bench > Run workflow), so it never
+# spends minutes or model quota unless you start it.
+name: bench
+
+on:
+  workflow_dispatch:
+    inputs:
+      only:
+        description: "Run only cases whose name contains this (empty = all)"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: bench
+  cancel-in-progress: false
+
+jobs:
+  bench:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - name: Restore the cached solver packages
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/solver-debs
+          key: solver-debs-ubuntu-24.04-v1
+      - name: Install solver
+        run: bash scripts/install_solver.sh
+      - name: Install EngineeringAgent
+        run: python -m pip install -q -e .
+      - name: Run the benchmark (blind)
+        env:
+          ENGAGENT_LLM_KEY: ${{ secrets.ENGAGENT_LLM_KEY }}
+          ENGAGENT_LLM_URL: ${{ vars.ENGAGENT_LLM_URL }}
+          ENGAGENT_LLM_MODEL: ${{ vars.ENGAGENT_LLM_MODEL }}
+          ENGAGENT_NO_LOCAL_LLM: "1"
+        run: |
+          export ENGAGENT_DEADLINE=$(python -c "import time; print(time.time() + 6000)")
+          if [ -n "${{ inputs.only }}" ]; then python -m engagent.cli bench --only "${{ inputs.only }}"; else python -m engagent.cli bench; fi
+          cat benchmarks/SCOREBOARD.md >> "$GITHUB_STEP_SUMMARY" || true
+      - name: Commit the scoreboard
+        if: inputs.only == ''
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add benchmarks/SCOREBOARD.md benchmarks/SCOREBOARD.json
+          git diff --cached --quiet || git commit -m "Benchmark scoreboard"
+          for i in 1 2 3; do git push origin HEAD:${{ github.ref_name }} && break; git pull --rebase origin ${{ github.ref_name }}; done

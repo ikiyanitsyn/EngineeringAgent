@@ -1,0 +1,11 @@
+{
+ "source": "Euler buckling, fixed-free (K = 2)",
+ "expect": [
+  {
+   "metric": "buckling_factor_1",
+   "expected": 6.90872308076255,
+   "unit": "",
+   "tol": 0.05
+  }
+ ]
+}

@@ -236,6 +236,13 @@ def _bound_spec(spec: str) -> str:
     return f"bound:{way} " + (spec[:m.start()] if m else spec)
 
 
+def cmd_bench(a):
+    from . import bench
+    out = None if a.no_write or a.only else bench.project_root() / "benchmarks" / "SCOREBOARD.md"
+    rows = bench.run(only=a.only, out_md=out)
+    _out(a, rows, [bench.scoreboard(rows)] + ([f"Wrote {out}"] if out else []))
+
+
 def cmd_cad_printcheck(a):
     from .cad.printcheck import print_check
     r = print_check(a.file, a.process, a.material, orientation=a.orientation,
@@ -670,6 +677,10 @@ def build_parser() -> argparse.ArgumentParser:
                         "falls on the expected side - 'lower' (default): FEA at or above the estimate")
     q.add_argument("--quick", action="store_true", help="skip the mesh-convergence run")
     q.add_argument("--name"); q.add_argument("--folder"); q.add_argument("--title")
+
+    q = add(sub, "bench", cmd_bench, "run the benchmark cases blind and write benchmarks/SCOREBOARD.md")
+    q.add_argument("--only", help="run only cases whose name contains this")
+    q.add_argument("--no-write", action="store_true", help="print only, do not update the scoreboard")
 
     q = add(sub, "ask", cmd_ask, "PLAIN ENGLISH: describe a part or analysis; an AI model writes and runs the request")
     q.add_argument("text", nargs="*", help='e.g. "printable PETG box 100x70x40 with 2.4 mm walls"')

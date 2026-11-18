@@ -1,0 +1,11 @@
+{
+ "source": "Roark's Formulas, Table 8.1 case 1a (cantilever, end load), with shear",
+ "expect": [
+  {
+   "metric": "max_displacement",
+   "expected": 0.9412516066666666,
+   "unit": "mm",
+   "tol": 0.05
+  }
+ ]
+}

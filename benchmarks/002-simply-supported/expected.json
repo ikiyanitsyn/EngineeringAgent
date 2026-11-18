@@ -1,0 +1,11 @@
+{
+ "source": "Roark, Table 8.1 case 1e (simply supported, centre load)",
+ "expect": [
+  {
+   "metric": "max_displacement",
+   "expected": 0.11625744047619048,
+   "unit": "mm",
+   "tol": 0.07
+  }
+ ]
+}

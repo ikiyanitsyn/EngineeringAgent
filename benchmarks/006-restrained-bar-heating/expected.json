@@ -1,0 +1,11 @@
+{
+ "source": "sigma = E alpha dT (fully restrained bar; 3-D ends add a little)",
+ "expect": [
+  {
+   "metric": "max_von_mises",
+   "expected": -126.0,
+   "unit": "MPa",
+   "tol": 0.15
+  }
+ ]
+}

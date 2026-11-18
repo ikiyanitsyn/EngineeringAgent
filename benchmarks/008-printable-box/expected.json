@@ -1,0 +1,15 @@
+{
+ "source": "dimensions as asked",
+ "expect": [
+  {
+   "metric": "cad.size",
+   "expected": [
+    100,
+    70,
+    40
+   ],
+   "unit": "mm",
+   "tol": 0.001
+  }
+ ]
+}

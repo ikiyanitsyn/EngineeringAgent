@@ -1,0 +1,11 @@
+{
+ "source": "series springs: P L1/(A E1) + P L2/(A E2)",
+ "expect": [
+  {
+   "metric": "max_displacement",
+   "expected": 0.0481892321514963,
+   "unit": "mm",
+   "tol": 0.03
+  }
+ ]
+}

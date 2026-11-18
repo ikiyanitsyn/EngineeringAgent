@@ -1,0 +1,11 @@
+{
+ "source": "Euler-Bernoulli beam, clamped-free, first mode",
+ "expect": [
+  {
+   "metric": "frequency_1",
+   "expected": 45.33519132729243,
+   "unit": "Hz",
+   "tol": 0.05
+  }
+ ]
+}

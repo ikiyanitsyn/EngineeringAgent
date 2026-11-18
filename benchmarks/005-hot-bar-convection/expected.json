@@ -1,0 +1,11 @@
+{
+ "source": "Incropera 3.1.3, thermal circuit",
+ "expect": [
+  {
+   "metric": "min_temperature",
+   "expected": 96.19047619047618,
+   "unit": "degC",
+   "tol": 0.01
+  }
+ ]
+}

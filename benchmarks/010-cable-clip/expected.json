@@ -1,0 +1,11 @@
+{
+ "source": "custom shape: a valid printable solid; fit judged by eye",
+ "expect": [
+  {
+   "metric": "cad.valid",
+   "expected": true,
+   "unit": "",
+   "tol": 0
+  }
+ ]
+}
