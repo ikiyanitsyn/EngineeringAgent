@@ -1,0 +1,6 @@
+I will generate the 6 mm L-bracket and analyze it under the same 300 N sideways load using mild steel (`steel_s235`). A simplified cantilever beam hand calculation is included as a bounding check.
+
+```bash
+ea make l_bracket thickness=6 --name "l_bracket_steel"
+ea analyze last -m steel_generic --fix hole:6.6@40,20,0 --force hole:6.6@0,20,40 0,300,0 --sf 2
+```
