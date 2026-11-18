@@ -98,7 +98,7 @@ def plan(step_a, fid_a, step_b, fid_b, screw_a="M6", screw_b="M6", max_offset=60
         if best:
             break
     centred = layout(0.0, np.zeros(2))
-    out = {"screw_a": screw_a, "screw_b": screw_b, "need_gap": need, "pa": pa.tolist(),
+    out = {"screw_a": screw_a, "screw_b": screw_b, "need_gap": need, "pa": pa.tolist(), "pb0": pb.tolist(),
            "centred": {"gap": centred[1], "a_free": centred[2], "b_free": centred[3]},
            "fa": fa, "fb": fb, "ca": ca.tolist(), "cb": cb.tolist()}
     if not best:
@@ -196,17 +196,22 @@ def fea_request(folder, material: str, mass_kg: float, g_factor: float) -> str:
     import json
     info = json.loads((Path(folder) / "adapter.json").read_text())
     t = info["thickness"]
-    sel = lambda pts, d: "+".join(f"hole:{d:g}@{x:.4g},{y:.4g},{t / 2:.4g}" for x, y in pts)   # noqa: E731
+    sel = lambda pts, d, z: "+".join(f"hole:{d:g}@{x:.4g},{y:.4g},{z:.4g}" for x, y in pts)   # noqa: E731
+    za, zb = info.get("z_a", t / 2), info.get("z_b", t / 2)
     F = mass_kg * 9.80665 * g_factor
     ca, cb = np.mean(info["holes_a"], axis=0), np.mean(info["holes_b"], axis=0)
     L = max(float(np.linalg.norm(cb - ca)), t)
     b = min(info["size"])
+    calc = "beam.cantilever_end_load"
+    if info.get("kind") == "box":                     # the ceiling spans between the two end walls
+        calc, L, b = "beam.fixed_fixed_center_load", info["size"][0] - 2 * info.get("wall", 4.0), info["size"][1]
+    t = info.get("plate_t", t)
     rel = str(Path(folder) / "adapter.step")
     from .. import materials
     E = materials.get(material, "metric").get("E")
-    return (f'ea analyze {rel} -m {material} --fix {sel(info["holes_a"], info["clear_a"])} '
-            f'--force {sel(info["holes_b"], info["clear_b"])} 0,0,{-F:.4g} --sf 2 --name "adapter check" '
-            f'--bound "beam.cantilever_end_load P={F:.4g} L={L:.4g} E={E:g}MPa b={b:.4g} h={t:g} order"')
+    return (f'ea analyze {rel} -m {material} --fix {sel(info["holes_a"], info["clear_a"], za)} '
+            f'--force {sel(info["holes_b"], info["clear_b"], zb)} 0,0,{-F:.4g} --sf 2 --name "adapter check" '
+            f'--bound "{calc} P={F:.4g} L={L:.4g} E={E:g}MPa b={b:.4g} h={t:g} order"')
 
 
 def report_lines(p: dict, b: dict | None) -> list[str]:
@@ -273,7 +278,73 @@ def picture(assembly_step, path, title: str = "Adapter assembly") -> Path:
         ax.set_axis_off()
         ax.set_title(name, fontsize=9)
     fig.suptitle(title, fontsize=11)
-    fig.text(0.5, 0.02, "grey = part A, orange = adapter plate, blue = part B", ha="center", fontsize=8, color="#555")
+    fig.text(0.5, 0.02, "grey = part A, orange = adapter, blue = part B", ha="center", fontsize=8, color="#555")
     fig.savefig(path, bbox_inches="tight", facecolor="white")
     plt.close(fig)
     return Path(path)
+
+
+def build_box(p: dict, folder: str | Path, step_a, step_b, wall: float = 4.0) -> dict:
+    """On-axis box adapter for when a centred flat plate cannot be assembled: a floor bolted to part A, a
+    ceiling bolted to part B, all screw heads inside, and side windows to reach them with a ball-end key."""
+    import json
+    from build123d import Align, Box, Compound, Cylinder, Location, Plane, Pos, Vector, export_step, fillet, Axis
+    from .inspect import load_shape
+    folder = Path(folder)
+    sa, sb = p["screw_a"], p["screw_b"]
+    da, Ha, ka = SHCS[sa][0], SHCS[sa][1], SHCS[sa][2]
+    db, Hb, kb = SHCS[sb][0], SHCS[sb][1], SHCS[sb][2]
+    pa, pb = np.array(p["pa"]), np.array(p["pb0"])
+    tf = tc = max(5.0, round(0.8 * max(float(sa[1:]), float(sb[1:]))))   # floor / ceiling thickness
+
+    def length(screw, grip, depth):
+        d = float(screw[1:])
+        fits = [L for L in LENGTHS if L - grip <= depth - 1.0]
+        L = max(fits) if fits else LENGTHS[0]
+        e = L - grip
+        return L, ("" if e >= 1.5 * d else f" - {e:.3g} mm of thread engaged ({e / d:.2g} x d)")
+    La, na = length(sa, tf, _pattern(p["fa"]).get("depth", 99))
+    Lb, nb = length(sb, tc, _pattern(p["fb"]).get("depth", 99))
+    inner_h = math.ceil(max(La + ka, Lb + kb) + 4.0)    # a screw stands upright inside before it is driven
+    H = tf + inner_h + tc
+    allp = np.vstack([pa, pb])
+    m = max(Ha, Hb) / 2 + 3.0                           # head + key clearance to the inner wall
+    lo, hi = allp.min(axis=0) - m - wall, allp.max(axis=0) + m + wall
+    w, l = hi - lo
+    cx, cy = (lo + hi) / 2
+    box = Pos(cx, cy, 0) * Box(w, l, H, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    box = fillet(box.edges().filter_by(Axis.Z), min(wall, 4.0))
+    cavity = Box(w - 2 * wall, l - 2 * wall, inner_h, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    box -= Pos(cx, cy, tf) * fillet(cavity.edges(), 2.0)   # rounded inside corners (no stress singularity)
+    win_w = max(w - 2 * wall - 8.0, 10.0)                # windows through the two walls facing +/-Y
+    win_h = max(inner_h - 4.0, 8.0)
+    win = Box(win_w, l + 2, win_h, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    box -= Pos(cx, cy, tf + 2.0) * fillet(win.edges().filter_by(Axis.Y), min(4.0, win_h / 2 - 0.5))
+    for x, y in pa:
+        box -= Pos(x, y, -1) * Cylinder(da / 2, tf + 2, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    for x, y in pb:
+        box -= Pos(x, y, H - tc - 1) * Cylinder(db / 2, tc + 2, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    export_step(box, folder / "adapter.step")
+    fa, fb = p["fa"], p["fb"]
+    la = Plane(origin=Vector(*p["ca"]), x_dir=Vector(*fa["u"]), z_dir=Vector(*fa["normal"])).location
+    lb = Plane(origin=Vector(*p["cb"]), x_dir=Vector(*fb["u"]), z_dir=Vector(*[-x for x in fb["normal"]])).location
+    part_a = la.inverse() * load_shape(step_a)
+    part_b = Pos(0, 0, H) * (lb.inverse() * load_shape(step_b))
+    export_step(Compound([part_a, box, part_b]), folder / "assembly.step")
+    info = {"plate": str(folder / "adapter.step"), "assembly": str(folder / "assembly.step"), "kind": "box",
+            "thickness": H, "plate_t": tf, "size": [float(w), float(l)],
+            "screws": [f"{len(pa)} x ISO 4762 {sa} x {La} (box floor to part A, heads inside){na}",
+                       f"{len(pb)} x ISO 4762 {sb} x {Lb} (part B to box ceiling, heads inside){nb}"],
+            "holes_a": pa.tolist(), "holes_b": pb.tolist(), "clear_a": da, "clear_b": db, "screw_a": sa,
+            "screw_b": sb, "z_a": tf / 2, "z_b": H - tc / 2, "wall": wall, "windows": [float(win_w), float(win_h)]}
+    (folder / "adapter.json").write_text(json.dumps(info, indent=1), encoding="utf-8")
+    return info
+
+
+def box_lines(b: dict) -> list[str]:
+    return [f"**Box adapter (keeps part B on the axis of part A):** {b['size'][0]:.4g} x {b['size'][1]:.4g} x "
+            f"{b['thickness']:g} mm, {b['plate_t']:g} mm floor and ceiling, two side windows "
+            f"{b['windows'][0]:.3g} x {b['windows'][1]:.3g} mm.",
+            "**Assembly order:** bolt the box to part A (drop the screws in through a window, drive them with a "
+            "ball-end hex key), then set part B on top and drive its screws upward from inside.",
+            "**Screws:** " + "; ".join(b["screws"]) + "."]

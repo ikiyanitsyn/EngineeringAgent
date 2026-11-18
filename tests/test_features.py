@@ -93,3 +93,27 @@ def test_adapter_plan_is_assemblable_and_holes_line_up(tmp_path):
         L = int(s.split(" x ")[2].split(" ")[0])
         assert L - grip <= 10 - 1
     assert "thread engaged" in b["screws"][0]
+
+
+def test_box_adapter_keeps_parts_on_axis_and_holes_line_up(tmp_path):
+    import json
+    from build123d import import_step
+    from engagent.cad import adapter
+    p = adapter.plan(EX / "arm_flange.step", "F2", EX / "camera.step", "F2", "M6", "M6")
+    b = adapter.build_box(p, tmp_path, EX / "arm_flange.step", EX / "camera.step")
+    a, box, cam = sorted(import_step(str(tmp_path / "assembly.step")).solids(), key=lambda s: s.bounding_box().min.Z)
+
+    def holes(solid, r):
+        return {(round(f.axis_of_rotation.position.X, 2), round(f.axis_of_rotation.position.Y, 2))
+                for f in solid.faces() if "CYL" in str(f.geom_type) and f.is_circular_concave and abs(f.radius - r) < 0.01}
+    assert holes(a, 2.5) <= holes(box, 3.3) and holes(cam, 2.5) <= holes(box, 3.3)
+    assert box.is_valid and (not (a & box) or (a & box).volume < 1e-6) and (not (box & cam) or (box & cam).volume < 1e-6)
+    import numpy as np
+    ha, hc = np.array(sorted(holes(a, 2.5))), np.array(sorted(holes(cam, 2.5)))
+    assert np.allclose(ha.mean(axis=0), hc.mean(axis=0), atol=1e-3)   # camera pattern centred on the flange axis
+    info = json.loads((tmp_path / "adapter.json").read_text())
+    assert info["kind"] == "box" and info["z_b"] > info["z_a"]
+    inner = b["thickness"] - 2 * b["plate_t"]
+    assert all(inner >= int(s.split(" x ")[2].split(" ")[0]) + 6 for s in b["screws"])   # screw + head stand upright
+    req = adapter.fea_request(tmp_path, "al_6061_t6", 0.8, 2)
+    assert f",{info['z_b']:.4g} " in req.replace("+", " ") and "order" in req

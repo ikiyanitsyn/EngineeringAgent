@@ -10,6 +10,7 @@ GITHUB_RUN_ID, GITHUB_SERVER_URL, GITHUB_REF_NAME, GITHUB_OUTPUT, GITHUB_STEP_SU
 from __future__ import annotations
 
 import json
+import math
 import os
 import re
 import shutil
@@ -319,22 +320,32 @@ def _cad_join(latest: str, convo: list[dict], issue, comment_id):
         folder = quick.next_job_folder("adapter")
         thick = re.search(r"(\d+(?:\.\d+)?)\s*mm\s*(?:thick|plate)", latest, re.I)
         plan = adapter.plan(steps[a_name], fa, steps[b_name], fb, pick[0], pick[1])
-        lines = [f"Joining `{a_name}` {fa} (below) to `{b_name}` {fb} (on top) with a flat adapter plate."]
-        if plan["ok"]:
+        lines = [f"Joining `{a_name}` {fa} (below) to `{b_name}` {fb} (on top)."]
+        name = lambda x: x.replace("part A", f"`{a_name}`").replace("part B", f"`{b_name}`")   # noqa: E731
+        (folder / "plots").mkdir(exist_ok=True)
+        centred = plan["ok"] and not any(plan["offset"])
+        if centred:                                    # a flat plate works on the axis: simplest part
             built = adapter.build(plan, folder, steps[a_name], steps[b_name],
                                   float(thick.group(1)) if thick else None)
-            convert(folder / "adapter.step", stl=True, threemf=True)
-            (folder / "plots").mkdir(exist_ok=True)
-            adapter.picture(folder / "assembly.step", folder / "plots" / "assembly.png",
-                            f"{a_name} + adapter + {b_name}")
-            mat = material_from_words(latest) or "al_6061_t6"
-            lines += [x.replace("part A", f"`{a_name}`").replace("part B", f"`{b_name}`")
-                      for x in adapter.report_lines(plan, built)] + [
-                f"**Material:** `{mat}`" + ("" if material_from_words(latest) else " (default - say another if you "
-                                              "prefer, e.g. PETG to 3D print it)") + "."]
-        else:
-            lines += [x.replace("part A", f"`{a_name}`").replace("part B", f"`{b_name}`")
-                      for x in adapter.report_lines(plan, None)]
+            lines += [name(x) for x in adapter.report_lines(plan, built)]
+        else:                                          # keep B on A's axis: box adapter, screws inside
+            built = adapter.build_box(plan, folder, steps[a_name], steps[b_name])
+            lines += ["A flat plate on the axis cannot be assembled (one set of screws would be buried), so "
+                      "this is a box adapter with the screws inside and windows to reach them."]
+            lines += [name(x) for x in adapter.box_lines(built)]
+            if plan["ok"]:                             # the flat alternative, shifted sideways
+                alt = folder / "offset_plate"
+                alt.mkdir(exist_ok=True)
+                ab = adapter.build(plan, alt, steps[a_name], steps[b_name])
+                convert(alt / "adapter.step", stl=True, threemf=True)
+                lines.append(f"**Alternative:** a flat {ab['size'][0]:.4g} x {ab['size'][1]:.4g} x "
+                             f"{ab['thickness']:g} mm plate works if `{b_name}` may sit "
+                             f"{math.hypot(*plan['offset']):.3g} mm off-centre (files in `offset_plate/`).")
+        convert(folder / "adapter.step", stl=True, threemf=True)
+        adapter.picture(folder / "assembly.step", folder / "plots" / "assembly.png", f"{a_name} + adapter + {b_name}")
+        mat = material_from_words(latest) or "al_6061_t6"
+        lines.append(f"**Material:** `{mat}`" + ("" if material_from_words(latest) else
+                     " (default - say another if you prefer, e.g. PETG to 3D print it)") + ".")
         (folder / "request.txt").write_text(latest, encoding="utf-8")
         rel = os.path.relpath(folder, ROOT)
         folders = [rel]
@@ -346,7 +357,7 @@ def _cad_join(latest: str, convo: list[dict], issue, comment_id):
         if files and pushed:
             head += "\n\n**Files:** " + " · ".join(files)
             head += f'\n\n<img src="{raw}/plots/assembly.png?raw=true" alt="assembly" width="560">'
-        if plan["ok"]:
+        if True:
             head += ("\n\n**Next:** tell me the weight of the top part and the acceleration (e.g. *0.8 kg, 2 g*) "
                      "and I will check the plate with FEA and a hand calculation (the screws are sized above; their load is shown in the reactions).")
         head += "\n\n<sub>Engineering assistance, not sign-off.</sub>"
