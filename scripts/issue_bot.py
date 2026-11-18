@@ -189,7 +189,12 @@ def main() -> int:
             head = _result_body(result, plan, direct, req_text, folders, issue, followup)
     except Exception as e:  # still answer the user
         head = f"### ❌ Unexpected error while saving results\n`{type(e).__name__}: {e}`\n\n[Log]({RUN_URL})"
-    _finish(head + _model_footer(direct, out_by_rules), comment_id, folders)
+    footer = _model_footer(direct, out_by_rules)
+    if check:                                           # say what really happened, and show the request
+        footer = "\n\n<sub>Answered by: built-in adapter check (no AI model)</sub>"
+        head = ("<details><summary>Analysis that was run (copy, edit and post it as a comment to change it)"
+                "</summary>\n\n```bash\n" + check + "\n```\n</details>\n\n" + head)
+    _finish(head + footer, comment_id, folders)
     return 0
 
 
