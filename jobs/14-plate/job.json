@@ -1,0 +1,44 @@
+{
+ "name": "14-plate",
+ "units": "metric",
+ "analysis": "static",
+ "title": "static analysis of part",
+ "geometry": {
+  "template": "plate",
+  "params": {
+   "length": 300,
+   "width": 200,
+   "thickness": 6
+  }
+ },
+ "material": "al_6061_t6",
+ "sets": {
+  "ymin": "ymin",
+  "zmax": "zmax"
+ },
+ "constraints": [
+  {
+   "type": "fixed",
+   "on": "ymin"
+  }
+ ],
+ "loads": [
+  {
+   "type": "force",
+   "on": "zmax",
+   "value": [
+    0.0,
+    0.0,
+    -98.0665
+   ]
+  }
+ ],
+ "probes": {
+  "zmax": {
+   "set": "zmax"
+  }
+ },
+ "criteria": {
+  "yield_sf": 1.5
+ }
+}

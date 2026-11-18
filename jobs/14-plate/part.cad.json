@@ -1,0 +1,53 @@
+{
+ "valid": true,
+ "solids": 1,
+ "faces": 6,
+ "edges": 12,
+ "volume": 360000.0,
+ "area": 126000.0,
+ "bbox_min": [
+  0.0,
+  0.0,
+  0.0
+ ],
+ "bbox_max": [
+  300.0,
+  200.0,
+  6.0
+ ],
+ "bbox_size": [
+  300.0,
+  200.0,
+  6.0
+ ],
+ "center_of_mass": [
+  150.0,
+  100.0,
+  3.0
+ ],
+ "inertia_unit_density": [
+  [
+   1201080000.0,
+   0.0,
+   0.0
+  ],
+  [
+   0.0,
+   2701080000.0,
+   0.0
+  ],
+  [
+   0.0,
+   0.0,
+   3900000000.0
+  ]
+ ],
+ "face_types": {
+  "plane": 6
+ },
+ "cylinder_diameters": [],
+ "files": [
+  "/home/runner/work/EngineeringAgent/EngineeringAgent/jobs/14-plate/part.step"
+ ],
+ "template": "plate"
+}
