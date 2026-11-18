@@ -43,9 +43,18 @@ def _mm(value: float, unit: str | None) -> float:
 
 
 def template_of(t: str) -> str | None:
-    for name, rx in TEMPLATE_WORDS:
-        if re.search(rx, t):
-            return name
+    """The part the message is about: the template named first in the body (an issue title such as
+    "shelf bracket bar" only counts when the body names none)."""
+    lines = t.strip().split("\n", 1)
+    body = lines[1] if len(lines) > 1 and re.match(r"\s*request\b", lines[0]) else t
+    for text in (body, t):
+        hits = []
+        for rank, (name, rx) in enumerate(TEMPLATE_WORDS):
+            m = re.search(rx, text)
+            if m:
+                hits.append((m.start(), rank, name))
+        if hits:
+            return min(hits)[2]
     return None
 
 

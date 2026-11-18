@@ -66,7 +66,12 @@ Run everything: `.venv/bin/python -m pytest -q` then `.venv/bin/python -m pytest
    brackets, several loads) goes to the model. `ENGAGENT_NO_RULES=1` turns it off.
    **Confirmed live (issue #6):** "aluminium plate 300 x 200 x 6 mm, clamped along one long edge, 10 kg
    on top" -> answered with no model, 0.242 mm, SF 58.5, ~6.5 min (the FEA on a thin plate is most
-   of it). Automatic wide-plate check added afterwards: 3.0 % from FEA, PASS (locally).
+   of it). Automatic wide-plate check added afterwards: 3.0 % from FEA, PASS - confirmed live on
+   issue #8 (7.7 min). Issue #7 (steel bar, 20 kg) was PASS (hand check 0.9 %) but went to the
+   model because its title said "bracket": the part is now taken from the body, first mention.
+   **Speed, measured:** a thin 300 x 200 x 6 plate needs 133k nodes, and the convergence re-run at
+   344k nodes takes ~300 s of serial CalculiX; the iterative solver was slower (427 s). Kept as is:
+   the convergence run is what makes the result trustworthy.
    **Bot plumbing found live:** apt-get hung on two runners for 7+ min -> the solver's .deb files
    are cached by warm-model.yml and installed offline (10 s); the "working on it" comment is posted
    before setup; a failed or cancelled run edits it into a retry notice.

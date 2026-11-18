@@ -124,6 +124,8 @@ def needs_model() -> bool:
 
 
 def main() -> int:
+    # another request may have committed since this run checked out: take its job numbers into account
+    subprocess.run(["git", "pull", "-q", "--rebase", "origin", BRANCH], cwd=ROOT, capture_output=True)
     issue, latest, convo = _inputs()
     comment_id = int(os.environ["ENGAGENT_ACK_ID"]) if os.environ.get("ENGAGENT_ACK_ID", "").isdigit() else None
     if issue and not comment_id:

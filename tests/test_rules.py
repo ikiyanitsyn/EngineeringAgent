@@ -79,3 +79,11 @@ def test_plate_and_bar_get_automatic_hand_checks():
     job = quick.build_analysis_job("beam", material="steel_generic", analysis="thermal", temps=[["xmin", "100"]],
                                    convects=[["xmax", "25", "20"]], params={"length": 100})
     assert [h["output"] for h in job["hand_calcs"]] == ["T_surface", "heat_flow"]
+
+
+def test_the_body_names_the_part_not_the_title():
+    text = ("Request: steel shelf bracket bar\n\nSteel bar 150 x 12 x 25 mm bolted to a wall at one end, with 20 kg "
+            "hanging from the free end. How much does it bend - is it safe?")
+    assert "ea make beam length=150 width=12 height=25" in _req(text)
+    assert form_from_words("a lid for my electronics box")["template"] == "lid"
+    assert form_from_words("a box with a lid, 100x60x40")["template"] == "enclosure"
