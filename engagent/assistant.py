@@ -410,6 +410,11 @@ def ask(conversation: list[dict] | str, *, max_fixes: int = 2, run: bool = True,
     if local and os.environ.get("ENGAGENT_FREEFORM") != "1":
         return _ask_structured(conversation, say, run)
     messages = [{"role": "system", "content": chatbot_prompt(compact=local)}] + conversation
+    from .guard import material_from_words as _mfw
+    _mat = _mfw("\n".join(m["content"] for m in conversation if m.get("role") == "user"))
+    if _mat:                                          # say which library material the user's words mean, so the
+        messages = messages[:-1] + [dict(messages[-1], content=messages[-1]["content"]      # model never asks
+                                         + f"\n\n(Library material for my words: `{_mat}` - use exactly this key.)")]
     out: dict = {"attempts": 0}
     for attempt in range(max_fixes + 1):
         out["attempts"] = attempt + 1
