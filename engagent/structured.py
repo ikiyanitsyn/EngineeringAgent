@@ -112,11 +112,12 @@ def build_request(form: dict, user_text: str) -> tuple[str | None, str | None]:
     params = {k: v for k, v in (form.get("params") or {}).items() if k in defaults and isinstance(v, (int, float))}
     pstr = " ".join(f"{k}={v:g}" for k, v in params.items())
     name = re.sub(r'["\\]', "", str(form.get("name") or tmpl))[:40]
-    if action == "make":
-        pm = str(form.get("print_material") or "petg").lower()
-        if pm not in materials.LIBRARY:
+    if action == "make":                     # the 3D-print check only when printing was asked for
+        pm = str(form.get("print_material") or "").lower()
+        if pm and pm not in materials.LIBRARY:
             pm = "petg"
-        return f'ea make {tmpl} {pstr} --print {pm} --name "{name}"'.replace("  ", " "), None
+        pr = f" --print {pm}" if pm else ""
+        return f'ea make {tmpl} {pstr}{pr} --name "{name}"'.replace("  ", " "), None
     # analyze: material from the user's words (never from the model), loads converted here
     mat = material_from_words(user_text) or material_from_words(" " + str(form.get("material_words") or ""))
     missing = []

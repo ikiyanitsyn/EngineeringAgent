@@ -230,7 +230,12 @@ def assemble(folder: str | Path) -> dict:
             blocks.append(("calc", h["name"], h.get("status", "INFO"), lines,
                            U.fmt(h["expected"], h["kind"], system) if "expected" in h else "",
                            U.fmt(h["fea"], h["kind"], system) if "fea" in h else "",
-                           f"{h['diff'] * 100:.2f} % (tolerance {h['tol'] * 100:g} %)" if "diff" in h else ""))
+                           f"{h['diff'] * 100:.2f} % (tolerance {h['tol'] * 100:g} %)" if "diff" in h else
+                           (f"FEA = {h['ratio']:.3g} x estimate ({h['bound']} bound, simplified model)"
+                            if "bound" in h and "ratio" in h else "")))
+            if "bound" in h and "ratio" in h:
+                from ..fea.run import bound_text
+                lines.append(bound_text(h))
 
         # checklist
         blocks.append(("h2", f"{sec}. Verification checklist")); sec += 1

@@ -423,6 +423,10 @@ def link_check(spec: str, job: dict, system: str | None = None) -> dict:
     """
     import shlex
     from . import handcalc
+    bound = None                                   # "bound[:lower|upper|order] CALC ..." = simplified estimate
+    mb = re.match(r"\s*bound(?::(lower|upper|order))?\s+", spec)
+    if mb:
+        bound, spec = mb.group(1) or "lower", spec[mb.end():]
     head, _, target = spec.partition("->")
     tol_m = re.search(r"\s+tol=([\d.]+)\s*$", target)          # optional "-> out@metric tol=0.1"
     if tol_m:
@@ -487,6 +491,10 @@ def link_check(spec: str, job: dict, system: str | None = None) -> dict:
     if target.strip():
         entry["name"] += f" ({out_name.replace('_', ' ')})"
     entry.update(output=out_name, tol=float(tol_m.group(1)) if tol_m else tol)
+    if bound:
+        entry.update(bound=bound, name=entry["name"].replace("Hand check:", "Estimate:", 1))
+        if metric is None and out_name == "stress":
+            metric = "max_von_mises"
     if metric:
         entry["metric"] = metric
     return entry
@@ -550,6 +558,9 @@ def summary_lines(r: dict, top: int = 8) -> list[str]:
     for h in r.get("hand_calcs", []):
         if "diff" in h:
             lines.append(f"Hand calc '{h['name']}': {h['status']} ({h['diff'] * 100:.1f} % difference)")
+        elif "bound" in h and "ratio" in h:
+            from .fea.run import bound_text
+            lines.append(f"Hand calc (estimate): {bound_text(h)}")
     return lines
 
 

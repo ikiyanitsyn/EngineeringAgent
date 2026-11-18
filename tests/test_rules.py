@@ -44,7 +44,6 @@ def test_plate_edges():
 
 
 @pytest.mark.parametrize("text", [
-    "steel bar fixed at one end with 500 N at the tip, how much does it bend?",     # no direction given
     "aluminum L-bracket with 300 N on it, is it strong enough?",                     # bracket: model
     "steel beam 1 m long, both ends supported, 2 kN in the middle - stress?",        # mid-span: model
     "a bar at one end with 50 kg hanging at the end, how much does it bend?",       # no material
@@ -93,14 +92,14 @@ def test_the_body_names_the_part_not_the_title():
     ("print a washer 20 mm OD, 8.4 mm hole, 2 mm thick in PETG",
      'ea make standoff outer_diameter=20 hole=8.4 height=2 --print petg --name "washer"'),
     ("I need a spacer for an M5 bolt, 12 mm diameter, 15 mm long",
-     'ea make standoff outer_diameter=12 hole=5.5 height=15 --print petg --name "spacer"'),
+     'ea make standoff outer_diameter=12 hole=5.5 height=15 --name "spacer"'),
     ("3d print a 30 mm cube", 'ea make plate length=30 width=30 thickness=30 --print petg --name "cube"'),
     ("a PLA disc 40 mm diameter 3 mm thick", 'ea make standoff outer_diameter=40 hole=0 height=3 --print pla --name "disc"'),
     ("a block 60 x 40 x 10 with M4 holes in the corners",
-     'ea make plate length=60 width=40 thickness=10 hole_diameter=4.5 --print petg --name "block"'),
+     'ea make plate length=60 width=40 thickness=10 hole_diameter=4.5 --name "block"'),
     ("plate 80 x 50 x 5 with a 10 mm hole in the middle",
-     'ea make plate length=80 width=50 thickness=5 center_hole=10 --print petg --name "plate"'),
-    ("tube 25 mm od 21 mm id 100 mm long", 'ea make standoff outer_diameter=25 hole=21 height=100 --print petg --name "tube"'),
+     'ea make plate length=80 width=50 thickness=5 center_hole=10 --name "plate"'),
+    ("tube 25 mm od 21 mm id 100 mm long", 'ea make standoff outer_diameter=25 hole=21 height=100 --name "tube"'),
 ])
 def test_simple_shapes_from_words(text, expected):
     assert _req(text) == expected
@@ -139,3 +138,50 @@ def test_joined_bars_end_to_end(monkeypatch, tmp_path):
     assert out["kind"] == "results" and out["by_rules"]
     fea = out["result"]["jobs"][0]
     assert fea["verdict"] == "PASS" and any("Series elongation" in l and "PASS" in l for l in fea["summary"])
+
+
+
+def test_missing_analysis_inputs_get_one_question():
+    """Live: 'run a simple cantilever ... 500 newtons, steel, 2meters' got a 10x10 default and CAD only."""
+    for text in ["run a simple cantilever beam loaded at one end 500 newtons, material is steel, length is 2meters",
+                 "steel bar fixed at one end with 500 N at the tip, how much does it bend?"]:
+        f = form_from_words(text)
+        assert f["action"] == "question" and "cross-section" in f["question"] and "direction" in f["question"]
+    req = _req("run a simple cantilever beam loaded at one end 500 newtons, material is steel, length is 2meters"
+               "\n\n20 x 40 mm, straight down")
+    assert "width=20 height=40 length=2000" in req and "--force xmax 0,0,-500" in req and "--print" not in req
+
+
+def test_print_check_only_when_printing_is_mentioned():
+    assert "--print" not in _req("make me a beam 300 mm long")
+    assert "--print petg" in _req("I need a wall hook to 3D print for my coat")
+
+
+def test_bound_hand_calcs_are_marked_and_kept_by_autocorrect():
+    from engagent import quick
+    from engagent.cli import _bound_spec
+    from engagent.guard import autocorrect
+    assert _bound_spec("beam.cantilever_end_load P=1 L=2 E=3 b=4 h=5 upper").startswith("bound:upper beam.")
+    job = quick.build_analysis_job("l_bracket", material="al_6061_t6", fix=["hole:6.6@40,20,0"],
+                                   forces=[["hole:6.6@0,20,40", "0,300,0"]], params={"thickness": 6},
+                                   checks=[_bound_spec("beam.cantilever_end_load P=300 L=40 E=69GPa b=6 h=40")])
+    assert job["hand_calcs"][0]["bound"] == "lower" and job["hand_calcs"][0]["name"].startswith("Estimate:")
+    req = ('ea analyze last -m steel_s235 --fix xmin --force xmax 0,300,0 --bound '
+           '"beam.cantilever_end_load P=300 L=40 E=210GPa b=6 h=40"')
+    fixed, notes = autocorrect(req, "same bracket in mild steel, 300 N")
+    assert "--bound" in fixed and "steel_generic" in fixed and any("hand check" in n for n in notes)
+
+
+@pytest.mark.solver
+def test_bracket_bound_never_fails_a_correct_fea(monkeypatch, tmp_path):
+    """The rigid-base cantilever estimate is ~50x stiffer than the real bracket: consistent, not a FAIL."""
+    from engagent import quick
+    from engagent.cli import _bound_spec
+    monkeypatch.setenv("ENGAGENT_ROOT", str(tmp_path))
+    out = quick.analyze("l_bracket", params={"thickness": 6}, material="al_6061_t6", fix=["hole:6.6@40,20,0"],
+                        forces=[["hole:6.6@0,20,40", "0,300,0"]], converge=False, report=False,
+                        checks=[_bound_spec("beam.cantilever_end_load P=300 L=40 E=69GPa b=6 h=40")])
+    r = out["results"]
+    hc = next(c for c in r["checks"] if c["id"] == "hand_calc")
+    assert hc["status"] == "PASS" and "consistent" in hc["detail"], hc
+    assert r["hand_calcs"][0]["ratio"] > 10

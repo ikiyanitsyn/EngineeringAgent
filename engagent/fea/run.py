@@ -89,6 +89,19 @@ def metric_value(metrics: dict, name: str) -> dict:
                    f"available: {', '.join(sorted(metrics))}" + (f" (closest: {', '.join(hint)})" if hint else ""))
 
 
+def bound_text(h: dict) -> str:
+    """Plain words for a bounding (simplified) hand calculation."""
+    r = h.get("ratio", 0)
+    side = {"lower": "at or above", "upper": "at or below", "order": "of the same order as"}[h["bound"]]
+    head = f"{h['name']} is a simplified estimate (expected: FEA {side} it)"
+    if h["status"] == PASS:
+        why = (" - the simple model leaves out flexibility and stress raisers (base, holes, fillets) that the "
+               "FEA includes" if h["bound"] == "lower" and r > 1.5 else "")
+        return f"{head}: FEA = {r:.3g} x estimate, consistent{why}"
+    return (f"{head}: FEA = {r:.3g} x estimate, on the unexpected side - check the supports and loads; the "
+            f"estimate is a simplification, so this calls for a review, not a failed FEA")
+
+
 def _hand_calcs(job: Job, metrics: dict) -> list[dict]:
     rows = []
     for hc in job.hand_calcs:
@@ -119,9 +132,18 @@ def _hand_calcs(job: Job, metrics: dict) -> list[dict]:
                     diff = abs(fea - expected) / max(abs(expected), 1e-30)
                 else:
                     diff = abs(abs(fea) - abs(expected)) / max(abs(expected), 1e-30)
-                tol = float(hc.get("tol", 0.05))
-                row.update(metric=hc["metric"], fea=fea, diff=diff, tol=tol,
-                           status=PASS if diff <= tol else FAIL)
+                if hc.get("bound"):
+                    # a simplified model: only the side of the estimate the FEA falls on is checked.
+                    # 'lower' (default): the simple model leaves out flexibility and stress raisers
+                    # (base compliance, holes, fillets), so the FEA should be at or above it.
+                    way = hc["bound"] if hc["bound"] in ("lower", "upper", "order") else "lower"
+                    ratio = abs(fea) / max(abs(expected), 1e-30)
+                    ok = {"lower": ratio >= 0.9, "upper": ratio <= 1.1, "order": 0.2 <= ratio <= 5}[way]
+                    row.update(metric=hc["metric"], fea=fea, bound=way, ratio=ratio, status=PASS if ok else WARN)
+                else:
+                    tol = float(hc.get("tol", 0.05))
+                    row.update(metric=hc["metric"], fea=fea, diff=diff, tol=tol,
+                               status=PASS if diff <= tol else FAIL)
             else:
                 row.update(status=INFO)
         except Exception as e:  # report, never hide
@@ -250,17 +272,24 @@ def _checks(job: Job, mesh: Mesh, log: RunLog, metrics: dict, info: dict, hand: 
                 "flow with a hand calculation")
     # 5 hand calculations
     compared = [h for h in hand if "diff" in h or h["status"] == FAIL]
+    bounds = [h for h in hand if "bound" in h]
+    bound_txt = "; ".join(bound_text(h) for h in bounds)
     if not hand:
         add("hand_calc", "Agreement with hand calculation", NOT_DONE,
             "no hand calculation supplied - a result that cannot be predicted cannot be trusted")
-    elif not compared:
-        add("hand_calc", "Agreement with hand calculation", NOT_DONE,
-            "hand calculations are listed but none is linked to an FEA metric")
-    else:
+    elif compared:
         bad = [h for h in compared if h["status"] == FAIL]
         det = "; ".join(f"{h['name']}: " + (h["error"] if "error" in h else
                         f"{h['diff'] * 100:.2f} % (tol {h['tol'] * 100:g} %)") for h in compared)
-        add("hand_calc", "Agreement with hand calculation", FAIL if bad else PASS, det)
+        add("hand_calc", "Agreement with hand calculation", FAIL if bad else PASS,
+            det + (f"; also {bound_txt}" if bound_txt else ""))
+    elif bounds:
+        # estimate only: never makes a correct FEA look wrong - an unexpected side is a REVIEW, not a FAIL
+        add("hand_calc", "Agreement with hand calculation (simplified estimate)",
+            PASS if all(h["status"] == PASS for h in bounds) else WARN, bound_txt)
+    else:
+        add("hand_calc", "Agreement with hand calculation", NOT_DONE,
+            "hand calculations are listed but none is linked to an FEA metric")
     # 6 convergence
     if conv is None:
         add("convergence", "Mesh convergence", NOT_DONE, "run with converge=true (CLI: --converge)")

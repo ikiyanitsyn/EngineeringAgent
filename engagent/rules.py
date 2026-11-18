@@ -15,7 +15,7 @@ import re
 from .guard import analysis_intent, material_from_words
 
 NUM = r"(\d+(?:\.\d+)?)"
-LEN_UNIT = r"\s*(mm|cm|m|in|inch|inches|\"|')?"
+LEN_UNIT = r"\s*(mm|cm|millimet(?:er|re)s?|centimet(?:er|re)s?|met(?:er|re)s?|m|in|inch|inches|\"|')?"
 
 TEMPLATE_WORDS = [  # order matters: more specific first
     ("phone_stand", r"phone stand|tablet stand|phone holder"),
@@ -39,6 +39,7 @@ TEMP_RX = NUM + r"\s*(?:°\s*|deg(?:rees?)?\s*)?([cf])(?![a-z])"
 
 def _mm(value: float, unit: str | None) -> float:
     unit = (unit or "mm").lower()
+    unit = re.sub(r"^millimet(er|re)s?$", "mm", re.sub(r"^centimet(er|re)s?$", "cm", re.sub(r"^met(er|re)s?$", "m", unit)))
     return value * {"mm": 1, "cm": 10, "m": 1000, "in": 25.4, "inch": 25.4, "inches": 25.4, '"': 25.4,
                     "'": 304.8}.get(unit, 1)
 
@@ -76,6 +77,12 @@ def dimensions(t: str, tmpl: str) -> dict:
                 "enclosure": ("length", "width", "height"), "lid": ("length", "width", "thickness")}.get(tmpl)
         if keys:
             out.update(zip(keys, (a, b, c)))
+    if not triple and tmpl == "beam":                     # "40 x 80 mm (section)" = width x height
+        two = re.search(NUM + LEN_UNIT + r"\s*[x×*]\s*" + NUM + LEN_UNIT + r"(?!\s*[x×*])", t)
+        if two:
+            g = two.groups()
+            unit = g[3] or g[1]
+            out["width"], out["height"] = _mm(float(g[0]), g[1] or unit), _mm(float(g[2]), g[3] or unit)
     words = {"long": "length", "length": "length", "wide": "width", "width": "width",
              "tall": "height", "high": "height", "height": "height", "deep": "height",
              "thick": "thickness", "thickness": "thickness"}
@@ -146,7 +153,8 @@ def _mechanical(t: str, tmpl: str, form: dict) -> dict | None:
         if not re.search(r"\b(one end|an end|cantilever|to a wall|into a wall|wall at|clamped at|fixed at|"
                          r"bolted at|welded at|built[- ]in)\b", t):
             return None
-        if not re.search(r"\b(free end|the end|other end|its end|the tip|at the tip|end of)\b", t):
+        if not re.search(r"\b(free end|the end|other end|its end|the tip|at the tip|end of)\b", t) and \
+                not re.search(r"\bcantilever\b", t):         # a cantilever "loaded at one end" = at the tip
             return None
         fixed, face = ["xmin"], "xmax"
     elif tmpl == "plate":
@@ -168,8 +176,18 @@ def _mechanical(t: str, tmpl: str, form: dict) -> dict | None:
         unit = {"n": "N", "newton": "N", "newtons": "N", "kn": "kN", "lbf": "lbf", "lb": "lb", "lbs": "lb",
                 "pound": "lb", "pounds": "lb"}.get(unit, "kg")
         d = _direction(t) or ("-z" if unit in ("kg", "lb") else None)
+        missing = []
+        if tmpl == "beam" and not {"width", "height"} <= set(form["params"]):
+            missing.append("the cross-section of the beam (width x height in mm, e.g. 20 x 40 mm, or a "
+                           "standard section)")
         if not d:
-            return None
+            missing.append(f"the direction of the {mag} {unit} load (e.g. straight down, or along the beam)")
+        if missing:                                    # never guess an analysis input: ask once, for all of it
+            got = ", ".join(f"{k} {v:g} mm" for k, v in form["params"].items())
+            return {"action": "question", "question":
+                    "To run this analysis I still need: " + "; ".join(missing) + "."
+                    + (f" (I have: {got}, {mag} {unit} at the free end, {material_from_words(t) or 'material'}.)"
+                       if got else "") + " Reply in a comment and I will run it."}
         load = {"face": face, "kind": "force", "direction": d, "magnitude": float(mag), "unit": unit}
     else:
         mag, unit = pressures[0]
@@ -293,7 +311,10 @@ def form_from_words(user_text: str) -> dict | None:
     word = re.search(dict(TEMPLATE_WORDS)[tmpl], t)
     name = word.group(0).strip() if word and tmpl in ("standoff", "plate", "enclosure", "beam") else tmpl.replace("_", " ")
     form: dict = {"template": tmpl, "params": dimensions(t, tmpl), "name": name}
-    if not analysis_intent(user_text):
+    loaded = re.search(FORCE_RX, t) or re.search(PRESSURE_RX, t)
+    wants_fea = analysis_intent(user_text) or bool(loaded and material_from_words(user_text) and re.search(
+        r"\b(run|loaded|load|simulat\w*|check|calculate|what happens)\b", t))
+    if not wants_fea:
         form["action"] = "make"
         pm = next((m for m in PRINT_MATERIALS if re.search(rf"\b{m}\b", t)), None)
         if pm or re.search(PRINT_WORDS, t):

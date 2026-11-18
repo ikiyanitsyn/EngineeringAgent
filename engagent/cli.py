@@ -219,6 +219,14 @@ def cmd_cad_export(a):
     _out(a, [str(f) for f in files], ["Wrote " + ", ".join(str(f) for f in files)])
 
 
+def _bound_spec(spec: str) -> str:
+    """'CALC k=v ... [-> out@metric] upper' -> 'bound:upper CALC k=v ... [-> out@metric]'."""
+    import re
+    m = re.search(r"\s+(lower|upper|order)\s*$", spec)
+    way = m.group(1) if m else "lower"
+    return f"bound:{way} " + (spec[:m.start()] if m else spec)
+
+
 def cmd_cad_printcheck(a):
     from .cad.printcheck import print_check
     r = print_check(a.file, a.process, a.material, orientation=a.orientation,
@@ -464,7 +472,7 @@ def cmd_analyze(a):
                       temps=a.temp, convects=a.convect, heats=a.heat, dtemp=a.dT,
                       initial_temperature=a.t0, params=quick.kv_params(a.params), mesh_size=a.size,
                       modes=a.modes, duration=a.duration, criteria=crit or None, fatigue=a.fatigue,
-                      checks=a.check, title=a.title)
+                      checks=(a.check or []) + [_bound_spec(b) for b in (a.bound or [])] or None, title=a.title)
     res = r["results"]
     if a.json:
         print(json.dumps({"folder": r["folder"], "verdict": res["verdict"], "files": r["files"],
@@ -646,6 +654,9 @@ def build_parser() -> argparse.ArgumentParser:
     q.add_argument("--fatigue", action="store_true", help="add fatigue screening (load 0 -> max)")
     q.add_argument("--check", action="append", metavar='"CALC k=v ..."',
                    help="hand calculation to compare with, e.g. \"beam.cantilever_end_load P=500 L=200 E=210GPa b=10 h=20\"")
+    q.add_argument("--bound", action="append", metavar='"CALC k=v ... [lower|upper|order]"',
+                   help="a SIMPLIFIED hand calculation (no exact textbook case fits): only checks that the FEA "
+                        "falls on the expected side - 'lower' (default): FEA at or above the estimate")
     q.add_argument("--quick", action="store_true", help="skip the mesh-convergence run")
     q.add_argument("--name"); q.add_argument("--folder"); q.add_argument("--title")
 

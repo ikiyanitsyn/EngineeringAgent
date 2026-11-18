@@ -281,6 +281,23 @@ def _wrong_grade(key: str, mapped: str | None, user_text: str) -> bool:
     return not any(tok in t for tok in grade_tokens)        # e.g. s355 chosen but never mentioned
 
 
+def _fix_check(spec: str, material: str | None, force: float | None) -> str:
+    """Put the job's material stiffness (E, nu) and load (P) into a hand-calc spec."""
+    if material:
+        try:
+            from . import materials
+            m = materials.get(material, "metric")
+            if m.get("E"):
+                spec = re.sub(r"(?<![\w.])E=(\"[^\"]*\"|'[^']*'|\S+)", f'E="{m.get("E"):g} MPa"', spec)
+            if m.get("nu"):
+                spec = re.sub(r"(?<![\w.])nu=\S+", f"nu={m.get('nu'):g}", spec)
+        except Exception:
+            pass
+    if force:
+        spec = re.sub(r"(?<![\w.])P=(\"[^\"]*\"|'[^']*'|\S+)", f'P="{force:g} N"', spec)
+    return spec
+
+
 def autocorrect(request_text: str, user_text: str) -> tuple[str, list[str]]:
     """Replace invented materials / load magnitudes with the user's own, when unambiguous.
 
@@ -328,10 +345,19 @@ def autocorrect(request_text: str, user_text: str) -> tuple[str, list[str]]:
                     notes.append(f"pressure: used {pressures[0]:g} MPa from what you wrote")
                     changed = True
         if changed:
-            # --check hand calcs may carry the same invented numbers: drop them (the beam check is automatic)
-            if "--check" in argv:
-                k = argv.index("--check")
-                del argv[k:k + 2]
-                notes.append("hand check: re-derived from your values")
+            # hand calcs carry the same material / load: update them to the corrected values (never drop them)
+            new_mat = argv[argv.index("-m") + 1] if "-m" in argv and argv.index("-m") + 1 < len(argv) else None
+            fv = None
+            if "--force" in argv and argv.index("--force") + 2 < len(argv):
+                try:
+                    fv = max(abs(float(c)) for c in argv[argv.index("--force") + 2].split(","))
+                except ValueError:
+                    fv = None
+            for j, a in enumerate(argv):
+                if a in ("--check", "--bound") and j + 1 < len(argv):
+                    fixed = _fix_check(argv[j + 1], new_mat, fv)
+                    if fixed != argv[j + 1]:
+                        argv[j + 1] = fixed
+                        notes.append("hand check: updated to your material and load")
             lines[i] = "ea " + " ".join(shlex.quote(x) for x in argv[1:])
     return "\n".join(lines), list(dict.fromkeys(notes))

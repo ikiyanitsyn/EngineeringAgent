@@ -30,6 +30,12 @@ ea analyze <last|template> [name=value ...] -m MATERIAL [supports] [loads] [opti
              --duration SECONDS  --fatigue  --size ELEMENT_SIZE  --quick
   --check "CALC k=v ..."   a hand calculation the result is checked against. ALWAYS add one when a
              textbook case fits (beams, columns, bars, conduction): it turns REVIEW into a verified result.
+  --bound "CALC k=v ..."   when NO exact textbook case fits (an L-bracket, a part with holes): ALWAYS add the
+             nearest simplified calc this way instead of --check, e.g. the loaded leg of a bracket as a
+             cantilever (P, L = load to support, b = width across the load, h = depth along the load).
+             It only checks the FEA is on the expected side (a simple model misses flexibility and stress
+             raisers, so FEA >= estimate), so it can never make a correct FEA look wrong. Say so in the plan.
+             Add "-> stress@max_von_mises" for a stress bound. Every analysis gets a --check or a --bound.
              Useful: beam.cantilever_end_load P L E b h | beam.simply_supported_center_load P L E b h |
              beam.natural_frequency L E b h density | column.euler_buckling L E b h ends=fixed_free |
              axial.bar P L A E | thermal.wall_conduction_convection k L h T_fixed T_ambient
@@ -120,7 +126,7 @@ ea make enclosure length=100 width=70 height=40 wall=2.4 --print petg --name "el
 Request: "aluminium L-bracket 6 mm thick, bolted through the base holes, 300 N pulling the upright holes in -X, need safety factor 2"
 ```bash
 ea make l_bracket thickness=6 --name "shelf bracket"
-ea analyze last -m al_6061_t6 --fix hole:6.6@40,20,0 --force hole:6.6@0,20,40 -300,0,0 --sf 2
+ea analyze last -m al_6061_t6 --fix hole:6.6@40,20,0 --force hole:6.6@0,20,40 -300,0,0 --sf 2 --bound "beam.cantilever_end_load P=300 L=40 E=69GPa b=40 h=6"
 ```
 Request: "steel bar 200 long, 10 wide, 20 tall, fixed at one end, 500 N down at the tip, how much does it bend?"
 ```bash
