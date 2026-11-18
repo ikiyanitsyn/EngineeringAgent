@@ -204,6 +204,9 @@ def _result_body(result, plan, direct, req_text, folders, issue, followup="") ->
     def ignored(path: str) -> bool:              # link only files that were committed
         return subprocess.run(["git", "check-ignore", "-q", path], cwd=ROOT).returncode == 0
     parts.append(to_markdown(result, f"{SERVER}/{REPO}/blob/{BRANCH}", skip=ignored))
+    pics = _pictures(folders, pushed)
+    if pics:
+        parts.append(pics)
     if followup:
         parts.append("### ❓ To finish your request\n" + followup
                      + "\n\nReply in a comment below and I will continue.")
@@ -213,6 +216,28 @@ def _result_body(result, plan, direct, req_text, folders, issue, followup="") ->
     return "\n\n".join(parts)
 
 
+
+
+def _pictures(folders: list[str], pushed: bool) -> str:
+    """Result pictures shown right in the comment (they play on phones too) and the viewer link."""
+    if not pushed:
+        return ""
+    raw = f"{SERVER}/{REPO}/blob/{BRANCH}"
+    out = []
+    for f in folders:
+        plots = ROOT / f / "plots"
+        shown = [(n, c) for n, c in (("deformation.gif", "Animated deformation (exaggerated)"),
+                                      ("von_mises.png", "von Mises stress"),
+                                      ("temperature.png", "Temperature"),
+                                      ("mode_1.png", "Mode 1")) if (plots / n).exists()]
+        if shown:
+            out.append(f"#### Results for `{f}`\n" + " ".join(f'<img src="{raw}/{f}/plots/{n}?raw=true" alt="{c}" '
+                                                              f'width="380">' for n, c in shown[:2]))
+        if (ROOT / f / "viewer.html").exists():
+            out.append(f"🖥️ **Interactive 3D viewer:** [viewer.html]({raw}/{f}/viewer.html) - on a computer, open "
+                       f"it and use *Download raw file*, then open the file in your browser (rotate, zoom, play "
+                       f"the deformation). On a phone the pictures above show the same results.")
+    return "\n\n".join(out)
 
 
 def _finish(head: str, comment_id, folders: list[str]) -> None:

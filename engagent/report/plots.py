@@ -95,6 +95,57 @@ def contour(view: dict, field: str, frame: int = -1, path: str | Path | None = N
     return ax
 
 
+def animate(view: dict, field: str, path: str | Path, frame: int = -1, n: int = 10, *, title: str | None = None,
+            dpi: int = 100, ms: int = 110) -> Path | None:
+    """Animated GIF of the deformation growing and relaxing (exaggerated), coloured by ``field``.
+
+    For issue comments and phones: an image plays everywhere a picture is shown, no viewer needed.
+    """
+    import io
+    import math
+    from PIL import Image
+    plt = _mpl()
+    fr = view["frames"][frame]
+    if not fr.get("disp") or field not in fr["fields"]:
+        return None
+    disp = np.asarray(fr["disp"], float).reshape(-1, 3)
+    peak = float(np.linalg.norm(disp, axis=1).max())
+    if peak <= 0:
+        return None
+    full = 0.08 * float(view["size"]) / peak
+    vals = np.asarray(fr["fields"][field]["values"], float)
+    vr = (float(vals.min()), float(vals.max()))
+    nodes = np.asarray(view["nodes"], float).reshape(-1, 3)
+    both = np.vstack([nodes, nodes + full * disp])          # frame fits the shape at full deformation
+    lo, hi = both.min(axis=0), both.max(axis=0)
+    ext = np.maximum(hi - lo, 0.04 * float(np.max(hi - lo)))
+    c = (lo + hi) / 2
+    lo, hi = c - ext / 2, c + ext / 2
+    images = []
+    for k in range(n):
+        amp = math.sin(0.5 * math.pi * k / (n - 1))        # 0 -> full, eased
+        fig = plt.figure(figsize=(6.0, 4.0), dpi=dpi)
+        ax = fig.add_subplot(111, projection="3d")
+        contour(view, field, frame, None, scale=max(amp * full, 1e-12), ax=ax, vrange=vr,
+                title=title or f"{field} - deformation shown x{full:.3g}")
+        ax.set_xlim(lo[0], hi[0]); ax.set_ylim(lo[1], hi[1]); ax.set_zlim(lo[2], hi[2])
+        try:
+            ax.set_box_aspect(tuple(ext), zoom=1.2)
+        except TypeError:
+            ax.set_box_aspect(tuple(ext))
+        buf = io.BytesIO()
+        fig.savefig(buf, format="png", facecolor="white", bbox_inches="tight", pad_inches=0.05)
+        plt.close(fig)
+        buf.seek(0)
+        im = Image.open(buf).convert("RGB")
+        if images and im.size != images[0].size:
+            im = im.resize(images[0].size)
+        images.append(im.convert("P", palette=Image.ADAPTIVE, colors=128))
+    seq = images + images[-2:0:-1]                       # grow, then relax: a smooth loop
+    seq[0].save(path, save_all=True, append_images=seq[1:], duration=ms, loop=0, optimize=True)
+    return Path(path)
+
+
 def history(times, series: dict[str, list[float]], path: str | Path, ylabel: str, title: str,
             xlabel: str = "Time [s]") -> Path:
     plt = _mpl()
@@ -138,6 +189,13 @@ def job_plots(folder: str | Path, results: dict) -> list[dict]:
             add("von Mises stress", -1, "von_mises.png",
                 "von Mises stress on the deformed shape (nodal values extrapolated from integration points)")
             add("Displacement", -1, "displacement.png", "Displacement magnitude on the deformed shape")
+            try:                                          # animated deformation for chats and phones
+                gif = animate(view, "von Mises stress", plots / "deformation.gif")
+                if gif:
+                    out.append({"path": gif, "caption": "Animated deformation (exaggerated), coloured by "
+                                "von Mises stress", "animation": True})
+            except Exception:
+                pass
         heat_solved = a in ("thermal_steady", "thermal_transient") or (
             a == "thermal_stress" and any(c.get("type") == "temperature"
                                           for c in (results.get("job") or {}).get("constraints", [])))

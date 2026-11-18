@@ -21,8 +21,11 @@ permissions:
   issues: write
   models: read
 
+# One queue per issue: different issues run side by side on separate runners (same minutes used;
+# job folders carry the issue number so they never collide). Comments on the SAME issue wait their
+# turn; GitHub keeps only the newest waiting run per queue, which is fine - the bot reads the whole thread.
 concurrency:
-  group: engineer
+  group: engineer-${{ github.event.issue.number || github.run_id }}
   cancel-in-progress: false
 
 jobs:
@@ -82,6 +85,7 @@ jobs:
           ENGAGENT_LLM_MODEL: ${{ vars.ENGAGENT_LLM_MODEL }}
           ENGAGENT_LOCAL_MODEL: ${{ vars.ENGAGENT_LOCAL_MODEL }}
           ENGAGENT_ACK_ID: ${{ steps.ack.outputs.id }}
+          ENGAGENT_JOB_TAG: ${{ github.event.issue.number && format('i{0}', github.event.issue.number) || '' }}
         run: python scripts/issue_bot.py
       - name: Upload files (STEP, STL, reports, interactive viewer)
         if: always() && steps.bot.outputs.folders != 'jobs/.none'

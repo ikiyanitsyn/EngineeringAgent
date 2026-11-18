@@ -23,6 +23,7 @@ Face selector shorthand (``--fix``, ``--force``, ...):
 from __future__ import annotations
 
 import json
+import os
 import re
 import shutil
 from pathlib import Path
@@ -51,7 +52,8 @@ def next_job_folder(name: str, base: Path | None = None) -> Path:
     base = Path(base) if base else jobs_dir()
     base.mkdir(parents=True, exist_ok=True)
     nums = [int(m.group(1)) for p in base.iterdir() if p.is_dir() and (m := re.match(r"(\d+)-", p.name))]
-    folder = base / f"{(max(nums) + 1 if nums else 1):02d}-{slug(name)}"
+    tag = os.environ.get("ENGAGENT_JOB_TAG", "")     # e.g. 'i15' from the issue bot: parallel runs never collide
+    folder = base / f"{(max(nums) + 1 if nums else 1):02d}-{slug(name)}{'-' + slug(tag) if tag else ''}"
     folder.mkdir(parents=True)
     return folder
 

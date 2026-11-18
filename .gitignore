@@ -16,5 +16,5 @@ job_fine.*
 job.inp
 job.dat
 view.json
-viewer.html
-plots/
+# plots/ (PNG + animated GIF, ~0.3 MB) and viewer.html (~1-2 MB, self-contained) are committed so the
+# bot can show results inline and on phones; delete old job folders if the repository grows too big.
