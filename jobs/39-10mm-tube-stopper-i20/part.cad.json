@@ -1,0 +1,68 @@
+{
+ "valid": true,
+ "solids": 2,
+ "faces": 9,
+ "edges": 12,
+ "volume": 6224.779588022209,
+ "area": 2463.1380314357484,
+ "bbox_min": [
+  0.0,
+  -11.0,
+  -9.0
+ ],
+ "bbox_max": [
+  44.0,
+  11.0,
+  9.0
+ ],
+ "bbox_size": [
+  44.0,
+  22.0,
+  18.0
+ ],
+ "center_of_mass": [
+  26.173456534127624,
+  1.0612360773391066e-16,
+  -1.4610873990188957e-16
+ ],
+ "inertia_unit_density": [
+  [
+   245673.0372423164,
+   1.715666956351566e-11,
+   -1.2890683623597967e-11
+  ],
+  [
+   1.715666956351566e-11,
+   1093039.6154810637,
+   7.720181581754906e-14
+  ],
+  [
+   -1.2890683623597967e-11,
+   7.720181581754906e-14,
+   1152228.4761531334
+  ]
+ ],
+ "face_types": {
+  "cylinder": 3,
+  "plane": 6
+ },
+ "cylinder_diameters": [
+  {
+   "diameter": 10.0,
+   "faces": 1
+  },
+  {
+   "diameter": 18.0,
+   "faces": 1
+  },
+  {
+   "diameter": 22.0,
+   "faces": 1
+  }
+ ],
+ "files": [
+  "/home/runner/work/EngineeringAgent/EngineeringAgent/jobs/39-10mm-tube-stopper-i20/part.step",
+  "/home/runner/work/EngineeringAgent/EngineeringAgent/jobs/39-10mm-tube-stopper-i20/part.stl",
+  "/home/runner/work/EngineeringAgent/EngineeringAgent/jobs/39-10mm-tube-stopper-i20/part.3mf"
+ ]
+}
