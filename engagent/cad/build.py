@@ -94,8 +94,13 @@ def run_script(script: str | Path, step_out: str | Path | None = None,
     env["ENGAGENT_PARAM_UNITS"] = U.normalize_system(system)
     env["ENGAGENT_STL"] = "1" if stl else "0"
     env["ENGAGENT_3MF"] = "1" if threemf else "0"
-    proc = subprocess.run([sys.executable, str(script)], cwd=script.parent, env=env,
-                          capture_output=True, text=True, timeout=timeout)
+    timeout = float(os.environ.get("ENGAGENT_SCRIPT_TIMEOUT", timeout))   # the issue bot uses a short limit
+    try:
+        proc = subprocess.run([sys.executable, str(script)], cwd=script.parent, env=env,
+                              capture_output=True, text=True, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        raise RuntimeError(f"geometry script {script.name} took longer than {timeout:g} s (too complex a "
+                           f"shape, or a fillet/boolean that does not resolve) - simplify it") from None
     if proc.returncode != 0:
         raise RuntimeError(f"geometry script {script.name} failed:\n{proc.stderr.strip()[-2000:]}")
     meta = step.with_suffix(".cad.json")

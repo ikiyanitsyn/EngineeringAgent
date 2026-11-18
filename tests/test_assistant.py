@@ -298,3 +298,24 @@ def test_a_temperature_is_never_read_as_a_load():
         {"temperatures": [{"value": 212, "unit": "F"}]}, "held at 212°F") == []
     assert structured.magnitudes_from_user(
         {"temperatures": [{"value": 100, "unit": "C"}]}, "a 100 mm bar") != []      # a length is not a temperature
+
+
+def test_time_budget_stops_model_calls(monkeypatch):
+    """The issue bot gives each request a deadline: no model call starts after it (no silent 30-minute runs)."""
+    import time as _t
+    monkeypatch.setenv("ENGAGENT_LLM_URL", "http://127.0.0.1:9/never")
+    monkeypatch.setenv("ENGAGENT_LLM_MODEL", "x")
+    monkeypatch.setenv("ENGAGENT_DEADLINE", str(_t.time() + 5))
+    t0 = _t.time()
+    with pytest.raises(assistant.LLMError, match="in time"):
+        assistant.complete([{"role": "user", "content": "hi"}])
+    assert _t.time() - t0 < 5
+
+
+def test_geometry_script_time_limit(monkeypatch, tmp_path):
+    from engagent.cad.build import run_script
+    script = tmp_path / "geometry.py"
+    script.write_text("import time\ntime.sleep(30)\n")
+    monkeypatch.setenv("ENGAGENT_SCRIPT_TIMEOUT", "1")
+    with pytest.raises(RuntimeError, match="took longer than 1 s"):
+        run_script(script)

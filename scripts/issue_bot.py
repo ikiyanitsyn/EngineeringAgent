@@ -63,13 +63,20 @@ def conversation(issue: dict) -> list[dict]:
         page += 1
 
 
+def _progress(what: str, n: int) -> None:
+    print(f"[{time.strftime('%H:%M:%S')}] {what}" + (f" (attempt {n + 1})" if n else ""), file=sys.stderr, flush=True)
+
+
 def _ask_with_fallback(convo: list[dict]) -> dict:
     """Configured provider / GitHub Models first; if none answers, a free open model on this runner."""
     try:
-        return assistant.ask(convo)
+        return assistant.ask(convo, on_event=_progress)
     except assistant.LLMError as first:
         if os.environ.get("ENGAGENT_NO_LOCAL_LLM") or ":11434" in (os.environ.get("ENGAGENT_LLM_URL") or ""):
             raise                       # local fallback switched off, or the local model is what just failed
+        if assistant.time_left() < 600:  # not enough time left to start the slow local model
+            raise assistant.LLMError(f"{first} - and too little time was left to try the local model; "
+                                     "post the request again in a few minutes")
         print(f"No hosted model answered ({first}); using a local open model on the runner.", file=sys.stderr)
         model = os.environ.get("ENGAGENT_LOCAL_MODEL") or assistant.LOCAL_DEFAULT_MODEL
         assistant.ensure_ollama(model, say=lambda m: print(m, file=sys.stderr))
@@ -131,6 +138,10 @@ def needs_model() -> bool:
 
 
 def main() -> int:
+    # a time budget for the whole request (model calls, custom CAD code, retries): the user hears back
+    # within ~20 minutes even when the AI service is slow; FEA itself is not cut short
+    os.environ.setdefault("ENGAGENT_DEADLINE", str(time.time() + float(os.environ.get("ENGAGENT_BUDGET_S", 1200))))
+    os.environ.setdefault("ENGAGENT_SCRIPT_TIMEOUT", "150")
     # another request may have committed since this run checked out: take its job numbers into account
     subprocess.run(["git", "pull", "-q", "--rebase", "origin", BRANCH], cwd=ROOT, capture_output=True)
     issue, latest, convo = _inputs()

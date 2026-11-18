@@ -106,7 +106,7 @@ def _post_ollama(base: str, model: str, messages: list[dict], timeout: float, fm
     body = json.dumps(payload).encode()
     req = urllib.request.Request(base + "/api/chat", data=body, method="POST",
                                  headers={"Content-Type": "application/json"})
-    with urllib.request.urlopen(req, timeout=max(timeout, 900)) as r:
+    with urllib.request.urlopen(req, timeout=min(max(timeout, 900), max(time_left(), 30))) as r:
         data = json.loads(r.read().decode("utf-8"))
     if "message" not in data:
         raise LLMError(f"{model} at {base}: unexpected reply {json.dumps(data)[:300]}")
@@ -142,6 +142,14 @@ def _post(url: str, key: str | None, model: str, messages: list[dict], timeout: 
 LAST_USED: dict = {}             # {"model": ..., "host": ...} of the most recent successful completion
 
 
+def time_left() -> float:
+    """Seconds left of the overall budget (ENGAGENT_DEADLINE, epoch seconds); unlimited when unset."""
+    try:
+        return float(os.environ["ENGAGENT_DEADLINE"]) - time.time()
+    except (KeyError, ValueError):
+        return 1e9
+
+
 def complete(messages: list[dict], *, model: str | None = None, timeout: float = 180.0) -> str:
     """One chat completion.  On GitHub Models, falls back to smaller models and the older endpoint."""
     s = settings()
@@ -161,11 +169,17 @@ def complete(messages: list[dict], *, model: str | None = None, timeout: float =
         # other providers: same endpoint and key, next model in the fallback list
         targets += [(s["url"], m) for m in fallback_models(s["url"]) if m != first]
     errors: list[str] = []
+    import sys
     for url, m in targets:
         for attempt in range(RETRIES):
             wait = RETRY_WAIT[min(attempt, len(RETRY_WAIT) - 1)]
+            left = time_left()
+            if left < 20:                             # the request's overall time budget is used up
+                errors.append("time budget used up before a model answered")
+                raise LLMError("the AI model did not answer in time (" + "; ".join(errors[-3:]) + ")")
             try:
-                text = _post(url, s["key"], m, messages, timeout)
+                print(f"[{time.strftime('%H:%M:%S')}] asking {m} (try {attempt + 1})", file=sys.stderr, flush=True)
+                text = _post(url, s["key"], m, messages, min(timeout, left))
                 LAST_USED.update(model=m, host=urllib.parse.urlparse(url).hostname or "")
                 return text
             except urllib.error.HTTPError as e:
@@ -428,7 +442,7 @@ def ask(conversation: list[dict] | str, *, max_fixes: int = 2, run: bool = True,
         say("running", attempt)
         res = run_request(reply)
         out["result"] = res
-        if not res["errors"] or attempt == max_fixes:
+        if not res["errors"] or attempt == max_fixes or time_left() < 240:   # no time for another try
             out["kind"] = "results" if not res["errors"] else "error"
             return out
         say("fixing", attempt)
