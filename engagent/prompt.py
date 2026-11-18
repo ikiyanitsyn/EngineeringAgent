@@ -126,6 +126,13 @@ Request: "aluminium beam 2 m long, 50 x 100 mm, resting on supports at both ends
 ea make beam length=1000 width=50 height=100 --name "simply supported beam (half)"
 ea analyze last -m al_6061_t6 --slide xmin z --slide xmax x --slide xmax y --force xmax 0,0,-3000 --check "beam.simply_supported_center_load P=6000 L=2000 E=69GPa b=50 h=100"
 ```
+Request: "aluminium rod 250 x 20 x 20 mm, held rigidly at both ends, cooled evenly from 90 C to 15 C - what stress?"
+(held at both ends = held ALONG the bar: --slide the end faces in x and pin one centre node at each end;
+ --fix on the end faces would also stop the ends expanding sideways and overstate the stress.)
+```bash
+ea make beam length=250 width=20 height=20 --name "restrained rod"
+ea analyze last -m al_6061_t6 -a thermal_stress --slide xmin x --slide xmax x --fix point:0,0,0 --fix point:250,0,0 --t0 90 --dT 15 --check "thermal.restrained_bar E=69GPa cte=23.6 dT=-75 -> stress@max_von_mises"
+```
 Request: "first natural frequency of a 100x10x10 mm steel cantilever"
 ```bash
 ea analyze beam -m steel_generic -a modal --fix xmin --check "beam.natural_frequency L=100 E=210GPa b=10 h=10 density=7850"
