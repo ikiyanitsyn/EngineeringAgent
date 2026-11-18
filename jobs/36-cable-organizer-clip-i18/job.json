@@ -1,0 +1,13 @@
+{
+ "name": "36-cable-organizer-clip-i18",
+ "units": "metric",
+ "title": "geometry (defaults)",
+ "geometry": {
+  "script": "geometry.py"
+ },
+ "material": "petg",
+ "print": {
+  "process": "fdm",
+  "material": "petg"
+ }
+}

@@ -1,0 +1,64 @@
+{
+ "valid": true,
+ "solids": 1,
+ "faces": 40,
+ "edges": 131,
+ "volume": 19412.835555201767,
+ "area": 7157.591583564448,
+ "bbox_min": [
+  -1e-07,
+  -2.220446049250313e-16,
+  -1e-07
+ ],
+ "bbox_max": [
+  65.0000001,
+  25.0,
+  14.0000001
+ ],
+ "bbox_size": [
+  65.00000019999999,
+  25.0,
+  14.000000199999999
+ ],
+ "center_of_mass": [
+  32.72955556025631,
+  12.500000008245713,
+  6.980993952702404
+ ],
+ "inertia_unit_density": [
+  [
+   1366090.1518520522,
+   0.00021987780928611755,
+   9273.583247010596
+  ],
+  [
+   0.00021987780928611755,
+   7468521.502144784,
+   -0.0011588335037231445
+  ],
+  [
+   9273.583247010596,
+   -0.0011588335037231445,
+   8213149.845799636
+  ]
+ ],
+ "face_types": {
+  "plane": 20,
+  "cylinder": 20
+ },
+ "cylinder_diameters": [
+  {
+   "diameter": 3.0,
+   "faces": 18
+  },
+  {
+   "diameter": 4.5,
+   "faces": 1
+  }
+ ],
+ "files": [
+  "/home/runner/work/EngineeringAgent/EngineeringAgent/jobs/36-cable-organizer-clip-i18/part.step",
+  "/home/runner/work/EngineeringAgent/EngineeringAgent/jobs/36-cable-organizer-clip-i18/part.stl",
+  "/home/runner/work/EngineeringAgent/EngineeringAgent/jobs/36-cable-organizer-clip-i18/part.3mf"
+ ]
+}

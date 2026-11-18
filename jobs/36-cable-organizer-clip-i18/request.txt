@@ -1,0 +1,31 @@
+I will generate the custom CAD model for the 3-cable organizer clip in PETG, featuring three 6 mm cutouts and an M4 mounting hole.
+
+```python
+from build123d import *
+from engagent.cad import params, save
+
+P = params(length=65.0, width=25.0, height=14.0, cable_d=6.0, hole_d=4.5)
+
+# Main body block
+body = Box(P.length, P.width, P.height, align=(Align.MIN, Align.MIN, Align.MIN))
+
+# Cutouts for three 6 mm cables along the top / front
+# Three parallel cylindrical cutouts along the Y axis
+for i in range(3):
+    x_pos = 12.5 + i * 18.0
+    body -= Pos(x_pos, P.width / 2, P.height) * Rot(0, 90, 0) * Cylinder(P.cable_d / 2, P.width * 2)
+    # Entry slots for the cables from the bottom/front
+    body -= Pos(x_pos - P.cable_d/4, 0, 0) * Box(P.cable_d/2, P.width, P.height * 0.7, align=(Align.MIN, Align.MIN, Align.MIN))
+
+# M4 mounting hole in the center base
+body -= Pos(P.length / 2, P.width / 2, 0) * Cylinder(P.hole_d / 2, P.height * 2)
+
+# Fillet external edges for clean 3D printing
+body = fillet(body.edges().filter_by(Axis.Z), 1.5)
+
+save(body)
+```
+
+```bash
+ea make geometry.py --print petg --name "cable organizer clip"
+```
