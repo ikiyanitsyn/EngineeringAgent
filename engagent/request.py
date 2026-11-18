@@ -99,6 +99,11 @@ def run_request(text: str, *, markdown: bool = False, link_base: str | None = No
                       "See docs/CHATBOT-PROMPT.md.")
     # A ```python block plus `ea make <anything>.py` (or a bare `ea make`): the make line builds the block,
     # keeping its --print / --name options (models often name the script part.py or leave it out).
+    # a bare `ea analyze last` next to a full analyze line is a stray duplicate (models write both)
+    full = [c for c in req["commands"] if re.match(r"^analy[sz]e\s+\S+\s+\S", c.strip())]
+    if full:
+        req = dict(req, commands=[c for c in req["commands"]
+                                  if not re.match(r"^analy[sz]e(\s+last)?\s*$", c.strip())])
     py_make = [c for c in req["commands"] if re.match(r"^make(\s*$|\s+--|\s+\S+\.py\b)", c.strip())]
     if req["python"] and not req["json"] and py_make:
         import tempfile

@@ -257,6 +257,13 @@ def _import_parts(gmsh, parts: list[tuple[str, str]]) -> tuple[list[dict], dict[
     return faces, part_vols
 
 
+def _facing(n) -> str:
+    if not n:
+        return "?"
+    k = max(range(3), key=lambda i: abs(n[i]))
+    return ("+" if n[k] > 0 else "-") + "XYZ"[k]
+
+
 def list_faces(parts: list[tuple[str, str]] | str) -> list[dict]:
     """Table of the CAD faces of a STEP file: tag, type, bbox, area, centroid, normal, radius."""
     gmsh = _gmsh()
@@ -310,9 +317,21 @@ def build_mesh(parts: list[tuple[str, str]], sets: dict[str, Any] | None = None,
                 continue
             tags = select_faces(gmsh, faces, sel, system, bb, sel_tol)
             if not tags:
+                # list the biggest faces with a selector each, so whoever wrote the request (often an AI
+                # model that cannot run commands) can pick a valid one on the next attempt
+                flat = sorted((f for f in faces if f.get("type") == "Plane"), key=lambda f: -f["area"])[:8]
+                for f in flat:
+                    try:
+                        _outward(gmsh, f)
+                    except Exception:
+                        pass
+                r = lambda c: 0.0 if abs(c) < 1e-6 else c                      # noqa: E731
+                hint = "; ".join(
+                    f"near:{','.join(f'{r(c):.4g}' for c in f['centroid'])} (flat, area {f['area']:.4g} mm^2, "
+                    f"facing {_facing(f.get('outward'))})" for f in flat)
                 raise ValueError(
-                    f"set {name!r}: selector {sel!r} matched no CAD face. "
-                    f"Run `engagent cad faces <file.step>` to list faces and their coordinates.")
+                    f"set {name!r}: selector {sel!r} matched no CAD face (xmin..zmax pick only FLAT faces at the "
+                    f"part's extremes). Faces of this part: {hint}. Use one of these near:x,y,z selectors.")
             set_tags[name] = tags
 
         gmsh.option.setNumber("Mesh.MeshSizeMax", size)

@@ -496,6 +496,12 @@ def ask(conversation: list[dict] | str, *, max_fixes: int = 2, run: bool = True,
         say("running", attempt)
         res = run_request(reply)
         out["result"] = res
+        split = [a for j in res.get("jobs", []) for a in j.get("attention", []) if "separate solids" in a]
+        if split and attempt < max_fixes and time_left() >= 240:   # a part in pieces cannot be printed or analysed
+            res = dict(res, errors=list(res["errors"]) + [
+                "the geometry came out as separate solids (" + split[0].split(" - ")[-1] + "): make every "
+                "feature overlap or touch the main body so the part is ONE solid, then send the whole request again"])
+            out["result"] = res
         if not res["errors"] or attempt == max_fixes or time_left() < 240:   # no time for another try
             out["kind"] = "results" if not res["errors"] else "error"
             return out
