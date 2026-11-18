@@ -25,9 +25,15 @@ Reply `join arm_flange F2 to camera F2, M6`. The bot designs a flat adapter plat
   plate STEP / STL / 3MF and an assembly STEP with a picture.
 
 For these two parts a centred plate cannot be assembled. The camera's M6 screws would sit on the flange
-ring and the flange's screws under the camera, so the bot shifts the camera 32 mm and says so. If no flat
-plate works it explains why and asks which alternative you want; it never returns a part that cannot be
-assembled.
+ring and the flange's screws under the camera. So the bot designs an on-axis **box adapter**:
+- a floor bolted to the flange and a ceiling bolted to the camera, with every screw head inside;
+- side windows to reach the screws with a ball-end key;
+- rounded inside corners.
 
-Next (stage 3): give the top part's weight and the acceleration and the plate is checked with FEA and a
-hand calculation.
+The flat plate shifted 32 mm sideways is offered as the alternative (`offset_plate/`). It never returns a
+part that cannot be assembled.
+
+Stage 3: reply with the top part's weight and the acceleration (e.g. "0.8 kg, 2 g"). The adapter is
+checked with FEA and an order-of-magnitude hand calculation. For the box, the hand calculation is the
+ceiling as a beam fixed at both end walls. Result: PASS, design stress 0.45 MPa, safety factor 613,
+FEA = 0.83 x estimate.

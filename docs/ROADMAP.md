@@ -93,8 +93,10 @@ Run everything: `.venv/bin/python -m pytest -q` then `.venv/bin/python -m pytest
    - Own parts (#16): stage 1 measures the parts and asks which faces; stage 2 designs the adapter
      plate (assembly-access check, screws sized to hole depth); stage 3 checks the plate with FEA.
      All live, all without a model.
-   **Next for own parts:** spacer / 'cup' adapters with side windows when no flat plate works;
-   clickable faces in viewer.html that copy a selector; the screw check (tension and shear per
+   When no centred flat plate can be assembled, an on-axis box adapter is designed: screws inside,
+   side windows, rounded corners (FEA PASS, SF 613, hand check 0.83x). The offset plate is the
+   alternative.
+   **Next for own parts:** clickable faces in viewer.html that copy a selector; the screw check (tension and shear per
    screw from the reactions).
    **Speed, measured:** a thin 300 x 200 x 6 plate needs 133k nodes, and the convergence re-run at
    344k nodes takes ~300 s of serial CalculiX; the iterative solver was slower (427 s). Kept as is:

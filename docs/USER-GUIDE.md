@@ -303,8 +303,9 @@ A finished version of exactly this job is in
    ("M5 at nominal size or M6 tapped"), the bot asks which.
 4. It designs a flat adapter plate and returns the STEP, STL and 3MF files, an assembly STEP and a
    picture. It also gives the assembly order and the screws, sized to the depth of your threaded holes.
-   If a centred plate could not be assembled (a screw you could not reach), it shifts the part and says
-   so. If no plate works, it explains why and offers alternatives.
+   If a centred plate could not be assembled (a screw you could not reach), you get an on-axis box
+   adapter instead: the screws sit inside and side windows let you reach them. A flat plate with the
+   part shifted sideways is offered as the alternative.
 5. Reply with the load, e.g. `the camera weighs 0.8 kg and the arm accelerates at 2 g`. The plate is
    checked with FEA and a hand calculation.
 
