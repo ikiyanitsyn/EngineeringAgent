@@ -139,7 +139,7 @@ def needs_model() -> bool:
         return False
     from engagent.cadinput import find_inputs
     f = find_inputs(latest, ROOT)
-    if f["urls"] or f["paths"] or JOIN_RX.search(latest or ""):   # own parts / adapter design: no model
+    if f["urls"] or f["paths"] or JOIN_RX.search(latest or "") or re.search(r"\bF\d+\b", latest or ""):
         return False
     users = [m["content"] for m in convo if m["role"] == "user"]
     return form_from_words("\n".join(users), first=users[0] if users else None) is None
@@ -166,6 +166,10 @@ def main() -> int:
     if join is not None:
         return join
     check = _adapter_load(latest, convo)                # "0.8 kg, 2 g": FEA of the adapter just designed
+    if not check:
+        check = _part_fea(latest, convo, comment_id)    # "steel, fix F1, 500 N down on F3": FEA of a part
+        if check == 0:
+            return 0                                    # a question was posted
     if check:
         latest = check                                  # runs below as ordinary `ea` lines
     link_base = f"{SERVER}/{REPO}/blob/{BRANCH}"
@@ -219,7 +223,7 @@ def main() -> int:
         head = f"### ❌ Unexpected error while saving results\n`{type(e).__name__}: {e}`\n\n[Log]({RUN_URL})"
     footer = _model_footer(direct, out_by_rules)
     if check:                                           # say what really happened, and show the request
-        footer = "\n\n<sub>Answered by: built-in adapter check (no AI model)</sub>"
+        footer = "\n\n<sub>Answered by: built-in rules on your measured part (no AI model)</sub>"
         head = ("<details><summary>Analysis that was run (copy, edit and post it as a comment to change it)"
                 "</summary>\n\n```bash\n" + check + "\n```\n</details>\n\n" + head)
     _finish(head + footer, comment_id, folders)
@@ -299,6 +303,25 @@ def _adapter_load(latest: str, convo: list[dict]) -> str | None:
     mat = material_from_words(latest) or (re.search(r"Material:\*\* `([\w.]+)`", last[-1]) or [None, None])[1] \
         or material_from_words(mat_words) or "al_6061_t6"
     return adapter.fea_request(f.group(1), mat, mass, float(g.group(1)) if g else 1.0)
+
+
+def _part_fea(latest: str, convo: list[dict], comment_id):
+    """Plain-English FEA of a part the user uploaded and the bot measured (numbered F-faces)."""
+    from engagent import cadinput
+    if JOIN_RX.search(latest or "") or not re.search(r"\bF\d+\b", latest or "", re.I) or parse(latest)["commands"]:
+        return None
+    saved = [re.search(r"Parts saved in `([^`]+)`", x["content"]) for x in convo if x["role"] == "assistant"]
+    saved = [x.group(1) for x in saved if x]
+    if not saved or not (ROOT / saved[-1] / "features.json").exists():
+        return None
+    try:
+        req, q = cadinput.part_fea_request(latest, ROOT / saved[-1])
+    except ValueError as e:
+        req, q = None, str(e)
+    if q:
+        _finish(f"### ❓ One thing first\n{q}\n\n<sub>Answered by: built-in rules (no AI model)</sub>", comment_id, [])
+        return 0
+    return req.replace(str(ROOT) + "/", "")
 
 
 JOIN_RX = re.compile(r"\bjoin\s+`?([\w.-]+)`?\s+(F\d+)\s+(?:to|and|with|onto|on)\s+`?([\w.-]+)`?\s+(F\d+)", re.I)

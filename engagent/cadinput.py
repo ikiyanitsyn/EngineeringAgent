@@ -123,3 +123,95 @@ QUESTION = ("**Which faces should the adapter join?** Reply in a comment, for ex
             "Also say anything that matters: the material or 3D-print filament, a maximum thickness or "
             "offset, and the load (e.g. the camera weighs 0.8 kg and the arm accelerates at 2 g). "
             "If a hole size is ambiguous (e.g. *M5 at nominal size or M6 tapped*), say which screw it is.")
+
+
+# ---------------------------------------------------------------- plain-English FEA of an uploaded part
+FIX_WORDS = r"\b(fix|fixed|hold|held|clamp|clamped|bolt|bolted|support|supported|anchor|anchored|mount|mounted)\b"
+
+
+def part_fea_request(text: str, folder: Path) -> tuple[str | None, str | None]:
+    """'steel, fix F1, 500 N down on F3' about parts measured earlier -> (`ea analyze` request, question).
+
+    Faces are the numbered F-faces of the listing; each is selected by a point ON that face, so the
+    selection is exact. Nothing is guessed: a missing material, support, load size or direction is asked.
+    """
+    from .guard import material_from_words
+    from .rules import FORCE_RX, PRESSURE_RX
+    from .structured import TO_MPA, TO_N
+    feats = json.loads((Path(folder) / "features.json").read_text())
+    t = (text or "").lower()
+    if not re.search(r"\bf\d+\b", t):
+        return None, None
+    names = list(feats)
+    part = next((n for n in names if n.lower() in t), names[0]) if names else None
+    if part is None:
+        return None, None
+    faces = {f["id"].lower(): f for f in feats[part]["faces"]}
+
+    def sel(ids):
+        bad = [i.upper() for i in ids if i not in faces]
+        if bad:
+            raise ValueError(f"{part} has no face {', '.join(bad)} (faces: {', '.join(f.upper() for f in faces)})")
+        return "+".join("near:" + ",".join(f"{v:.4g}" for v in faces[i].get("label_at", faces[i]["centre"]))
+                        for i in ids)
+
+    fixed, loads, missing = [], [], []
+    for clause in re.split(r"[,;.\n]|\band\b(?=[^,;.]*\b(?:fix|hold|clamp|bolt|support|\d))", t):
+        ids = re.findall(r"\bf\d+\b", clause)
+        if not ids:
+            continue
+        f = re.search(FORCE_RX, clause)
+        p = re.search(PRESSURE_RX, clause)
+        if f or p:
+            loads.append((clause, ids, f, p))
+        elif re.search(FIX_WORDS, clause):
+            fixed += ids
+    mat = material_from_words(text)
+    if not mat:
+        missing.append("the material (e.g. steel, aluminium 6061, PETG)")
+    if not fixed:
+        missing.append("which face is held (e.g. 'fix F1')")
+    if not loads:
+        missing.append("the load with its size and unit and the face it acts on (e.g. '500 N down on F3')")
+    parts = []
+    for clause, ids, f, p in loads:
+        if p:
+            mag, unit = p.groups()
+            parts.append(f"--pressure {sel(ids)} {float(mag) * TO_MPA[{'mpa': 'MPa', 'kpa': 'kPa', 'bar': 'bar', 'psi': 'psi'}[unit]]:g}")
+            continue
+        mag, unit = f.groups()
+        unit = {"n": "N", "newton": "N", "newtons": "N", "kn": "kN", "lbf": "lbf", "lb": "lb", "lbs": "lb",
+                "pound": "lb", "pounds": "lb"}.get(unit, "kg")
+        P = float(mag) * TO_N[unit]
+        d = _direction(clause, faces[ids[0]] if ids[0] in faces else None, unit)
+        if d is None:
+            missing.append(f"the direction of the {mag} {unit} on {', '.join(i.upper() for i in ids)} "
+                           "(e.g. 'down', 'along +X', or 'pushing on' the face)")
+            continue
+        parts.append(f"--force {sel(ids)} " + ",".join(f"{P * c:.6g}" for c in d))
+    if missing:
+        return None, ("To run the analysis I still need: " + "; ".join(missing)
+                      + ". Reply in a comment, e.g. *steel, fix F1, 500 N down on F3*.")
+    step = Path(folder) / f"{part}.step"
+    req = (f'ea analyze {step} -m {mat} --fix {sel(list(dict.fromkeys(fixed)))} ' + " ".join(parts)
+           + f' --name "{part} check"')
+    return req, None
+
+
+def _direction(clause: str, face: dict | None, unit: str):
+    """Unit vector for a load: 'down'/'up', 'along +X' etc., or 'pushing/pulling' the face (its normal)."""
+    if re.search(r"\b(down|downward|downwards|hanging|weight)\b", clause) or (unit in ("kg", "lb") and
+                                                                              not re.search(r"\bup\b", clause)):
+        return (0.0, 0.0, -1.0)
+    if re.search(r"\b(up|upward|upwards)\b", clause):
+        return (0.0, 0.0, 1.0)
+    m = re.search(r"\b(?:along|in|towards?|to)\s*(?:the\s*)?([+-])?\s*([xyz])\b", clause)
+    if m:
+        v = [0.0, 0.0, 0.0]
+        v["xyz".index(m.group(2))] = -1.0 if m.group(1) == "-" else 1.0
+        return tuple(v)
+    if face is not None and re.search(r"\b(push|pushing|pushes|press|pressing|presses)\b", clause):
+        return tuple(-c for c in face["normal"])        # into the face
+    if face is not None and re.search(r"\b(pull|pulling|pulls)\b", clause):
+        return tuple(face["normal"])                     # out of the face
+    return None

@@ -1,5 +1,6 @@
 """The user's own parts: hole patterns, screw sizes, safe handling of uploaded files."""
 import io
+import json
 import zipfile
 from pathlib import Path
 
@@ -124,3 +125,26 @@ def test_a_step_file_renamed_to_txt_is_accepted(tmp_path):
     assert _safe_name("Camera Body.step.txt") == "Camera_Body.step"
     t = "my parts: https://github.com/user-attachments/files/123/camera.step.txt"
     assert find_inputs(t, tmp_path)["urls"] == ["https://github.com/user-attachments/files/123/camera.step.txt"]
+
+
+def test_plain_english_fea_of_an_uploaded_part(tmp_path):
+    import shutil
+    from engagent import cadinput
+    from engagent.cad.features import mount_features
+    shutil.copy(EX / "camera.step", tmp_path / "camera.step")
+    (tmp_path / "features.json").write_text(json.dumps({"camera": mount_features(tmp_path / "camera.step")}))
+    req, q = cadinput.part_fea_request("aluminium 6061, fix F2, 300 N down on F1", tmp_path)
+    assert q is None and req.startswith(f"ea analyze {tmp_path / 'camera.step'} -m al_6061_t6 --fix near:")
+    assert "0,0,-300" in req.replace(" ", "").replace("-0,", "0,") or ",-300" in req
+    # nothing guessed: no material, no direction
+    req, q = cadinput.part_fea_request("fix F2, 300 N on F1", tmp_path)
+    assert req is None and "material" in q and "direction" in q
+    # 'pushing on' a face = into it (its inward normal); a face that does not exist is named
+    req, q = cadinput.part_fea_request("steel, hold F2, 100 N pushing on F5", tmp_path)
+    assert q is None and "--force near:" in req
+    req, q = None, None
+    try:
+        cadinput.part_fea_request("steel, fix F2, 100 N down on F9", tmp_path)
+    except ValueError as e:
+        q = str(e)
+    assert q and "F9" in q
