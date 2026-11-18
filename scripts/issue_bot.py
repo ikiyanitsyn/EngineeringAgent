@@ -343,7 +343,7 @@ def _cad_join(latest: str, convo: list[dict], issue, comment_id):
             head += f'\n\n<img src="{raw}/plots/assembly.png?raw=true" alt="assembly" width="560">'
         if plan["ok"]:
             head += ("\n\n**Next:** tell me the weight of the top part and the acceleration (e.g. *0.8 kg, 2 g*) "
-                     "and I will check the plate and screws with FEA and a hand calculation.")
+                     "and I will check the plate with FEA and a hand calculation (the screws are sized above; their load is shown in the reactions).")
         head += "\n\n<sub>Engineering assistance, not sign-off.</sub>"
     except Exception as e:
         head = f"### ❌ Could not design the adapter\n`{type(e).__name__}: {e}`\n\n[Log]({RUN_URL})"
