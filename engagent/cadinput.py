@@ -35,7 +35,10 @@ def find_inputs(text: str, root: Path) -> dict:
 
 
 def _safe_name(name: str) -> str:
-    stem = re.sub(r"[^A-Za-z0-9_-]+", "_", Path(name).stem).strip("_")[:40] or "part"
+    name = Path(name).name                                  # never keep folders from an archive
+    name = re.sub(r"\.txt$", "", name, flags=re.I)          # camera.step.txt (GitHub takes .txt) -> camera
+    name = re.sub(r"\.(step|stp)$", "", name, flags=re.I)
+    stem = re.sub(r"[^A-Za-z0-9_-]+", "_", name).strip("_")[:40] or "part"
     return stem + ".step"
 
 

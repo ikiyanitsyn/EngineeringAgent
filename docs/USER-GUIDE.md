@@ -295,8 +295,12 @@ A finished version of exactly this job is in
 
 ### D. Join two parts you already have (e.g. a camera on a robot arm)
 
-1. Open a request issue. Attach a **.zip** holding your STEP files (GitHub does not take `.step`
-   attachments), or upload the files into the repository (e.g. an `inbox/` folder) and write their paths.
+1. Open a request issue and attach your STEP files. GitHub does not take `.step` attachments, so you have
+   three options:
+   - **Easiest:** rename each file to end in **.txt** (`camera.step` -> `camera.step.txt`) and drag it in.
+     STEP files are plain text, so nothing is lost.
+   - Attach a **.zip** of them.
+   - Upload them to the repository (e.g. an `inbox/` folder) and write their paths.
 2. The bot measures both parts. It replies with numbered faces (F1, F2, ...), the hole patterns on them
    (bolt circle or rectangle, and the screw size) and pictures with the numbers on the faces.
 3. Reply `join arm_flange F2 to camera F2, M6, aluminium 6061`. If a hole size could be two screws

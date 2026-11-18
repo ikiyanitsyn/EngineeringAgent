@@ -258,9 +258,10 @@ def _cad_parts(latest: str, issue, comment_id):
         if not parts:
             shutil.rmtree(folder, ignore_errors=True)
             head = ("### ❌ I could not read your CAD files\n" + "\n".join(f"- {x}" for x in problems)
-                    + "\n\nGitHub does not accept `.step` attachments: put the STEP files in a **.zip** and "
-                    "attach that, or upload them to the repository (e.g. an `inbox/` folder) and write their "
-                    "paths here, like `inbox/camera.step`.")
+                    + "\n\nGitHub does not accept `.step` attachments. Easiest: rename each file to end in "
+                    "**.txt** (`camera.step` -> `camera.step.txt`) and drag it in - STEP files are plain text. "
+                    "Or attach a **.zip** of them, or upload them to the repository (e.g. an `inbox/` folder) "
+                    "and write their paths here, like `inbox/camera.step`.")
         else:
             (folder / "request.txt").write_text(latest, encoding="utf-8")
             data, md = cadinput.list_parts(parts, folder)

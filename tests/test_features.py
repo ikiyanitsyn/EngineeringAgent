@@ -117,3 +117,10 @@ def test_box_adapter_keeps_parts_on_axis_and_holes_line_up(tmp_path):
     assert all(inner >= int(s.split(" x ")[2].split(" ")[0]) + 6 for s in b["screws"])   # screw + head stand upright
     req = adapter.fea_request(tmp_path, "al_6061_t6", 0.8, 2)
     assert f",{info['z_b']:.4g} " in req.replace("+", " ") and "order" in req
+
+
+def test_a_step_file_renamed_to_txt_is_accepted(tmp_path):
+    from engagent.cadinput import _safe_name, find_inputs
+    assert _safe_name("Camera Body.step.txt") == "Camera_Body.step"
+    t = "my parts: https://github.com/user-attachments/files/123/camera.step.txt"
+    assert find_inputs(t, tmp_path)["urls"] == ["https://github.com/user-attachments/files/123/camera.step.txt"]
