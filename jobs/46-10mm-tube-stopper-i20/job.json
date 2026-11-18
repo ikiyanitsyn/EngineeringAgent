@@ -1,0 +1,56 @@
+{
+ "name": "46-10mm-tube-stopper-i20",
+ "units": "metric",
+ "analysis": "static",
+ "title": "static analysis of part",
+ "geometry": {
+  "script": "geometry.py"
+ },
+ "material": "pla",
+ "sets": {
+  "xmax": "xmax",
+  "xmin": "xmin"
+ },
+ "constraints": [
+  {
+   "type": "fixed",
+   "on": "xmax"
+  }
+ ],
+ "loads": [
+  {
+   "type": "pressure",
+   "on": "xmin",
+   "value": 0.207
+  }
+ ],
+ "probes": {
+  "xmin": {
+   "set": "xmin"
+  }
+ },
+ "criteria": {
+  "yield_sf": 1.5
+ },
+ "hand_calcs": [
+  {
+   "name": "Estimate: Cantilever, point load P at the free end (stress)",
+   "calc": "beam.cantilever_end_load",
+   "inputs": {
+    "P": 16.27,
+    "L": 25,
+    "E": "3.5GPa",
+    "b": 10,
+    "h": 10
+   },
+   "output": "stress",
+   "tol": 0.05,
+   "bound": "lower",
+   "metric": "max_von_mises"
+  }
+ ],
+ "print": {
+  "process": "fdm",
+  "material": "pla"
+ }
+}

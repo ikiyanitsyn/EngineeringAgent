@@ -1,0 +1,25 @@
+Plan:
+1. Reference the CAD file as `last` in the analysis command since `geometry.py` was compiled during the make step.
+2. Run `ea make` and `ea analyze last` with PLA material, pressure at xmin, and fix at xmax.
+3. Validate with the simplified beam model bound.
+
+```bash
+ea make geometry.py --print pla --name "10mm tube stopper"
+ea analyze last -m pla --pressure xmin 0.207 --fix xmax --bound "beam.cantilever_end_load P=16.27 L=25 E=3.5GPa b=10 h=10 -> stress@max_von_mises"
+```
+
+```python
+from build123d import *
+from engagent.cad import params, save
+
+P = params(length=25.0, diameter=10.0, knob_dia=18.0, knob_thick=6.0)
+
+shaft = Cylinder(P.diameter / 2, P.length, align=(Align.MIN, Align.CENTER, Align.CENTER))
+ridge1 = Pos(P.length - 8, 0, 0) * Cylinder((P.diameter / 2) + 0.6, 2.0, align=(Align.MIN, Align.CENTER, Align.CENTER))
+ridge2 = Pos(P.length - 14, 0, 0) * Cylinder((P.diameter / 2) + 0.6, 2.0, align=(Align.MIN, Align.CENTER, Align.CENTER))
+knob = Cylinder(P.knob_dia / 2, P.knob_thick, align=(Align.MIN, Align.CENTER, Align.CENTER))
+
+part = shaft + ridge1 + ridge2 + knob
+
+save(part)
+```
