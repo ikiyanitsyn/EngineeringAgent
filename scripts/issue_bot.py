@@ -145,6 +145,9 @@ def main() -> int:
     join = _cad_join(latest, convo, issue, comment_id)  # "join camera F2 to arm_flange F2": design the adapter
     if join is not None:
         return join
+    check = _adapter_load(latest, convo)                # "0.8 kg, 2 g": FEA of the adapter just designed
+    if check:
+        latest = check                                  # runs below as ordinary `ea` lines
     link_base = f"{SERVER}/{REPO}/blob/{BRANCH}"
     head, result, plan, req_text, followup = "", None, "", "", ""
     out_by_rules = False
@@ -243,6 +246,25 @@ def _cad_parts(latest: str, issue, comment_id):
         head = f"### ❌ Unexpected error while reading your parts\n`{type(e).__name__}: {e}`\n\n[Log]({RUN_URL})"
     _finish(head + "\n\n<sub>Answered by: built-in CAD measurement (no AI model)</sub>", comment_id, folders)
     return 0
+
+
+def _adapter_load(latest: str, convo: list[dict]) -> str | None:
+    """'the camera weighs 0.8 kg, 2 g' after an adapter design -> the `ea analyze` request for the plate."""
+    from engagent.cad import adapter
+    from engagent.guard import material_from_words
+    m = re.search(r"(\d+(?:\.\d+)?)\s*(kg|g(?:rams?)?)\b(?!\s*(?:accel|g\b))", latest or "", re.I)
+    if not m or parse(latest)["commands"]:
+        return None
+    last = [x["content"] for x in convo if x["role"] == "assistant" and "Adapter design" in x["content"]]
+    f = re.search(r"/(jobs/[^/)\s]+)/adapter\.step", last[-1]) if last else None
+    if not f or not (ROOT / f.group(1) / "adapter.json").exists():
+        return None
+    mass = float(m.group(1)) / (1 if m.group(2).lower() == "kg" else 1000)
+    g = re.search(r"(\d+(?:\.\d+)?)\s*(?:g\b|x\s*g\b|g-?force)", latest[m.end():] + " " + latest[:m.start()], re.I)
+    mat_words = latest + " " + last[-1]
+    mat = material_from_words(latest) or (re.search(r"Material:\*\* `([\w.]+)`", last[-1]) or [None, None])[1] \
+        or material_from_words(mat_words) or "al_6061_t6"
+    return adapter.fea_request(f.group(1), mat, mass, float(g.group(1)) if g else 1.0)
 
 
 JOIN_RX = re.compile(r"\bjoin\s+`?([\w.-]+)`?\s+(F\d+)\s+(?:to|and|with|onto|on)\s+`?([\w.-]+)`?\s+(F\d+)", re.I)

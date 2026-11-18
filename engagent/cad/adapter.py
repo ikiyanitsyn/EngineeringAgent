@@ -179,8 +179,34 @@ def build(p: dict, folder: str | Path, step_a, step_b, thickness: float | None =
     lb_len, nb = length(sb, gb, _pattern(p["fb"]).get("depth", 99))
     screws = [f"{len(pa)} x ISO 4762 {sa} x {la_len} (plate to part A, counterbored from the top){na}",
               f"{len(pb)} x ISO 4762 {sb} x {lb_len} (part B to plate, counterbored from below){nb}"]
-    return {"plate": str(folder / "adapter.step"), "assembly": str(folder / "assembly.step"),
-            "thickness": t, "size": [float(w), float(l)], "screws": screws}
+    info = {"plate": str(folder / "adapter.step"), "assembly": str(folder / "assembly.step"),
+            "thickness": t, "size": [float(w), float(l)], "screws": screws,
+            "holes_a": pa.tolist(), "holes_b": pb.tolist(), "clear_a": da, "clear_b": db,
+            "screw_a": sa, "screw_b": sb}
+    import json
+    (folder / "adapter.json").write_text(json.dumps(info, indent=1), encoding="utf-8")
+    return info
+
+
+def fea_request(folder, material: str, mass_kg: float, g_factor: float) -> str:
+    """`ea analyze` lines checking the plate: held at the screws into part A, part B's weight times the
+    acceleration pulling on its screws (along the plate normal - the worst case for bending), with an
+    order-of-magnitude hand check: the plate as a cantilever between the two hole-group centres. The
+    screws are spread out, so the true lever is shorter or longer - the estimate is not one-sided.)"""
+    import json
+    info = json.loads((Path(folder) / "adapter.json").read_text())
+    t = info["thickness"]
+    sel = lambda pts, d: "+".join(f"hole:{d:g}@{x:.4g},{y:.4g},{t / 2:.4g}" for x, y in pts)   # noqa: E731
+    F = mass_kg * 9.80665 * g_factor
+    ca, cb = np.mean(info["holes_a"], axis=0), np.mean(info["holes_b"], axis=0)
+    L = max(float(np.linalg.norm(cb - ca)), t)
+    b = min(info["size"])
+    rel = str(Path(folder) / "adapter.step")
+    from .. import materials
+    E = materials.get(material, "metric").get("E")
+    return (f'ea analyze {rel} -m {material} --fix {sel(info["holes_a"], info["clear_a"])} '
+            f'--force {sel(info["holes_b"], info["clear_b"])} 0,0,{-F:.4g} --sf 2 --name "adapter check" '
+            f'--bound "beam.cantilever_end_load P={F:.4g} L={L:.4g} E={E:g}MPa b={b:.4g} h={t:g} order"')
 
 
 def report_lines(p: dict, b: dict | None) -> list[str]:
