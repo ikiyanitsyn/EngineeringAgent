@@ -91,7 +91,7 @@ jobs:
           path: ${{ steps.bot.outputs.folders }}
           if-no-files-found: ignore
       - name: Tell the user if the run broke
-        if: failure() && steps.ack.outputs.id
+        if: (failure() || cancelled()) && steps.ack.outputs.id
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ACK_ID: ${{ steps.ack.outputs.id }}
