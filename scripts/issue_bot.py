@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -123,7 +124,7 @@ def needs_model() -> bool:
         return False
     from engagent.cadinput import find_inputs
     f = find_inputs(latest, ROOT)
-    if f["urls"] or f["paths"]:                        # the user's own parts: measured, no model
+    if f["urls"] or f["paths"] or JOIN_RX.search(latest or ""):   # own parts / adapter design: no model
         return False
     return form_from_words("\n".join(m["content"] for m in convo if m["role"] == "user")) is None
 
@@ -141,6 +142,9 @@ def main() -> int:
     cad = _cad_parts(latest, issue, comment_id)       # the user's own STEP parts: list faces, ask what to join
     if cad is not None:
         return cad
+    join = _cad_join(latest, convo, issue, comment_id)  # "join camera F2 to arm_flange F2": design the adapter
+    if join is not None:
+        return join
     link_base = f"{SERVER}/{REPO}/blob/{BRANCH}"
     head, result, plan, req_text, followup = "", None, "", "", ""
     out_by_rules = False
@@ -238,6 +242,90 @@ def _cad_parts(latest: str, issue, comment_id):
     except Exception as e:
         head = f"### ❌ Unexpected error while reading your parts\n`{type(e).__name__}: {e}`\n\n[Log]({RUN_URL})"
     _finish(head + "\n\n<sub>Answered by: built-in CAD measurement (no AI model)</sub>", comment_id, folders)
+    return 0
+
+
+JOIN_RX = re.compile(r"\bjoin\s+`?([\w.-]+)`?\s+(F\d+)\s+(?:to|and|with|onto|on)\s+`?([\w.-]+)`?\s+(F\d+)", re.I)
+
+
+def _cad_join(latest: str, convo: list[dict], issue, comment_id):
+    """Stage 2: the user picked the faces - plan, build and check a flat adapter plate."""
+    from engagent import quick
+    from engagent.cad import adapter
+    from engagent.cad.export import convert
+    from engagent.guard import material_from_words
+    m = JOIN_RX.search(latest or "")
+    if not m:
+        return None
+    saved = [re.search(r"Parts saved in `([^`]+)`", x["content"]) for x in convo if x["role"] == "assistant"]
+    saved = [x.group(1) for x in saved if x]
+    if not saved:
+        return None
+    src = ROOT / saved[-1]
+    a_name, fa, b_name, fb = m.groups()
+    folders: list[str] = []
+    try:
+        steps = {p.stem: p for p in src.glob("*.step")}
+        miss = [n for n in (a_name, b_name) if n not in steps]
+        if miss:
+            raise ValueError(f"no part called {', '.join(miss)} (parts: {', '.join(steps)})")
+        import json as _json
+        feats = _json.loads((src / "features.json").read_text())
+        screws = [x.upper() for x in re.findall(r"\bM\d{1,2}\b", latest, re.I)]
+        pick = []
+        for name, fid in ((a_name, fa), (b_name, fb)):
+            face = next((f for f in feats[name]["faces"] if f["id"].upper() == fid.upper()), None)
+            if face is None:
+                raise ValueError(f"{name} has no face {fid}")
+            cand = [h["screw"] for h in face["holes"] if h["count"] >= 2 and not h["screw"].startswith("bore")]
+            sizes = sorted(set(re.findall(r"M\d+", cand[0]))) if cand else []
+            given = [x for x in screws if x in sizes]
+            pick.append(given[0] if given else (sizes[0] if len(sizes) == 1 else None))
+        if None in pick:
+            k = pick.index(None)
+            n, f = ((a_name, fa), (b_name, fb))[k]
+            cand = [h["screw"] for h in next(x for x in feats[n]["faces"] if x["id"].upper() == f.upper())["holes"]]
+            head = (f"### ❓ One thing first\nThe holes on `{n}` {f} fit **{cand[0] if cand else 'no standard screw'}**. "
+                    f"Which screw is it? Reply e.g. *join {a_name} {fa} to {b_name} {fb}, M6*.")
+            _finish(head + "\n\n<sub>Answered by: built-in CAD design (no AI model)</sub>", comment_id, [])
+            return 0
+        folder = quick.next_job_folder("adapter")
+        thick = re.search(r"(\d+(?:\.\d+)?)\s*mm\s*(?:thick|plate)", latest, re.I)
+        plan = adapter.plan(steps[a_name], fa, steps[b_name], fb, pick[0], pick[1])
+        lines = [f"Joining `{a_name}` {fa} (below) to `{b_name}` {fb} (on top) with a flat adapter plate."]
+        if plan["ok"]:
+            built = adapter.build(plan, folder, steps[a_name], steps[b_name],
+                                  float(thick.group(1)) if thick else None)
+            convert(folder / "adapter.step", stl=True, threemf=True)
+            (folder / "plots").mkdir(exist_ok=True)
+            adapter.picture(folder / "assembly.step", folder / "plots" / "assembly.png",
+                            f"{a_name} + adapter + {b_name}")
+            mat = material_from_words(latest) or "al_6061_t6"
+            lines += [x.replace("part A", f"`{a_name}`").replace("part B", f"`{b_name}`")
+                      for x in adapter.report_lines(plan, built)] + [
+                f"**Material:** `{mat}`" + ("" if material_from_words(latest) else " (default - say another if you "
+                                              "prefer, e.g. PETG to 3D print it)") + "."]
+        else:
+            lines += [x.replace("part A", f"`{a_name}`").replace("part B", f"`{b_name}`")
+                      for x in adapter.report_lines(plan, None)]
+        (folder / "request.txt").write_text(latest, encoding="utf-8")
+        rel = os.path.relpath(folder, ROOT)
+        folders = [rel]
+        pushed = commit(folders, f"#{issue['number']} adapter" if issue else "adapter")
+        raw = f"{SERVER}/{REPO}/blob/{BRANCH}/{rel}"
+        files = [f"[{n}]({raw}/{n})" for n in ("adapter.step", "adapter.stl", "adapter.3mf", "assembly.step")
+                 if (folder / n).exists()]
+        head = "### 🔩 Adapter design\n" + "\n".join(f"- {x}" for x in lines)
+        if files and pushed:
+            head += "\n\n**Files:** " + " · ".join(files)
+            head += f'\n\n<img src="{raw}/plots/assembly.png?raw=true" alt="assembly" width="560">'
+        if plan["ok"]:
+            head += ("\n\n**Next:** tell me the weight of the top part and the acceleration (e.g. *0.8 kg, 2 g*) "
+                     "and I will check the plate and screws with FEA and a hand calculation.")
+        head += "\n\n<sub>Engineering assistance, not sign-off.</sub>"
+    except Exception as e:
+        head = f"### ❌ Could not design the adapter\n`{type(e).__name__}: {e}`\n\n[Log]({RUN_URL})"
+    _finish(head + "\n\n<sub>Answered by: built-in CAD design (no AI model)</sub>", comment_id, folders)
     return 0
 
 

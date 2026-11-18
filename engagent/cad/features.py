@@ -79,13 +79,17 @@ def mount_features(step: str | Path, max_faces: int = 8) -> dict:
         d /= np.linalg.norm(d)
         p = np.array(tuple(ax.position), float)
         dia = 2 * float(f.radius)
+        vs = np.array([tuple(v) for v in f.vertices()], float) if f.vertices() else np.zeros((1, 3))
+        span = (float((vs @ d).min()), float((vs @ d).max()))   # extent along the axis (hole depth)
         for h in holes:
             q = p - h["point"]
             if abs(abs(d @ h["dir"]) - 1) < 1e-6 and np.linalg.norm(q - (q @ h["dir"]) * h["dir"]) < 1e-4 \
                     and abs(h["diameter"] - dia) < 1e-4:
+                s0 = sorted((span[0], span[1]) if d @ h["dir"] > 0 else (-span[1], -span[0]))
+                h["span"] = (min(h["span"][0], s0[0]), max(h["span"][1], s0[1]))
                 break
         else:
-            holes.append({"point": p, "dir": d, "diameter": dia})
+            holes.append({"point": p, "dir": d, "diameter": dia, "span": span})
     planes = []
     for f in shape.faces():
         if "PLANE" not in str(f.geom_type):
@@ -112,14 +116,16 @@ def mount_features(step: str | Path, max_faces: int = 8) -> dict:
             t = (c - h["point"]) @ n / (h["dir"] @ n)
             hit = h["point"] + t * h["dir"]               # where the hole axis meets this face's plane
             if np.all(hit >= lo - 1e-3) and np.all(hit <= hi + 1e-3) and _hole_opens_on(pl["face"], hit, h):
-                on.append((hit, h["diameter"]))
+                on.append((hit, h["diameter"], h["span"][1] - h["span"][0]))
         groups: dict[float, list] = {}
-        for hit, dia in on:
+        depth: dict[float, float] = {}
+        for hit, dia, dep in on:
             groups.setdefault(round(dia, 3), []).append(hit)
+            depth[round(dia, 3)] = min(depth.get(round(dia, 3), 1e9), dep)
         pats = []
         for dia, hits in sorted(groups.items()):
             pts2 = np.array([[(x - c) @ u, (x - c) @ v] for x in hits])
-            pats.append({"diameter": dia, "count": len(hits), "screw": screw_for(dia),
+            pats.append({"diameter": dia, "count": len(hits), "screw": screw_for(dia), "depth": round(depth[dia], 3),
                          "pattern": _pattern(pts2), "centres": [list(map(float, x)) for x in hits]})
         ext = hi - lo
         size = sorted((float(e) for e in ext), reverse=True)[:2]
@@ -131,6 +137,7 @@ def mount_features(step: str | Path, max_faces: int = 8) -> dict:
         except Exception:
             label = c
         out.append({"id": f"F{i}", "area": pl["area"], "centre": [float(x) for x in c],
+                    "u": [float(x) for x in u], "v": [float(x) for x in v],
                     "label_at": [float(x) for x in label],
                     "normal": [round(float(x), 4) for x in n], "size": size, "holes": pats,
                     "selector": "near:" + ",".join(f"{x:.4g}" for x in c)})

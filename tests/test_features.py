@@ -68,3 +68,28 @@ def test_unzip_rejects_non_step_content_and_oversize(tmp_path, monkeypatch):
     zp.write_bytes(_zip({"big.step": "ISO-10303-21;" + "x" * 500}).getvalue())
     with pytest.raises(ValueError, match="larger than|expands beyond"):
         cadinput._unzip_steps(zp, tmp_path / "b")
+
+
+def test_adapter_plan_is_assemblable_and_holes_line_up(tmp_path):
+    from build123d import import_step
+    from engagent.cad import adapter
+    p = adapter.plan(EX / "arm_flange.step", "F2", EX / "camera.step", "F2", "M6", "M6")
+    # centred, the camera's M6 screws sit on the flange ring and the flange screws under the camera
+    assert p["centred"]["a_free"] is False and p["centred"]["b_free"] is False
+    assert p["ok"] and p["gap"] >= p["need_gap"]
+    b = adapter.build(p, tmp_path, EX / "arm_flange.step", EX / "camera.step")
+    a, plate, cam = sorted(import_step(str(tmp_path / "assembly.step")).solids(), key=lambda s: s.bounding_box().min.Z)
+
+    def holes(solid, r):
+        return {(round(f.axis_of_rotation.position.X, 2), round(f.axis_of_rotation.position.Y, 2))
+                for f in solid.faces() if "CYL" in str(f.geom_type) and f.is_circular_concave and abs(f.radius - r) < 0.01}
+    through = holes(plate, 3.3)
+    assert holes(a, 2.5) <= through and holes(cam, 2.5) <= through      # every tapped hole meets a plate hole
+    assert not (a & plate) or (a & plate).volume < 1e-6
+    assert not (plate & cam) or (plate & cam).volume < 1e-6
+    # screws stop short of the bottom of the 10 mm deep tapped holes, and say when engagement is short
+    grip = b["thickness"] - 6.5
+    for s in b["screws"]:
+        L = int(s.split(" x ")[2].split(" ")[0])
+        assert L - grip <= 10 - 1
+    assert "thread engaged" in b["screws"][0]
