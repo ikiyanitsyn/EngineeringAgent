@@ -1,0 +1,6 @@
+{
+ "geometry": {
+  "script": "geometry.py"
+ },
+ "name": "33-wrap-custom-python-shape-i18"
+}

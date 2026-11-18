@@ -1,0 +1,18 @@
+from build123d import *
+from engagent.cad import params, save
+
+P = params(cable_d=6.0, wall=2.5, length=60.0, width=25.0, screw_d=4.5)
+base = Box(P.length, P.width, P.wall, align=(Align.CENTER, Align.MIN, Align.MIN))
+screw_hole = Pos(0, P.width / 2, 0) * Cylinder(P.screw_d / 2, P.wall * 3)
+base -= screw_hole
+block_h = P.cable_d + 2 * P.wall
+holder = Pos(0, 0, P.wall) * Box(P.length, P.width, block_h, align=(Align.CENTER, Align.MIN, Align.MIN))
+channel_spacing = P.length / 4
+for i in range(3):
+    x_pos = -P.length / 2 + channel_spacing * (i + 1)
+    cable_cut = Pos(x_pos, P.width / 2, P.wall + block_h / 2) * Rot(90, 0, 0) * Cylinder(P.cable_d / 2, P.width * 1.5)
+    neck_cut = Pos(x_pos, 0, P.wall) * Box(P.cable_d * 0.7, P.width, block_h, align=(Align.CENTER, Align.MIN, Align.MIN))
+    holder -= cable_cut
+    holder -= neck_cut
+part = base + holder
+save(part)
