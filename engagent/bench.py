@@ -71,6 +71,8 @@ def run_case(case: Path, work: Path) -> dict:
         row.update(outcome="ERROR", detail=f"{type(e).__name__}: {str(e)[:200]}", seconds=time.time() - t0)
         return row
     row["seconds"] = time.time() - t0
+    row["request"] = (out.get("request") or out.get("reply") or "")[:4000]   # what the solver ran (for the judge)
+    print("    request:\n      " + row["request"].replace("\n", "\n      ")[:2000], flush=True)
     row["answered_by"] = ("rules" if out.get("by_rules") else
                           (assistant.LAST_USED.get("model") or "model"))
     if out.get("kind") == "question":
