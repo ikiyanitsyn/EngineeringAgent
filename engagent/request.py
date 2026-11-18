@@ -97,6 +97,18 @@ def run_request(text: str, *, markdown: bool = False, link_base: str | None = No
         errors.append("No commands or code blocks found. A request needs lines starting with `ea` "
                       "(for example `ea make plate length=100 --print petg`) or a ```json / ```python block. "
                       "See docs/CHATBOT-PROMPT.md.")
+    # A ```python block plus `ea make <anything>.py` (or a bare `ea make`): the make line builds the block,
+    # keeping its --print / --name options (models often name the script part.py or leave it out).
+    py_make = [c for c in req["commands"] if re.match(r"^make(\s*$|\s+--|\s+\S+\.py\b)", c.strip())]
+    if req["python"] and not req["json"] and py_make:
+        import tempfile
+        tmp = Path(tempfile.mkdtemp(prefix="engagent-req-")) / "geometry.py"
+        tmp.write_text(req["python"][0], encoding="utf-8")
+        best = max(py_make, key=len)                    # the line with the most options wins
+        rest = re.sub(r"^make(\s+\S+\.py\b)?", "", best.strip())
+        line = f"make {shlex.quote(str(tmp))}{rest}"
+        cmds = [c for c in req["commands"] if c not in py_make]
+        req = dict(req, python=[], commands=[line] + cmds)
     try:
         # ---- code blocks: one job folder
         if req["json"] or req["python"]:

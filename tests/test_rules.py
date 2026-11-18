@@ -185,3 +185,22 @@ def test_bracket_bound_never_fails_a_correct_fea(monkeypatch, tmp_path):
     hc = next(c for c in r["checks"] if c["id"] == "hand_calc")
     assert hc["status"] == "PASS" and "consistent" in hc["detail"], hc
     assert r["hand_calcs"][0]["ratio"] > 10
+
+
+@pytest.mark.solver
+def test_python_block_with_a_misnamed_make_line_builds_once(monkeypatch, tmp_path):
+    """Live issue #18: Gemini wrote `ea make` and `ea make part.py --print petg` next to its python block."""
+    from engagent.request import run_request
+    monkeypatch.setenv("ENGAGENT_ROOT", str(tmp_path))
+    txt = ("```python\nfrom build123d import *\nfrom engagent.cad import params, save\n"
+           "save(Box(60, 25, 13.5, align=(Align.MIN, Align.MIN, Align.MIN)))\n```\n"
+           "```bash\nea make\nea make part.py --print petg --name \"clip\"\n```")
+    r = run_request(txt)
+    assert r["errors"] == [] and len(r["jobs"]) == 1
+    assert any("3D-print check" in l for l in r["jobs"][0]["summary"])
+
+
+def test_holding_cables_is_not_an_analysis_question():
+    from engagent.guard import analysis_intent
+    assert not analysis_intent("a clip that holds three 6 mm cables under the desk")
+    assert analysis_intent("will it hold 5 kg?") and analysis_intent("is it strong enough")

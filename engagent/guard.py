@@ -158,7 +158,8 @@ def question(missing: list[str]) -> str:
             "'5 kg hanging from the hook'), and where the part is held, if not already stated.")
 
 
-INTENT = ("bend", "deflect", "sag", "stress", "strength", "strong", "hold", "break", "fail", "safety factor",
+INTENT = ("bend", "deflect", "sag", "stress", "strength", "strong", "will it hold", "can it hold", "hold up",
+          "hold the weight", "hold the load", "break", "fail", "safety factor",
           "safe", "carry", "support the", "vibrat", "frequency", "resonan", "buckl", "temperature", "how hot",
           "heat", "cool", "thermal", "fatigue", "analy", "fea", "stiff", "deform", "crack", "stretch", "elongat",
           "compress", "twist", "torsion", "displace", "move under", "yield", "load capacity")
