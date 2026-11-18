@@ -40,6 +40,8 @@ ea analyze <last|template> [name=value ...] -m MATERIAL [supports] [loads] [opti
              --duration SECONDS  --fatigue  --size ELEMENT_SIZE  --quick
   --check "CALC k=v ..."   a hand calculation the result is checked against. ALWAYS add one when a
              textbook case fits (beams, columns, bars, conduction): it turns REVIEW into a verified result.
+             No exact textbook case (e.g. an L-bracket)? Still add the nearest simplified one as a bound,
+             e.g. the loaded leg as a cantilever beam, and say in the plan that it is only a bound.
              Useful: beam.cantilever_end_load P L E b h | beam.simply_supported_center_load P L E b h |
              beam.natural_frequency L E b h density | column.euler_buckling L E b h ends=fixed_free |
              axial.bar P L A E | thermal.wall_conduction_convection k L h T_fixed T_ambient

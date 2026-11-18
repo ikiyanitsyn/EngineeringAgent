@@ -135,6 +135,7 @@ def main() -> int:
 
     link_base = f"{SERVER}/{REPO}/blob/{BRANCH}"
     head, result, plan, req_text, followup = "", None, "", "", ""
+    out_by_rules = False
     direct = parse(latest)
     try:
         if direct["commands"] or direct["json"] or direct["python"]:
@@ -142,6 +143,7 @@ def main() -> int:
             req_text = latest
         else:
             out = _ask_with_fallback(convo)
+            out_by_rules = bool(out.get("by_rules"))
             plan = out.get("plan", "")
             if out.get("corrections"):
                 plan = (plan + "\n\n**Checked against your words:** " + "; ".join(out["corrections"]) + ".").strip()
@@ -172,8 +174,21 @@ def main() -> int:
             head = _result_body(result, plan, direct, req_text, folders, issue, followup)
     except Exception as e:  # still answer the user
         head = f"### ❌ Unexpected error while saving results\n`{type(e).__name__}: {e}`\n\n[Log]({RUN_URL})"
-    _finish(head, comment_id, folders)
+    _finish(head + _model_footer(direct, out_by_rules), comment_id, folders)
     return 0
+
+
+def _model_footer(direct, by_rules) -> str:
+    """One line saying what produced the answer (the model that really answered, after any fallback)."""
+    if direct["commands"] or direct["json"] or direct["python"]:
+        what = "your own `ea` commands (no AI model)"
+    elif by_rules:
+        what = "built-in rules (no AI model)"
+    elif assistant.LAST_USED:
+        what = f"`{assistant.LAST_USED['model']}` via {assistant.LAST_USED['host']}"
+    else:
+        return ""
+    return f"\n\n<sub>Answered by: {what}</sub>"
 
 
 def _result_body(result, plan, direct, req_text, folders, issue, followup="") -> str:

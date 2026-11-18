@@ -24,6 +24,7 @@ import os
 import re
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 
 from . import config
@@ -138,6 +139,9 @@ def _post(url: str, key: str | None, model: str, messages: list[dict], timeout: 
     return content
 
 
+LAST_USED: dict = {}             # {"model": ..., "host": ...} of the most recent successful completion
+
+
 def complete(messages: list[dict], *, model: str | None = None, timeout: float = 180.0) -> str:
     """One chat completion.  On GitHub Models, falls back to smaller models and the older endpoint."""
     s = settings()
@@ -161,7 +165,9 @@ def complete(messages: list[dict], *, model: str | None = None, timeout: float =
         for attempt in range(RETRIES):
             wait = RETRY_WAIT[min(attempt, len(RETRY_WAIT) - 1)]
             try:
-                return _post(url, s["key"], m, messages, timeout)
+                text = _post(url, s["key"], m, messages, timeout)
+                LAST_USED.update(model=m, host=urllib.parse.urlparse(url).hostname or "")
+                return text
             except urllib.error.HTTPError as e:
                 detail = e.read().decode("utf-8", "replace")[:300]
                 errors.append(f"{m} at {url}: HTTP {e.code} {detail}")
