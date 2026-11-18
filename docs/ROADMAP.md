@@ -99,6 +99,17 @@ Run everything: `.venv/bin/python -m pytest -q` then `.venv/bin/python -m pytest
    alternative.
    **Next for own parts:** clickable faces in viewer.html that copy a selector; the screw check (tension and shear per
    screw from the reactions).
+   **Benchmark loop (benchmarks/, `ea bench`, bench.yml), first day:** 10 textbook cases solved blind.
+   Gemini route: 8/10, then 8/10 with different failures, then 9/10 as the gaps were fixed.
+   Two Claude solvers on the 3 model-route cases: Claude chat 2/3 (it clamped the heated bar's ends
+   sideways, an agent gap since fixed in the prompt) and Claude Code 3/3 (it found the clamping issue
+   itself). Fixes from the loop:
+   - rules for the simply supported beam (half model with symmetry, 1.7 %), Euler columns (0.1 %)
+     and restrained heated bars (0.0 %);
+   - the library material is named up front, and a needless question on a design request gets one
+     push;
+   - four benchmark answers that had leaked into the prompt's examples were removed, and a test
+     now guards against it.
    **Speed, measured:** a thin 300 x 200 x 6 plate needs 133k nodes, and the convergence re-run at
    344k nodes takes ~300 s of serial CalculiX; the iterative solver was slower (427 s). Kept as is:
    the convergence run is what makes the result trustworthy.
