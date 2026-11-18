@@ -1,0 +1,100 @@
+{
+ "name": "18-joined-bars",
+ "units": "metric",
+ "analysis": "static",
+ "title": "steel_generic and al_6061_t6 bars joined end to end",
+ "parts": [
+  {
+   "name": "steel",
+   "material": "steel_generic",
+   "geometry": {
+    "template": "beam",
+    "params": {
+     "length": 50.0,
+     "width": 10.0,
+     "height": 10.0
+    },
+    "step": "steel.step"
+   }
+  },
+  {
+   "name": "al",
+   "material": "al_6061_t6",
+   "geometry": {
+    "template": "beam",
+    "params": {
+     "length": 50.0,
+     "width": 10.0,
+     "height": 10.0
+    },
+    "position": [
+     50.0,
+     0,
+     0
+    ],
+    "step": "al.step"
+   }
+  }
+ ],
+ "sets": {
+  "fixed": {
+   "part": "steel",
+   "plane": "x",
+   "at": 0
+  },
+  "joint_a": {
+   "part": "steel",
+   "plane": "x",
+   "at": 50.0
+  },
+  "joint_b": {
+   "part": "al",
+   "plane": "x",
+   "at": 50.0
+  },
+  "tip": {
+   "part": "al",
+   "plane": "x",
+   "at": 100.0
+  }
+ },
+ "interactions": [
+  {
+   "type": "tie",
+   "master": "joint_a",
+   "slave": "joint_b"
+  }
+ ],
+ "constraints": [
+  {
+   "type": "fixed",
+   "on": "fixed"
+  }
+ ],
+ "loads": [
+  {
+   "type": "force",
+   "on": "tip",
+   "value": [
+    5000.0,
+    0,
+    0
+   ]
+  }
+ ],
+ "probes": {
+  "tip": {
+   "set": "tip"
+  }
+ },
+ "hand_calcs": [
+  {
+   "name": "Series elongation P L1/(A E1) + P L2/(A E2)",
+   "expected": "0.0481892 mm",
+   "kind": "length",
+   "formula": "delta = P L1 / (A E1) + P L2 / (A E2)",
+   "metric": "probe.tip.ux",
+   "tol": 0.03
+  }
+ ]
+}

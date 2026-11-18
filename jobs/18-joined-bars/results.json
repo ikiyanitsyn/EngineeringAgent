@@ -1,0 +1,650 @@
+{
+ "engagent_version": "0.1.0",
+ "name": "18-joined-bars",
+ "title": "steel_generic and al_6061_t6 bars joined end to end",
+ "description": "",
+ "analysis": "static",
+ "units": "metric",
+ "standard": "iso",
+ "status": "ok",
+ "verdict": "PASS",
+ "solver": {
+  "version": "2.21",
+  "seconds": 1.57,
+  "errors": [],
+  "warnings": [],
+  "command": "ccx -i job",
+  "tail": ""
+ },
+ "mesh": {
+  "nodes": 11418,
+  "elements": 6465,
+  "element_type": "C3D10",
+  "size_mm": 2.078460969082653,
+  "parts": [
+   "steel",
+   "al"
+  ],
+  "bbox_min": [
+   0.0,
+   -5.0,
+   -5.0
+  ],
+  "bbox_max": [
+   100.0,
+   5.0,
+   5.0
+  ],
+  "volume_mm3": 10000.0,
+  "quality_min": 0.30128877831861434,
+  "quality_mean": 0.8116455767004755,
+  "quality_below_0p1": 0
+ },
+ "parts": [
+  {
+   "name": "steel",
+   "geometry": "steel.step",
+   "material": {
+    "key": "steel_generic",
+    "name": "Structural steel (generic)",
+    "family": "steel",
+    "orthotropic": false,
+    "properties": {
+     "E": "210 GPa",
+     "nu": "0.3",
+     "density": "7850 kg/m^3",
+     "cte": "12 um/m/K",
+     "k": "50 W/m/K",
+     "cp": "480 J/kg/K",
+     "yield": "250 MPa",
+     "uts": "400 MPa",
+     "elongation": "0.2",
+     "endurance": "200 MPa"
+    },
+    "meta": {
+     "spec": "generic, guide default"
+    }
+   },
+   "orientation": null
+  },
+  {
+   "name": "al",
+   "geometry": "al.step",
+   "material": {
+    "key": "al_6061_t6",
+    "name": "Aluminium 6061-T6",
+    "family": "aluminium",
+    "orthotropic": false,
+    "properties": {
+     "E": "68.9 GPa",
+     "nu": "0.33",
+     "density": "2700 kg/m^3",
+     "cte": "23.6 um/m/K",
+     "k": "167 W/m/K",
+     "cp": "896 J/kg/K",
+     "yield": "276 MPa",
+     "uts": "310 MPa",
+     "elongation": "0.12",
+     "endurance": "96.5 MPa"
+    },
+    "meta": {
+     "spec": "ASTM B209 6061-T6"
+    }
+   },
+   "orientation": null
+  }
+ ],
+ "sets": {
+  "fixed": {
+   "area": 100.0,
+   "faces": [
+    5
+   ],
+   "nodes": 153,
+   "centroid": [
+    0.0,
+    -4.4408920985006264e-17,
+    -8.881784197001253e-17
+   ]
+  },
+  "joint_a": {
+   "area": 100.0,
+   "faces": [
+    6
+   ],
+   "nodes": 153,
+   "centroid": [
+    49.99999999999999,
+    -3.552713678800501e-17,
+    -8.881784197001253e-17
+   ]
+  },
+  "joint_b": {
+   "area": 100.0,
+   "faces": [
+    11
+   ],
+   "nodes": 153,
+   "centroid": [
+    49.99999999999999,
+    -4.4408920985006264e-17,
+    -8.881784197001253e-17
+   ]
+  },
+  "tip": {
+   "area": 100.0,
+   "faces": [
+    12
+   ],
+   "nodes": 153,
+   "centroid": [
+    99.99999999999999,
+    -3.552713678800501e-17,
+    -8.881784197001253e-17
+   ]
+  }
+ },
+ "constraints": [
+  "Fixed (all translations) on 'fixed'"
+ ],
+ "loads": [
+  "Force (5000, 0, 0) N on 'tip' (area 100 mm^2)"
+ ],
+ "interactions": [
+  {
+   "type": "tie",
+   "master": "joint_a",
+   "slave": "joint_b"
+  }
+ ],
+ "notes": [],
+ "initial_temperature": null,
+ "metrics": {
+  "max_displacement": {
+   "value": 0.04806127113139227,
+   "kind": "length",
+   "label": "Maximum displacement",
+   "location": [
+    100.0,
+    5.0,
+    5.0
+   ],
+   "vector": [
+    0.0480313,
+    -0.00119876,
+    -0.00120124
+   ]
+  },
+  "max_ux": {
+   "value": 0.0480313,
+   "kind": "length",
+   "label": "Largest ux",
+   "location": [
+    100.0,
+    5.0,
+    5.0
+   ]
+  },
+  "max_uy": {
+   "value": -0.00121604,
+   "kind": "length",
+   "label": "Largest uy",
+   "location": [
+    54.88996481927229,
+    5.0,
+    0.18650131976125994
+   ]
+  },
+  "max_uz": {
+   "value": -0.00121764,
+   "kind": "length",
+   "label": "Largest uz",
+   "location": [
+    55.91078891745011,
+    0.13028041143514635,
+    5.0
+   ]
+  },
+  "peak_von_mises": {
+   "value": 77.49406976466386,
+   "kind": "pressure",
+   "label": "Peak von Mises stress (anywhere)",
+   "location": [
+    50.0,
+    5.0,
+    3.999999999999992
+   ],
+   "in_exclusion": true
+  },
+  "max_von_mises": {
+   "value": 55.52814573922205,
+   "kind": "pressure",
+   "label": "Design von Mises stress (away from supports/contacts)",
+   "location": [
+    45.46889824834068,
+    5.0,
+    4.342006392814962
+   ]
+  },
+  "max_principal": {
+   "value": 55.5189996760096,
+   "kind": "pressure",
+   "label": "Maximum principal stress (design zone)",
+   "location": [
+    45.586725654706584,
+    -4.103703875044576,
+    -5.0
+   ]
+  },
+  "min_principal": {
+   "value": -1.044694032041823,
+   "kind": "pressure",
+   "label": "Minimum principal stress (design zone)",
+   "location": [
+    54.84788021861533,
+    0.18537913373694792,
+    -5.0
+   ]
+  },
+  "safety_factor_yield": {
+   "value": 4.502221291056252,
+   "kind": "ratio",
+   "label": "Safety factor on yield (design stress)",
+   "part": "steel",
+   "yield_strength": 250.0
+  },
+  "reaction.fixed": {
+   "value": 5000.0,
+   "kind": "force",
+   "label": "Reaction force on 'fixed'",
+   "vector": [
+    -5000.0,
+    9.021228e-12,
+    2.201483e-11
+   ]
+  },
+  "reaction_total": {
+   "value": 5000.0,
+   "kind": "force",
+   "label": "Total reaction force",
+   "vector": [
+    -5000.0,
+    9.021228e-12,
+    2.201483e-11
+   ]
+  },
+  "applied_force": {
+   "value": 5000.0,
+   "kind": "force",
+   "label": "Total applied force",
+   "vector": [
+    5000.0,
+    0.0,
+    0.0
+   ]
+  },
+  "probe.tip.ux": {
+   "value": 0.04803096666666664,
+   "kind": "length",
+   "label": "ux at probe 'tip'",
+   "location": [
+    100.0,
+    0.011080395695560906,
+    -0.015632337442013203
+   ]
+  },
+  "probe.tip.uy": {
+   "value": -3.906688431372545e-06,
+   "kind": "length",
+   "label": "uy at probe 'tip'",
+   "location": [
+    100.0,
+    0.011080395695560906,
+    -0.015632337442013203
+   ]
+  },
+  "probe.tip.uz": {
+   "value": -2.246480653594572e-07,
+   "kind": "length",
+   "label": "uz at probe 'tip'",
+   "location": [
+    100.0,
+    0.011080395695560906,
+    -0.015632337442013203
+   ]
+  },
+  "probe.tip.displacement": {
+   "value": 0.048030966826070894,
+   "kind": "length",
+   "label": "Displacement at probe 'tip'",
+   "location": [
+    100.0,
+    0.011080395695560906,
+    -0.015632337442013203
+   ]
+  },
+  "probe.tip.sxx": {
+   "value": 49.99949999999995,
+   "kind": "pressure",
+   "label": "sxx at probe 'tip'",
+   "location": [
+    100.0,
+    0.011080395695560906,
+    -0.015632337442013203
+   ]
+  },
+  "probe.tip.syy": {
+   "value": 3.2677098162745106e-08,
+   "kind": "pressure",
+   "label": "syy at probe 'tip'",
+   "location": [
+    100.0,
+    0.011080395695560906,
+    -0.015632337442013203
+   ]
+  },
+  "probe.tip.szz": {
+   "value": 1.4185835091503266e-08,
+   "kind": "pressure",
+   "label": "szz at probe 'tip'",
+   "location": [
+    100.0,
+    0.011080395695560906,
+    -0.015632337442013203
+   ]
+  },
+  "probe.tip.sxy": {
+   "value": 9.020624705882351e-10,
+   "kind": "pressure",
+   "label": "sxy at probe 'tip'",
+   "location": [
+    100.0,
+    0.011080395695560906,
+    -0.015632337442013203
+   ]
+  },
+  "probe.tip.syz": {
+   "value": 3.7844394575163376e-09,
+   "kind": "pressure",
+   "label": "syz at probe 'tip'",
+   "location": [
+    100.0,
+    0.011080395695560906,
+    -0.015632337442013203
+   ]
+  },
+  "probe.tip.szx": {
+   "value": -1.511345320261438e-09,
+   "kind": "pressure",
+   "label": "szx at probe 'tip'",
+   "location": [
+    100.0,
+    0.011080395695560906,
+    -0.015632337442013203
+   ]
+  },
+  "probe.tip.von_mises": {
+   "value": 49.99949997656848,
+   "kind": "pressure",
+   "label": "von Mises at probe 'tip'",
+   "location": [
+    100.0,
+    0.011080395695560906,
+    -0.015632337442013203
+   ]
+  }
+ },
+ "hand_calcs": [
+  {
+   "name": "Series elongation P L1/(A E1) + P L2/(A E2)",
+   "formulas": [
+    "delta = P L1 / (A E1) + P L2 / (A E2)"
+   ],
+   "reference": "user-supplied hand calculation",
+   "inputs": {},
+   "notes": [],
+   "expected": 0.0481892,
+   "kind": "length",
+   "metric": "probe.tip.ux",
+   "fea": 0.04803096666666664,
+   "diff": 0.003283584980314294,
+   "tol": 0.03,
+   "status": "PASS"
+  }
+ ],
+ "checks": [
+  {
+   "id": "solver",
+   "name": "Solver finished without errors",
+   "status": "PASS",
+   "detail": "CalculiX 2.21, 1.6 s, no warnings"
+  },
+  {
+   "id": "units",
+   "name": "Unit set and material values",
+   "status": "PASS",
+   "detail": "deck written in mm, tonne, s, N, MPa, mJ, mW, degC; inputs read as metric"
+  },
+  {
+   "id": "mesh",
+   "name": "Mesh quality",
+   "status": "PASS",
+   "detail": "11,418 nodes, 6,465 C3D10, size 2.078 mm, min quality (SICN) 0.30"
+  },
+  {
+   "id": "equilibrium",
+   "name": "Reactions balance the applied load",
+   "status": "PASS",
+   "detail": "applied (5000, 0, 0) N, reactions (-5000, 0, 0) N, imbalance 4.76e-13 %"
+  },
+  {
+   "id": "hand_calc",
+   "name": "Agreement with hand calculation",
+   "status": "PASS",
+   "detail": "Series elongation P L1/(A E1) + P L2/(A E2): 0.33 % (tol 3 %)"
+  },
+  {
+   "id": "convergence",
+   "name": "Mesh convergence (size x0.5, change < 5 %)",
+   "status": "PASS",
+   "detail": "max_displacement: 0.01 %; max_von_mises: 1.22 %; probe.tip.ux: 0.01 % (for information, not required: peak_von_mises 12.5 %)"
+  },
+  {
+   "id": "singularity",
+   "name": "Stress singularities identified and excluded",
+   "status": "PASS",
+   "detail": "peak 77.49 MPa lies within 4.157 mm of a support/contact (sets: fixed, joint_a, joint_b) and is mesh-dependent, so it is not a design value; design stress 55.53 MPa is taken outside that zone; peak changed 12.5 % on refinement"
+  },
+  {
+   "id": "linearity",
+   "name": "Linear analysis is valid",
+   "status": "PASS",
+   "detail": "small displacement and stress below yield"
+  },
+  {
+   "id": "sanity",
+   "name": "Displacement follows the load direction",
+   "status": "PASS",
+   "detail": "cosine between peak displacement and net load = 1.00"
+  }
+ ],
+ "convergence": {
+  "ratio": 0.5,
+  "tol": 0.05,
+  "rows": [
+   {
+    "metric": "max_displacement",
+    "coarse": 0.04806127113139227,
+    "fine": 0.04806776247360906,
+    "kind": "length",
+    "change": 0.00013504564978155387,
+    "required": true
+   },
+   {
+    "metric": "max_von_mises",
+    "coarse": 55.52814573922205,
+    "fine": 56.21213079354533,
+    "kind": "pressure",
+    "change": 0.01216792611607991,
+    "required": true
+   },
+   {
+    "metric": "peak_von_mises",
+    "coarse": 77.49406976466386,
+    "fine": 88.52760658644964,
+    "kind": "pressure",
+    "change": 0.12463385431087219,
+    "required": false
+   },
+   {
+    "metric": "probe.tip.ux",
+    "coarse": 0.04803096666666664,
+    "fine": 0.04803787148217627,
+    "kind": "length",
+    "change": 0.00014373691624095075,
+    "required": true
+   },
+   {
+    "metric": "probe.tip.displacement",
+    "coarse": 0.048030966826070894,
+    "fine": 0.048037878933876114,
+    "kind": "length",
+    "change": 0.00014388869697463892,
+    "required": false
+   },
+   {
+    "metric": "probe.tip.von_mises",
+    "coarse": 49.99949997656848,
+    "fine": 49.99950003442528,
+    "kind": "pressure",
+    "change": 1.157147610998936e-09,
+    "required": false
+   }
+  ],
+  "coarse": {
+   "size": 2.078460969082653,
+   "nodes": 11418,
+   "elements": 6465
+  },
+  "fine": {
+   "size": 1.0392304845413265,
+   "nodes": 69920,
+   "elements": 44758
+  }
+ },
+ "fatigue": null,
+ "history": null,
+ "frequencies": [],
+ "buckling_factors": [],
+ "exclusion": {
+  "distance": 4.156921938165306,
+  "sets": [
+   "fixed",
+   "joint_a",
+   "joint_b"
+  ]
+ },
+ "criteria": {},
+ "gdt": null,
+ "runtime_s": 50.2,
+ "job": {
+  "name": "18-joined-bars",
+  "units": "metric",
+  "analysis": "static",
+  "title": "steel_generic and al_6061_t6 bars joined end to end",
+  "parts": [
+   {
+    "name": "steel",
+    "material": "steel_generic",
+    "geometry": {
+     "template": "beam",
+     "params": {
+      "length": 50.0,
+      "width": 10.0,
+      "height": 10.0
+     },
+     "step": "steel.step"
+    }
+   },
+   {
+    "name": "al",
+    "material": "al_6061_t6",
+    "geometry": {
+     "template": "beam",
+     "params": {
+      "length": 50.0,
+      "width": 10.0,
+      "height": 10.0
+     },
+     "position": [
+      50.0,
+      0,
+      0
+     ],
+     "step": "al.step"
+    }
+   }
+  ],
+  "sets": {
+   "fixed": {
+    "part": "steel",
+    "plane": "x",
+    "at": 0
+   },
+   "joint_a": {
+    "part": "steel",
+    "plane": "x",
+    "at": 50.0
+   },
+   "joint_b": {
+    "part": "al",
+    "plane": "x",
+    "at": 50.0
+   },
+   "tip": {
+    "part": "al",
+    "plane": "x",
+    "at": 100.0
+   }
+  },
+  "interactions": [
+   {
+    "type": "tie",
+    "master": "joint_a",
+    "slave": "joint_b"
+   }
+  ],
+  "constraints": [
+   {
+    "type": "fixed",
+    "on": "fixed"
+   }
+  ],
+  "loads": [
+   {
+    "type": "force",
+    "on": "tip",
+    "value": [
+     5000.0,
+     0,
+     0
+    ]
+   }
+  ],
+  "probes": {
+   "tip": {
+    "set": "tip"
+   }
+  },
+  "hand_calcs": [
+   {
+    "name": "Series elongation P L1/(A E1) + P L2/(A E2)",
+    "expected": "0.0481892 mm",
+    "kind": "length",
+    "formula": "delta = P L1 / (A E1) + P L2 / (A E2)",
+    "metric": "probe.tip.ux",
+    "tol": 0.03
+   }
+  ]
+ }
+}

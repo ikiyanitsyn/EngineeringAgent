@@ -1,0 +1,53 @@
+{
+ "valid": true,
+ "solids": 1,
+ "faces": 6,
+ "edges": 12,
+ "volume": 4999.999999999999,
+ "area": 2199.9999999999995,
+ "bbox_min": [
+  50.0,
+  -5.0,
+  -5.0
+ ],
+ "bbox_max": [
+  100.0,
+  5.0,
+  5.0
+ ],
+ "bbox_size": [
+  50.0,
+  10.0,
+  10.0
+ ],
+ "center_of_mass": [
+  75.0,
+  -2.858824288409779e-17,
+  7.105427357601004e-18
+ ],
+ "inertia_unit_density": [
+  [
+   83333.33333333334,
+   0.0,
+   0.0
+  ],
+  [
+   0.0,
+   1083333.3333333335,
+   -1.0156584154720531e-30
+  ],
+  [
+   0.0,
+   -1.0156584154720531e-30,
+   1083333.3333333335
+  ]
+ ],
+ "face_types": {
+  "plane": 6
+ },
+ "cylinder_diameters": [],
+ "files": [
+  "/home/runner/work/EngineeringAgent/EngineeringAgent/jobs/18-joined-bars/al.step"
+ ],
+ "template": "beam"
+}
