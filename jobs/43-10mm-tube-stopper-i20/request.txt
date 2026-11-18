@@ -1,0 +1,25 @@
+Plan:
+1. Fix face selection for both pressure and fixed support using the provided `near:` coordinates.
+2. Run `ea make` and `ea analyze` with valid face selectors for the cylindrical stopper.
+
+```python
+from build123d import *
+from engagent.cad import params, save
+
+P = params(length=35.0, tube_d=10.0, knob_d=18.0, knob_l=10.0)
+
+with BuildPart() as p:
+    Cylinder(radius=P.knob_d/2, height=P.knob_l, align=(Align.MIN, Align.CENTER, Align.CENTER))
+    with Locations((P.knob_l, 0, 0)):
+        Cylinder(radius=P.tube_d/2, height=P.length - P.knob_l, align=(Align.MIN, Align.CENTER, Align.CENTER))
+    with Locations((P.knob_l + 8.0, 0, 0)):
+        Cylinder(radius=(P.tube_d/2) - 0.8, height=3.0, align=(Align.MIN, Align.CENTER, Align.CENTER))
+
+part = p.part
+save(part)
+```
+
+```bash
+ea make geometry.py --print pla --name "10mm tube stopper"
+ea analyze last -m pla --pressure near:35,0,0 0.207 --fix near:0,0,0 --bound "beam.cantilever_end_load P=16.27 L=25 E=3.5GPa b=10 h=10 -> stress@max_von_mises"
+```
