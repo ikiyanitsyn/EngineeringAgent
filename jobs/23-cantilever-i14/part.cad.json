@@ -1,0 +1,53 @@
+{
+ "valid": true,
+ "solids": 1,
+ "faces": 6,
+ "edges": 12,
+ "volume": 14400000.0,
+ "area": 734400.0,
+ "bbox_min": [
+  0.0,
+  -30.0,
+  -60.0
+ ],
+ "bbox_max": [
+  2000.0,
+  30.0,
+  60.0
+ ],
+ "bbox_size": [
+  2000.0,
+  60.0,
+  120.0
+ ],
+ "center_of_mass": [
+  1000.0,
+  -8.918791631155424e-17,
+  -1.818989403545856e-16
+ ],
+ "inertia_unit_density": [
+  [
+   21600000000.0,
+   -5.4569682106375694e-08,
+   0.0
+  ],
+  [
+   -5.4569682106375694e-08,
+   4817280000000.0,
+   2.3361389956087456e-25
+  ],
+  [
+   0.0,
+   2.3361389956087456e-25,
+   4804320000000.0
+  ]
+ ],
+ "face_types": {
+  "plane": 6
+ },
+ "cylinder_diameters": [],
+ "files": [
+  "/home/runner/work/EngineeringAgent/EngineeringAgent/jobs/23-cantilever-i14/part.step"
+ ],
+ "template": "beam"
+}

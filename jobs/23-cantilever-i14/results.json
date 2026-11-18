@@ -1,0 +1,581 @@
+{
+ "engagent_version": "0.1.0",
+ "name": "23-cantilever-i14",
+ "title": "static analysis of part",
+ "description": "",
+ "analysis": "static",
+ "units": "metric",
+ "standard": "iso",
+ "status": "ok",
+ "verdict": "PASS",
+ "solver": {
+  "version": "2.21",
+  "seconds": 0.72,
+  "errors": [],
+  "warnings": [],
+  "command": "ccx -i job",
+  "tail": ""
+ },
+ "mesh": {
+  "nodes": 6598,
+  "elements": 3344,
+  "element_type": "C3D10",
+  "size_mm": 29.9999995,
+  "parts": [
+   "part"
+  ],
+  "bbox_min": [
+   0.0,
+   -30.0,
+   -60.0
+  ],
+  "bbox_max": [
+   2000.0,
+   30.0,
+   60.0
+  ],
+  "volume_mm3": 14400000.0,
+  "quality_min": 0.3038911597472493,
+  "quality_mean": 0.8245963204647397,
+  "quality_below_0p1": 0
+ },
+ "parts": [
+  {
+   "name": "part",
+   "geometry": "part.step",
+   "material": {
+    "key": "steel_generic",
+    "name": "Structural steel (generic)",
+    "family": "steel",
+    "orthotropic": false,
+    "properties": {
+     "E": "210 GPa",
+     "nu": "0.3",
+     "density": "7850 kg/m^3",
+     "cte": "12 um/m/K",
+     "k": "50 W/m/K",
+     "cp": "480 J/kg/K",
+     "yield": "250 MPa",
+     "uts": "400 MPa",
+     "elongation": "0.2",
+     "endurance": "200 MPa"
+    },
+    "meta": {
+     "spec": "generic, guide default"
+    }
+   },
+   "orientation": null
+  }
+ ],
+ "sets": {
+  "xmin": {
+   "area": 7199.999999999999,
+   "faces": [
+    5
+   ],
+   "nodes": 57,
+   "centroid": [
+    0.0,
+    -1.5789838572446674e-17,
+    5.052748343182936e-16
+   ]
+  },
+  "xmax": {
+   "area": 7199.999999999999,
+   "faces": [
+    6
+   ],
+   "nodes": 57,
+   "centroid": [
+    2000.0000000000007,
+    4.894849957458469e-16,
+    -2.526374171591468e-16
+   ]
+  }
+ },
+ "constraints": [
+  "Fixed (all translations) on 'xmin'"
+ ],
+ "loads": [
+  "Force (0, 0, -500) N on 'xmax' (area 7200 mm^2)"
+ ],
+ "interactions": [],
+ "notes": [],
+ "initial_temperature": null,
+ "metrics": {
+  "max_displacement": {
+   "value": 0.7353165716473532,
+   "kind": "length",
+   "label": "Maximum displacement",
+   "location": [
+    2000.0,
+    -9.992007221626409e-14,
+    60.0
+   ],
+   "vector": [
+    0.0330156,
+    -8.41767e-06,
+    -0.734575
+   ]
+  },
+  "max_ux": {
+   "value": 0.0330156,
+   "kind": "length",
+   "label": "Largest ux",
+   "location": [
+    2000.0,
+    -9.992007221626409e-14,
+    60.0
+   ]
+  },
+  "max_uy": {
+   "value": -0.000289612,
+   "kind": "length",
+   "label": "Largest uy",
+   "location": [
+    59.70149253731336,
+    30.0,
+    60.0
+   ]
+  },
+  "max_uz": {
+   "value": -0.734575,
+   "kind": "length",
+   "label": "Largest uz",
+   "location": [
+    2000.0,
+    -9.992007221626409e-14,
+    -60.0
+   ]
+  },
+  "peak_von_mises": {
+   "value": 7.122782786236744,
+   "kind": "pressure",
+   "label": "Peak von Mises stress (anywhere)",
+   "location": [
+    19.648670365764826,
+    7.991293952917772,
+    60.0
+   ],
+   "in_exclusion": true
+  },
+  "max_von_mises": {
+   "value": 6.690814077207631,
+   "kind": "pressure",
+   "label": "Design von Mises stress (away from supports/contacts)",
+   "location": [
+    67.16417910447753,
+    15.574128463156327,
+    -60.0
+   ]
+  },
+  "max_principal": {
+   "value": 6.686503644523243,
+   "kind": "pressure",
+   "label": "Maximum principal stress (design zone)",
+   "location": [
+    67.16417910447753,
+    15.574128463156327,
+    60.0
+   ]
+  },
+  "min_principal": {
+   "value": -6.686693006443937,
+   "kind": "pressure",
+   "label": "Minimum principal stress (design zone)",
+   "location": [
+    67.16417910447753,
+    15.574128463156327,
+    -60.0
+   ]
+  },
+  "safety_factor_yield": {
+   "value": 37.3646610285629,
+   "kind": "ratio",
+   "label": "Safety factor on yield (design stress)",
+   "part": "part",
+   "yield_strength": 250.0
+  },
+  "reaction.xmin": {
+   "value": 500.0,
+   "kind": "force",
+   "label": "Reaction force on 'xmin'",
+   "vector": [
+    -2.063041e-08,
+    -1.620336e-09,
+    500.0
+   ]
+  },
+  "reaction_total": {
+   "value": 500.0,
+   "kind": "force",
+   "label": "Total reaction force",
+   "vector": [
+    -2.063041e-08,
+    -1.620336e-09,
+    500.0
+   ]
+  },
+  "applied_force": {
+   "value": 500.0,
+   "kind": "force",
+   "label": "Total applied force",
+   "vector": [
+    0.0,
+    0.0,
+    -500.0
+   ]
+  },
+  "probe.xmax.ux": {
+   "value": 8.850618771834469e-09,
+   "kind": "length",
+   "label": "ux at probe 'xmax'",
+   "location": [
+    2000.0,
+    -1.5753480391523274e-14,
+    -6.943373751199576e-14
+   ]
+  },
+  "probe.xmax.uy": {
+   "value": -8.60176105263158e-06,
+   "kind": "length",
+   "label": "uy at probe 'xmax'",
+   "location": [
+    2000.0,
+    -1.5753480391523274e-14,
+    -6.943373751199576e-14
+   ]
+  },
+  "probe.xmax.uz": {
+   "value": -0.7345657368421052,
+   "kind": "length",
+   "label": "uz at probe 'xmax'",
+   "location": [
+    2000.0,
+    -1.5753480391523274e-14,
+    -6.943373751199576e-14
+   ]
+  },
+  "probe.xmax.displacement": {
+   "value": 0.7345657368924686,
+   "kind": "length",
+   "label": "Displacement at probe 'xmax'",
+   "location": [
+    2000.0,
+    -1.5753480391523274e-14,
+    -6.943373751199576e-14
+   ]
+  },
+  "probe.xmax.sxx": {
+   "value": -0.00039114499999999997,
+   "kind": "pressure",
+   "label": "sxx at probe 'xmax'",
+   "location": [
+    2000.0,
+    -1.5753480391523274e-14,
+    -6.943373751199576e-14
+   ]
+  },
+  "probe.xmax.syy": {
+   "value": -0.00026308857368421035,
+   "kind": "pressure",
+   "label": "syy at probe 'xmax'",
+   "location": [
+    2000.0,
+    -1.5753480391523274e-14,
+    -6.943373751199576e-14
+   ]
+  },
+  "probe.xmax.szz": {
+   "value": -0.00028469975087719334,
+   "kind": "pressure",
+   "label": "szz at probe 'xmax'",
+   "location": [
+    2000.0,
+    -1.5753480391523274e-14,
+    -6.943373751199576e-14
+   ]
+  },
+  "probe.xmax.sxy": {
+   "value": -5.571332280701754e-05,
+   "kind": "pressure",
+   "label": "sxy at probe 'xmax'",
+   "location": [
+    2000.0,
+    -1.5753480391523274e-14,
+    -6.943373751199576e-14
+   ]
+  },
+  "probe.xmax.syz": {
+   "value": -1.3349003508771902e-05,
+   "kind": "pressure",
+   "label": "syz at probe 'xmax'",
+   "location": [
+    2000.0,
+    -1.5753480391523274e-14,
+    -6.943373751199576e-14
+   ]
+  },
+  "probe.xmax.szx": {
+   "value": -0.06598589122807015,
+   "kind": "pressure",
+   "label": "szx at probe 'xmax'",
+   "location": [
+    2000.0,
+    -1.5753480391523274e-14,
+    -6.943373751199576e-14
+   ]
+  },
+  "probe.xmax.von_mises": {
+   "value": 0.11429102094232947,
+   "kind": "pressure",
+   "label": "von Mises at probe 'xmax'",
+   "location": [
+    2000.0,
+    -1.5753480391523274e-14,
+    -6.943373751199576e-14
+   ]
+  }
+ },
+ "hand_calcs": [
+  {
+   "name": "Hand check: Cantilever, point load P at the free end",
+   "calc": "beam.cantilever_end_load",
+   "output": "deflection",
+   "formulas": [
+    "delta = P L^3 / (3 E I)",
+    "M_max = P L (at the support)",
+    "M(x) = P (L - x)",
+    "theta = P L^2 / (2 E I)",
+    "sigma = M c / I",
+    "delta_shear = (shear term) / (kappa A G)"
+   ],
+   "reference": "Roark's Formulas for Stress and Strain, 8th ed., Table 8.1; Shigley's Mechanical Engineering Design, 10th ed., Table A-9",
+   "inputs": {
+    "P": "500 N",
+    "L": "2000 mm",
+    "E": "210000 MPa",
+    "b": "60 mm",
+    "h": "120 mm",
+    "nu": "0.3"
+   },
+   "notes": [
+    "Small deflection, linear elastic, plane sections remain plane.",
+    "Pass nu to include shear deflection (Timoshenko)."
+   ],
+   "all_outputs": {
+    "deflection_bending": "0.7349 mm",
+    "moment": "1000 N*m",
+    "shear_force": "500 N",
+    "I": "8.640e+06 mm^4",
+    "deflection_shear": "0.002063 mm",
+    "deflection": "0.7369 mm",
+    "stress": "6.944 MPa",
+    "shear_stress_avg": "0.06944 MPa",
+    "slope": "0.03158 deg",
+    "reaction": "500 N"
+   },
+   "expected": 0.7369253380364492,
+   "kind": "length",
+   "metric": "probe.xmax.displacement",
+   "fea": 0.7345657368924686,
+   "diff": 0.003201954149477061,
+   "tol": 0.05,
+   "status": "PASS"
+  }
+ ],
+ "checks": [
+  {
+   "id": "solver",
+   "name": "Solver finished without errors",
+   "status": "PASS",
+   "detail": "CalculiX 2.21, 0.7 s, no warnings"
+  },
+  {
+   "id": "units",
+   "name": "Unit set and material values",
+   "status": "PASS",
+   "detail": "deck written in mm, tonne, s, N, MPa, mJ, mW, degC; inputs read as metric"
+  },
+  {
+   "id": "mesh",
+   "name": "Mesh quality",
+   "status": "PASS",
+   "detail": "6,598 nodes, 3,344 C3D10, size 30 mm, min quality (SICN) 0.30"
+  },
+  {
+   "id": "equilibrium",
+   "name": "Reactions balance the applied load",
+   "status": "PASS",
+   "detail": "applied (0, 0, -500) N, reactions (0, 0, 500) N, imbalance 4.14e-09 %"
+  },
+  {
+   "id": "hand_calc",
+   "name": "Agreement with hand calculation",
+   "status": "PASS",
+   "detail": "Hand check: Cantilever, point load P at the free end: 0.32 % (tol 5 %)"
+  },
+  {
+   "id": "convergence",
+   "name": "Mesh convergence (size x0.5, change < 5 %)",
+   "status": "PASS",
+   "detail": "max_displacement: 0.03 %; max_von_mises: 0.56 %; probe.xmax.displacement: 0.03 % (for information, not required: peak_von_mises 7.8 %)"
+  },
+  {
+   "id": "singularity",
+   "name": "Stress singularities identified and excluded",
+   "status": "PASS",
+   "detail": "peak 7.123 MPa lies within 60 mm of a support/contact (sets: xmin) and is mesh-dependent, so it is not a design value; design stress 6.691 MPa is taken outside that zone; peak changed 7.8 % on refinement"
+  },
+  {
+   "id": "linearity",
+   "name": "Linear analysis is valid",
+   "status": "PASS",
+   "detail": "small displacement and stress below yield"
+  },
+  {
+   "id": "sanity",
+   "name": "Displacement follows the load direction",
+   "status": "PASS",
+   "detail": "cosine between peak displacement and net load = 1.00"
+  },
+  {
+   "id": "criteria",
+   "name": "Safety factor on yield >= 1.5",
+   "status": "PASS",
+   "detail": "achieved 37.4"
+  }
+ ],
+ "convergence": {
+  "ratio": 0.5,
+  "tol": 0.05,
+  "rows": [
+   {
+    "metric": "max_displacement",
+    "coarse": 0.7353165716473532,
+    "fine": 0.7355736895850952,
+    "kind": "length",
+    "change": 0.0003495474911385119,
+    "required": true
+   },
+   {
+    "metric": "max_von_mises",
+    "coarse": 6.690814077207631,
+    "fine": 6.728493643210504,
+    "kind": "pressure",
+    "change": 0.005600000237927547,
+    "required": true
+   },
+   {
+    "metric": "peak_von_mises",
+    "coarse": 7.122782786236744,
+    "fine": 7.727961179425205,
+    "kind": "pressure",
+    "change": 0.07831022686807457,
+    "required": false
+   },
+   {
+    "metric": "probe.xmax.displacement",
+    "coarse": 0.7345657368924686,
+    "fine": 0.7348206136534051,
+    "kind": "length",
+    "change": 0.00034685575799145164,
+    "required": true
+   },
+   {
+    "metric": "probe.xmax.von_mises",
+    "coarse": 0.11429102094232947,
+    "fine": 0.11864526405496838,
+    "kind": "pressure",
+    "change": 0.036699679058589174,
+    "required": false
+   }
+  ],
+  "coarse": {
+   "size": 29.9999995,
+   "nodes": 6598,
+   "elements": 3344
+  },
+  "fine": {
+   "size": 14.99999975,
+   "nodes": 37259,
+   "elements": 21715
+  }
+ },
+ "fatigue": null,
+ "history": null,
+ "frequencies": [],
+ "buckling_factors": [],
+ "exclusion": {
+  "distance": 59.999999,
+  "sets": [
+   "xmin"
+  ]
+ },
+ "criteria": {
+  "yield_sf": 1.5
+ },
+ "gdt": null,
+ "runtime_s": 14.3,
+ "job": {
+  "name": "23-cantilever-i14",
+  "units": "metric",
+  "analysis": "static",
+  "title": "static analysis of part",
+  "geometry": {
+   "template": "beam",
+   "params": {
+    "width": 60,
+    "height": 120,
+    "length": 2000
+   }
+  },
+  "material": "steel_generic",
+  "sets": {
+   "xmin": "xmin",
+   "xmax": "xmax"
+  },
+  "constraints": [
+   {
+    "type": "fixed",
+    "on": "xmin"
+   }
+  ],
+  "loads": [
+   {
+    "type": "force",
+    "on": "xmax",
+    "value": [
+     0.0,
+     0.0,
+     -500.0
+    ]
+   }
+  ],
+  "probes": {
+   "xmax": {
+    "set": "xmax"
+   }
+  },
+  "criteria": {
+   "yield_sf": 1.5
+  },
+  "hand_calcs": [
+   {
+    "name": "Hand check: Cantilever, point load P at the free end",
+    "calc": "beam.cantilever_end_load",
+    "inputs": {
+     "P": "500 N",
+     "L": "2000 mm",
+     "E": "210000 MPa",
+     "b": "60 mm",
+     "h": "120 mm",
+     "nu": 0.3
+    },
+    "output": "deflection",
+    "tol": 0.05,
+    "metric": "probe.xmax.displacement"
+   }
+  ]
+ }
+}
