@@ -1,0 +1,63 @@
+{
+ "valid": true,
+ "solids": 1,
+ "faces": 4,
+ "edges": 6,
+ "volume": 1340.0856162968962,
+ "area": 1003.3461537402402,
+ "bbox_min": [
+  -6.0,
+  -6.0,
+  0.0
+ ],
+ "bbox_max": [
+  6.0,
+  6.0,
+  15.0
+ ],
+ "bbox_size": [
+  12.0,
+  12.0,
+  15.0
+ ],
+ "center_of_mass": [
+  3.1813313736934223e-16,
+  -3.879288381492182e-16,
+  7.500000000000002
+ ],
+ "inertia_unit_density": [
+  [
+   39720.97522055039,
+   2.5913609487462653e-12,
+   -1.1226575225009575e-12
+  ],
+  [
+   2.5913609487462653e-12,
+   39720.975220550084,
+   8.861365902752937e-14
+  ],
+  [
+   -1.1226575225009575e-12,
+   8.861365902752937e-14,
+   29188.739829966948
+  ]
+ ],
+ "face_types": {
+  "cylinder": 2,
+  "plane": 2
+ },
+ "cylinder_diameters": [
+  {
+   "diameter": 5.5,
+   "faces": 1
+  },
+  {
+   "diameter": 12.0,
+   "faces": 1
+  }
+ ],
+ "files": [
+  "/home/runner/work/EngineeringAgent/EngineeringAgent/jobs/17-spacer/part.step"
+ ],
+ "template": "standoff"
+}

@@ -1,0 +1,18 @@
+{
+ "name": "17-spacer",
+ "units": "metric",
+ "title": "standoff (outer_diameter=12, hole=5.5, height=15)",
+ "geometry": {
+  "template": "standoff",
+  "params": {
+   "outer_diameter": 12,
+   "hole": 5.5,
+   "height": 15
+  }
+ },
+ "material": "petg",
+ "print": {
+  "process": "fdm",
+  "material": "petg"
+ }
+}

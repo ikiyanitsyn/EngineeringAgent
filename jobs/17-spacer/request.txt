@@ -1,0 +1,3 @@
+```bash
+ea make standoff outer_diameter=12 hole=5.5 height=15 --print petg --name "spacer"
+```
