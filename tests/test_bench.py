@@ -28,3 +28,14 @@ def test_scoreboard_counts_passes():
     rows = [{"case": "a", "outcome": "PASS", "seconds": 3}, {"case": "b", "outcome": "ASKED", "seconds": 1}]
     md = bench.scoreboard(rows)
     assert "1 / 2 PASS" in md and "| b | ASKED |" in md
+
+
+def test_no_benchmark_answer_leaks_into_the_chatbot_prompt():
+    """The prompt's examples must not reuse a benchmark case (a solver could copy it)."""
+    import re
+    from engagent.prompt import chatbot_prompt
+    text = chatbot_prompt("metric")
+    for c in bench.cases():
+        nums = re.findall(r"\d+(?:\.\d+)?", (c / "prompt.md").read_text())
+        key = " ".join(nums)
+        assert len(nums) < 3 or key not in " ".join(re.findall(r"\d+(?:\.\d+)?", text)), c.name
