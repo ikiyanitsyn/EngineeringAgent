@@ -1,0 +1,62 @@
+{
+ "plate": "/home/runner/work/EngineeringAgent/EngineeringAgent/jobs/29-adapter-i17/adapter.step",
+ "assembly": "/home/runner/work/EngineeringAgent/EngineeringAgent/jobs/29-adapter-i17/assembly.step",
+ "kind": "box",
+ "thickness": 32.0,
+ "plate_t": 5.0,
+ "size": [
+  59.355339059324,
+  64.0
+ ],
+ "screws": [
+  "4 x ISO 4762 M6 x 12 (box floor to part A, heads inside) - 7 mm of thread engaged (1.2 x d)",
+  "4 x ISO 4762 M6 x 12 (part B to box ceiling, heads inside) - 7 mm of thread engaged (1.2 x d)"
+ ],
+ "holes_a": [
+  [
+   -17.677669529662,
+   17.677669529662
+  ],
+  [
+   -17.677669529662,
+   -17.677669529662
+  ],
+  [
+   17.677669529662,
+   17.677669529662
+  ],
+  [
+   17.677669529662,
+   -17.677669529662
+  ]
+ ],
+ "holes_b": [
+  [
+   15.0,
+   -20.0
+  ],
+  [
+   15.0,
+   20.0
+  ],
+  [
+   -15.0,
+   -20.0
+  ],
+  [
+   -15.0,
+   20.0
+  ]
+ ],
+ "clear_a": 6.6,
+ "clear_b": 6.6,
+ "screw_a": "M6",
+ "screw_b": "M6",
+ "z_a": 2.5,
+ "z_b": 29.5,
+ "wall": 4.0,
+ "windows": [
+  43.355339059324,
+  16.0
+ ]
+}
