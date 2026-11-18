@@ -1,0 +1,6 @@
+I will generate the CAD model for a 6 mm thick steel L-bracket and analyze it under a 300 N sideways (+Y) load at the upright leg holes, fixed at the base holes, using standard mild steel (`steel_s235`) with a cantilever bound check.
+
+```bash
+ea make l_bracket thickness=6 --name "steel l_bracket"
+ea analyze last -m steel_generic --fix hole:6.6@40,20,0 --force hole:6.6@0,20,40 0,300,0 --sf 2 --bound 'beam.cantilever_end_load P="300 N" L=60 E="210000 MPa" b=6 h=40'
+```
