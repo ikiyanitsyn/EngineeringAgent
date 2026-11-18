@@ -1,0 +1,162 @@
+[
+ {
+  "case": "001-cantilever-mass",
+  "source": "Roark's Formulas, Table 8.1 case 1a (cantilever, end load), with shear",
+  "seconds": 15.950148105621338,
+  "answered_by": "rules",
+  "checks": [
+   {
+    "metric": "max_displacement",
+    "expected": 0.9412516066666666,
+    "ok": true,
+    "detail": "0.9388 (0.3 % off, tol 5 %)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "max_displacement: 0.9388 (0.3 % off, tol 5 %)"
+ },
+ {
+  "case": "002-simply-supported",
+  "source": "Roark, Table 8.1 case 1e (simply supported, centre load)",
+  "seconds": 62.41760802268982,
+  "answered_by": "gemini-3.5-flash",
+  "checks": [
+   {
+    "metric": "max_displacement",
+    "expected": 0.11625744047619048,
+    "ok": false,
+    "detail": "0.2358 (102.8 % off, tol 7 %)"
+   }
+  ],
+  "outcome": "FAIL",
+  "detail": "max_displacement: 0.2358 (102.8 % off, tol 7 %)"
+ },
+ {
+  "case": "003-column-buckling",
+  "source": "Euler buckling, fixed-free (K = 2)",
+  "seconds": 231.52898907661438,
+  "answered_by": "gemini-3.5-flash",
+  "checks": [
+   {
+    "metric": "buckling_factor_1",
+    "expected": 6.90872308076255,
+    "ok": true,
+    "detail": "6.915 (0.1 % off, tol 5 %)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "buckling_factor_1: 6.915 (0.1 % off, tol 5 %)"
+ },
+ {
+  "case": "004-cantilever-frequency",
+  "source": "Euler-Bernoulli beam, clamped-free, first mode",
+  "seconds": 142.44612956047058,
+  "answered_by": "gemini-3.5-flash",
+  "checks": [
+   {
+    "metric": "frequency_1",
+    "expected": 45.33519132729243,
+    "ok": true,
+    "detail": "45.54 (0.4 % off, tol 5 %)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "frequency_1: 45.54 (0.4 % off, tol 5 %)"
+ },
+ {
+  "case": "005-hot-bar-convection",
+  "source": "Incropera 3.1.3, thermal circuit",
+  "seconds": 3.1941211223602295,
+  "answered_by": "rules",
+  "checks": [
+   {
+    "metric": "min_temperature",
+    "expected": 96.19047619047618,
+    "ok": true,
+    "detail": "96.19 (0.0 % off, tol 1 %)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "min_temperature: 96.19 (0.0 % off, tol 1 %)"
+ },
+ {
+  "case": "006-restrained-bar-heating",
+  "source": "sigma = E alpha dT (fully restrained bar; 3-D ends add a little)",
+  "seconds": 385.98176884651184,
+  "answered_by": "gemini-3.5-flash-lite",
+  "outcome": "ASKED",
+  "detail": "What is the material key for the steel (e.g. steel_generic, steel_s235, steel_a36)?"
+ },
+ {
+  "case": "007-bonded-bars",
+  "source": "series springs: P L1/(A E1) + P L2/(A E2)",
+  "seconds": 56.63948702812195,
+  "answered_by": "rules",
+  "checks": [
+   {
+    "metric": "max_displacement",
+    "expected": 0.0481892321514963,
+    "ok": true,
+    "detail": "0.04806 (0.3 % off, tol 3 %)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "max_displacement: 0.04806 (0.3 % off, tol 3 %)"
+ },
+ {
+  "case": "008-printable-box",
+  "source": "dimensions as asked",
+  "seconds": 1.1888203620910645,
+  "answered_by": "rules",
+  "checks": [
+   {
+    "metric": "cad.size",
+    "expected": [
+     100,
+     70,
+     40
+    ],
+    "ok": true,
+    "detail": "100x70x40"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "cad.size: 100x70x40"
+ },
+ {
+  "case": "009-m5-spacer",
+  "source": "dimensions as asked; ISO 273 medium clearance 5.5 mm",
+  "seconds": 0.25952720642089844,
+  "answered_by": "rules",
+  "checks": [
+   {
+    "metric": "cad.size",
+    "expected": [
+     12,
+     12,
+     15
+    ],
+    "ok": true,
+    "detail": "12x12x15"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "cad.size: 12x12x15"
+ },
+ {
+  "case": "010-cable-clip",
+  "source": "custom shape: a valid printable solid; fit judged by eye",
+  "seconds": 425.4218201637268,
+  "answered_by": "gemini-3.5-flash-lite",
+  "checks": [
+   {
+    "metric": "cad.valid",
+    "expected": true,
+    "ok": true,
+    "detail": "True"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "cad.valid: True"
+ }
+]
