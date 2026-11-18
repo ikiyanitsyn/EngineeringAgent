@@ -1,0 +1,1 @@
+Is this flange strong enough? examples/22-camera-adapter/arm_flange.step (live test: plain-English FEA of an uploaded part)
