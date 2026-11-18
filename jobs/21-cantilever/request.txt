@@ -1,0 +1,3 @@
+```bash
+ea make beam length=2000 --print petg --name "cantilever"
+```

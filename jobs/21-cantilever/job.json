@@ -1,0 +1,16 @@
+{
+ "name": "21-cantilever",
+ "units": "metric",
+ "title": "beam (length=2000)",
+ "geometry": {
+  "template": "beam",
+  "params": {
+   "length": 2000
+  }
+ },
+ "material": "petg",
+ "print": {
+  "process": "fdm",
+  "material": "petg"
+ }
+}
