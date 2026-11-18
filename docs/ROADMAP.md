@@ -71,6 +71,9 @@ Run everything: `.venv/bin/python -m pytest -q` then `.venv/bin/python -m pytest
    model because its title said "bracket": the part is now taken from the body, first mention.
    **Measured live after the fix (issue #7 re-run):** read by the rules, reply posted 7 s after the
    comment, full PASS answer (0.069 mm, SF 11.6, hand check 0.9 %) 75 s after it.
+   **Simple print shapes (issue #9):** washers, spacers, tubes, discs, blocks and cubes are read from
+   the words too ("a spacer for an M5 bolt, 12 mm diameter, 15 mm long" -> 5.5 mm ISO clearance);
+   live: STEP/STL/3MF + print check PASS in 65 s, no model.
    **Speed, measured:** a thin 300 x 200 x 6 plate needs 133k nodes, and the convergence re-run at
    344k nodes takes ~300 s of serial CalculiX; the iterative solver was slower (427 s). Kept as is:
    the convergence run is what makes the result trustworthy.
