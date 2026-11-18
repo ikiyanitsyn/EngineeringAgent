@@ -10,10 +10,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Restore the cached solver packages
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/solver-debs
+          key: solver-debs-ubuntu-24.04-v1
       - name: Install solver and libraries
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq calculix-ccx libglu1-mesa libgl1 libxrender1 libxcursor1 libxft2 libxinerama1
+        run: bash scripts/install_solver.sh
       - name: Install package
         run: |
           python -m venv .venv
