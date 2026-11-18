@@ -238,8 +238,12 @@ def _bound_spec(spec: str) -> str:
 
 def cmd_bench(a):
     from . import bench
-    out = None if a.no_write or a.only else bench.project_root() / "benchmarks" / "SCOREBOARD.md"
-    rows = bench.run(only=a.only, out_md=out)
+    if a.export_prompts:
+        files = bench.export_prompts(Path(a.export_prompts))
+        return _out(a, [str(f) for f in files], [f"Wrote {len(files)} prompts (no answers) to {a.export_prompts}"])
+    name = "SCOREBOARD.md" if not a.replies else f"SCOREBOARD-{a.solver or 'replies'}.md"
+    out = None if a.no_write or a.only else bench.project_root() / "benchmarks" / name
+    rows = bench.run(only=a.only, out_md=out, replies=Path(a.replies) if a.replies else None, solver=a.solver)
     _out(a, rows, [bench.scoreboard(rows)] + ([f"Wrote {out}"] if out else []))
 
 
@@ -681,6 +685,9 @@ def build_parser() -> argparse.ArgumentParser:
     q = add(sub, "bench", cmd_bench, "run the benchmark cases blind and write benchmarks/SCOREBOARD.md")
     q.add_argument("--only", help="run only cases whose name contains this")
     q.add_argument("--no-write", action="store_true", help="print only, do not update the scoreboard")
+    q.add_argument("--replies", help="score replies another solver wrote: a folder of <case>.md files")
+    q.add_argument("--solver", help="name of that solver for the scoreboard (e.g. claude-code-sonnet)")
+    q.add_argument("--export-prompts", dest="export_prompts", help="write only the prompts (no answers) here")
 
     q = add(sub, "ask", cmd_ask, "PLAIN ENGLISH: describe a part or analysis; an AI model writes and runs the request")
     q.add_argument("text", nargs="*", help='e.g. "printable PETG box 100x70x40 with 2.4 mm walls"')

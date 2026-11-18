@@ -56,8 +56,10 @@ def _judge(exp: dict, got) -> tuple[bool, str]:
     return diff <= tol, f"{got:.4g} ({diff * 100:.1f} % off, tol {tol * 100:g} %)"
 
 
-def run_case(case: Path, work: Path) -> dict:
-    """Solve one case blind and score it."""
+def run_case(case: Path, work: Path, reply: str | None = None, solver: str | None = None) -> dict:
+    """Solve one case blind and score it. With ``reply``, score a reply another solver wrote instead
+    (a Claude Code session, or a tool-less Claude 'chat' given only docs/CHATBOT-PROMPT.md) - it is run
+    exactly as if the user had pasted it into an issue."""
     from . import assistant
     prompt = (case / "prompt.md").read_text(encoding="utf-8").strip()
     expected = json.loads((case / "expected.json").read_text())
@@ -66,7 +68,15 @@ def run_case(case: Path, work: Path) -> dict:
     row = {"case": case.name, "source": expected.get("source", "")}
     assistant.LAST_USED.clear()
     try:
-        out = assistant.ask(prompt)
+        if reply is not None:
+            from .request import parse, run_request
+            if not any(parse(reply).values()):
+                out = {"kind": "question", "reply": reply}
+            else:
+                out = {"kind": "results", "request": reply, "result": run_request(reply)}
+            assistant.LAST_USED.update(model=solver or "pasted reply")
+        else:
+            out = assistant.ask(prompt)
     except Exception as e:                       # the service was down, or the model failed
         row.update(outcome="ERROR", detail=f"{type(e).__name__}: {str(e)[:200]}", seconds=time.time() - t0)
         return row
@@ -96,14 +106,23 @@ def run_case(case: Path, work: Path) -> dict:
     return row
 
 
-def run(only: str | None = None, out_md: Path | None = None) -> list[dict]:
+def run(only: str | None = None, out_md: Path | None = None, replies: Path | None = None,
+        solver: str | None = None) -> list[dict]:
+    """Score every case. ``replies`` = a folder of <case>.md replies written by another solver
+    (cases without a reply file are skipped)."""
     rows = []
     keep = os.environ.get("ENGAGENT_ROOT")
     try:
         for case in cases(only=only):
+            rep = None
+            if replies is not None:
+                f = Path(replies) / f"{case.name}.md"
+                if not f.exists():
+                    continue
+                rep = f.read_text(encoding="utf-8")
             with tempfile.TemporaryDirectory(prefix="bench-") as work:
                 print(f"[{time.strftime('%H:%M:%S')}] {case.name} ...", flush=True)
-                rows.append(run_case(case, Path(work)))
+                rows.append(run_case(case, Path(work), rep, solver))
                 print(f"    {rows[-1]['outcome']}: {rows[-1].get('detail', '')}", flush=True)
     finally:
         if keep is None:
@@ -129,3 +148,14 @@ def scoreboard(rows: list[dict]) -> str:
     lines += ["", "PASS = every expected value within tolerance. ASKED = the agent asked a question instead "
               "(fine when the prompt really lacks an input, otherwise a gap). FAIL / ERROR = a gap to fix."]
     return "\n".join(lines) + "\n"
+
+
+def export_prompts(dest: Path) -> list[Path]:
+    """Write ONLY the prompts (no answers) for another solver: <case>.md each."""
+    dest.mkdir(parents=True, exist_ok=True)
+    out = []
+    for c in cases():
+        p = dest / f"{c.name}.md"
+        p.write_text((c / "prompt.md").read_text(encoding="utf-8"), encoding="utf-8")
+        out.append(p)
+    return out
