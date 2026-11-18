@@ -1,0 +1,77 @@
+{
+ "name": "37-steel-l-bracket-i21",
+ "units": "metric",
+ "analysis": "static",
+ "title": "static analysis of part",
+ "geometry": {
+  "template": "l_bracket",
+  "params": {
+   "thickness": 6
+  }
+ },
+ "material": "steel_generic",
+ "sets": {
+  "hole_6_6_at_40_20_0": {
+   "cylinder": {
+    "diameter": 6.6,
+    "near": [
+     40.0,
+     20.0,
+     0.0
+    ]
+   }
+  },
+  "hole_6_6_at_0_20_40": {
+   "cylinder": {
+    "diameter": 6.6,
+    "near": [
+     0.0,
+     20.0,
+     40.0
+    ]
+   }
+  }
+ },
+ "constraints": [
+  {
+   "type": "fixed",
+   "on": "hole_6_6_at_40_20_0"
+  }
+ ],
+ "loads": [
+  {
+   "type": "force",
+   "on": "hole_6_6_at_0_20_40",
+   "value": [
+    -300.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "probes": {
+  "hole_6_6_at_0_20_40": {
+   "set": "hole_6_6_at_0_20_40"
+  }
+ },
+ "criteria": {
+  "yield_sf": 2.0
+ },
+ "hand_calcs": [
+  {
+   "name": "Estimate: Cantilever, point load P at the free end (stress)",
+   "calc": "beam.cantilever_end_load",
+   "inputs": {
+    "P": 300,
+    "L": 40,
+    "E": "210GPa",
+    "b": 40,
+    "h": 6
+   },
+   "output": "stress",
+   "tol": 0.05,
+   "bound": "lower",
+   "metric": "max_von_mises"
+  }
+ ]
+}

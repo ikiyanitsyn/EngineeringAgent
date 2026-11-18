@@ -1,0 +1,63 @@
+{
+ "valid": true,
+ "solids": 1,
+ "faces": 13,
+ "edges": 33,
+ "volume": 26753.51518066031,
+ "area": 11116.822081536986,
+ "bbox_min": [
+  -7.327471962526033e-16,
+  0.0,
+  0.0
+ ],
+ "bbox_max": [
+  60.0,
+  40.0,
+  60.0
+ ],
+ "bbox_size": [
+  60.0,
+  40.0,
+  60.0
+ ],
+ "center_of_mass": [
+  16.99177485147686,
+  20.000000000000007,
+  16.991774851476848
+ ],
+ "inertia_unit_density": [
+  [
+   12684060.94936065,
+   5.587935447692871e-09,
+   5234003.15535302
+  ],
+  [
+   5.587935447692871e-09,
+   18092351.039663777,
+   0.0
+  ],
+  [
+   5234003.15535302,
+   0.0,
+   12684060.949360654
+  ]
+ ],
+ "face_types": {
+  "plane": 8,
+  "cylinder": 5
+ },
+ "cylinder_diameters": [
+  {
+   "diameter": 6.6,
+   "faces": 4
+  },
+  {
+   "diameter": 10.0,
+   "faces": 1
+  }
+ ],
+ "files": [
+  "/home/runner/work/EngineeringAgent/EngineeringAgent/jobs/37-steel-l-bracket-i21/part.step"
+ ],
+ "template": "l_bracket"
+}

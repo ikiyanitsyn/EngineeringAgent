@@ -1,0 +1,7 @@
+### What do you need?
+
+Plan: a 6 mm steel bracket (default 60 x 60 mm legs, 40 mm wide, 6.6 mm holes), bolted through the base holes, with 300 N pulling the upright away from the base (-X) through its bolt holes. FEA checks it against a required safety factor of 2. The comparison is the upright as a simple cantilever (40 mm from load to base). An L-bracket has no exact textbook case, so this only checks that the FEA stress is at least the simple estimate, because the real part has stress raisers a cantilever misses.
+
+bash
+ea make l_bracket thickness=6 --name "steel L-bracket"
+ea analyze last -m steel_generic --fix hole:6.6@40,20,0 --force hole:6.6@0,20,40 -300,0,0 --sf 2 --bound "beam.cantilever_end_load P=300 L=40 E=210GPa b=40 h=6 -> stress@max_von_mises"
