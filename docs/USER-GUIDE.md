@@ -293,6 +293,23 @@ A finished version of exactly this job is in
 > Add a tolerance scheme: the underside is datum A. Will the bolt pattern always assemble?
 > Now check it in steel S355 instead.
 
+### D. Join two parts you already have (e.g. a camera on a robot arm)
+
+1. Open a request issue. Attach a **.zip** holding your STEP files (GitHub does not take `.step`
+   attachments), or upload the files into the repository (e.g. an `inbox/` folder) and write their paths.
+2. The bot measures both parts. It replies with numbered faces (F1, F2, ...), the hole patterns on them
+   (bolt circle or rectangle, and the screw size) and pictures with the numbers on the faces.
+3. Reply `join arm_flange F2 to camera F2, M6, aluminium 6061`. If a hole size could be two screws
+   ("M5 at nominal size or M6 tapped"), the bot asks which.
+4. It designs a flat adapter plate and returns the STEP, STL and 3MF files, an assembly STEP and a
+   picture. It also gives the assembly order and the screws, sized to the depth of your threaded holes.
+   If a centred plate could not be assembled (a screw you could not reach), it shifts the part and says
+   so. If no plate works, it explains why and offers alternatives.
+5. Reply with the load, e.g. `the camera weighs 0.8 kg and the arm accelerates at 2 g`. The plate is
+   checked with FEA and a hand calculation.
+
+All of this runs without an AI model. Try it with `examples/22-camera-adapter/`.
+
 ## 5. Reading the result
 
 1. **Look at the verdict first** (section 3).
@@ -307,6 +324,18 @@ A finished version of exactly this job is in
 If the hand calculation and the computer disagree, one of them is wrong. Ask:
 
 > Run the results review and tell me which check fails and why.
+
+**Hand checks.** Every analysis gets one.
+- **Exact check:** used when a textbook formula fits, such as a cantilever bar. The FEA must agree
+  within a few per cent.
+- **Estimate:** used when nothing fits exactly, such as an L-bracket with holes. It is marked as an
+  estimate and only checks that the FEA lands on the expected side, normally above a simple model,
+  because the simple model leaves out holes and flexible bases.
+- **Never a false FAIL:** an estimate can ask for a review, but it never fails a correct FEA.
+
+**On a phone.** The reply shows the stress plot and an animated GIF of the part deforming, right in the
+issue. On a computer the reply also links the interactive 3D viewer. Open it, choose *Download raw file*,
+then open the file in your browser. Two-finger pinch zooms on touch screens.
 
 ## 6. Units: metric or inches
 
