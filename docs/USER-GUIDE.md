@@ -73,7 +73,9 @@ GitHub runs the CAD and FEA tools for you on its free servers and answers in the
   Common requests are read straight from your words, with no AI model at all, and come back in
   1 to 3 minutes: a bar bolted to a wall with a weight on its end, a plate clamped on an edge
   with a load or pressure on top, a bar heated at one end and cooled by air, and "print me a
-  box / hook / phone stand / plate" with sizes. Write the material, the size with its unit, how
+  box / lid / hook / phone stand / pipe clamp / plate / block / cube / washer / spacer / tube /
+  disc" with sizes (e.g. *"a spacer for an M5 bolt, 12 mm diameter, 15 mm long"*, *"a block
+  60 x 40 x 10 with M4 holes in the corners"*). Write the material, the size with its unit, how
   it is held and the load with its unit, e.g. *"mild steel bar 200 x 10 x 20 mm bolted to a wall
   at one end, 50 kg hanging from the free end - how much does it bend?"*. Anything else goes to
   the free AI model, which takes 5 to 15 minutes.

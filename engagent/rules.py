@@ -25,8 +25,9 @@ TEMPLATE_WORDS = [  # order matters: more specific first
     ("enclosure", r"\b(enclosure|box|case|housing)\b"),
     ("l_bracket", r"l[- ]?bracket|angle bracket|\bbracket\b"),
     ("flange", r"\bflange\b"),
-    ("standoff", r"\b(standoff|stand-off|spacer)\b"),
-    ("plate", r"\b(plate|sheet|panel)\b"),
+    ("standoff", r"\b(standoff|stand-off|spacer|washer|ring|bushing|bush|sleeve|tube|cylinder|disc|disk|puck|"
+                 r"grommet|collar)\b"),
+    ("plate", r"\b(plate|sheet|panel|block|cube|brick|tile|slab)\b"),
     ("beam", r"\b(beam|bar|rod|cantilever|joist|rail)\b"),
 ]
 PRINT_WORDS = r"3d[- ]?print|printable|\bprint\b|\bstl\b|\b3mf\b|filament|\bfdm\b"
@@ -58,6 +59,11 @@ def template_of(t: str) -> str | None:
     return None
 
 
+def clearance(m: int) -> float:
+    """ISO 273 medium clearance hole for a metric screw Mm."""
+    return {2: 2.4, 2.5: 2.9, 3: 3.4, 4: 4.5, 5: 5.5, 6: 6.6, 8: 9.0, 10: 11.0, 12: 13.5}.get(m, m * 1.1)
+
+
 def dimensions(t: str, tmpl: str) -> dict:
     """Dimensions the user gave, in mm, keyed by the template's parameter names."""
     out: dict = {}
@@ -80,6 +86,40 @@ def dimensions(t: str, tmpl: str) -> dict:
         out.setdefault(key, _mm(float(m.group(1)), m.group(2)))
     for m in re.finditer(r"\b(length|width|height|thickness)\s*(?:of|=|:|is)?\s*" + NUM + LEN_UNIT, t):
         out.setdefault(m.group(1), _mm(float(m.group(2)), m.group(3)))
+    if tmpl == "standoff":
+        od = (re.search(NUM + LEN_UNIT + r"\s*(?:outer|outside|o\.?d\.?|od)\b", t)
+              or re.search(r"\b(?:od|o\.d\.|outer diameter|outside diameter)\s*(?:of|=|:)?\s*" + NUM + LEN_UNIT, t)
+              or re.search(NUM + LEN_UNIT + r"\s*(?:diameter|dia|wide|across)\b", t)
+              or re.search(r"\b(?:diameter|dia)\s*(?:of|=|:)?\s*" + NUM + LEN_UNIT, t))
+        if od:
+            out["outer_diameter"] = _mm(float(od.group(1)), od.group(2))
+        metric = re.search(r"\bfor (?:an? )?m(\d+)\b", t)
+        bore = (re.search(NUM + LEN_UNIT + r"\s*(?:inner|inside|i\.?d\.?|id|hole|bore)\b", t)
+                or re.search(r"\b(?:id|i\.d\.|inner diameter|inside diameter|hole|bore)\s*(?:of|=|:)?\s*" + NUM + LEN_UNIT, t))
+        if bore:
+            out["hole"] = _mm(float(bore.group(1)), bore.group(2))
+        elif metric:
+            out["hole"] = clearance(int(metric.group(1)))
+        elif re.search(r"\b(disc|disk|puck|cylinder)\b", t):
+            out["hole"] = 0.0
+        if "length" in out or "thickness" in out:            # a tube's length / a washer's thickness
+            out.setdefault("height", out.get("length") or out.get("thickness"))
+        for k in ("length", "width", "thickness"):
+            out.pop(k, None)
+    if tmpl == "plate":
+        cube = re.search(NUM + LEN_UNIT + r"\s*cube\b", t) or re.search(r"\bcube\s*(?:of)?\s*" + NUM + LEN_UNIT, t)
+        if cube and not out:
+            a = _mm(float(cube.group(1)), cube.group(2))
+            out.update(length=a, width=a, thickness=a)
+        out.pop("height", None)
+        metric = re.search(r"\bm(\d+)\s*(?:screws?|bolts?|holes?)\b", t)
+        plain = re.search(NUM + LEN_UNIT + r"\s*(?:mounting |screw |bolt |through[- ])?holes?\b", t)
+        d = clearance(int(metric.group(1))) if metric else (_mm(float(plain.group(1)), plain.group(2)) if plain else None)
+        if d:
+            if re.search(r"\b(middle|centre|center)\b", t) and not re.search(r"\bcorners?\b", t):
+                out["center_hole"] = d
+            else:
+                out["hole_diameter"] = d
     m = re.search(NUM + LEN_UNIT + r"\s*(?:thick\s+)?walls?\b", t) or re.search(r"\bwalls?\s*(?:of|=)?\s*" + NUM + LEN_UNIT, t)
     if m and tmpl in ("enclosure", "lid"):
         out["wall"] = _mm(float(m.group(1)), m.group(2))
@@ -167,7 +207,9 @@ def form_from_words(user_text: str) -> dict | None:
     tmpl = template_of(t)
     if not tmpl:
         return None
-    form: dict = {"template": tmpl, "params": dimensions(t, tmpl), "name": tmpl.replace("_", " ")}
+    word = re.search(dict(TEMPLATE_WORDS)[tmpl], t)
+    name = word.group(0).strip() if word and tmpl in ("standoff", "plate", "enclosure", "beam") else tmpl.replace("_", " ")
+    form: dict = {"template": tmpl, "params": dimensions(t, tmpl), "name": name}
     if not analysis_intent(user_text):
         form["action"] = "make"
         pm = next((m for m in PRINT_MATERIALS if re.search(rf"\b{m}\b", t)), None)

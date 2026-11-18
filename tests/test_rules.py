@@ -87,3 +87,20 @@ def test_the_body_names_the_part_not_the_title():
     assert "ea make beam length=150 width=12 height=25" in _req(text)
     assert form_from_words("a lid for my electronics box")["template"] == "lid"
     assert form_from_words("a box with a lid, 100x60x40")["template"] == "enclosure"
+
+
+@pytest.mark.parametrize("text, expected", [
+    ("print a washer 20 mm OD, 8.4 mm hole, 2 mm thick in PETG",
+     'ea make standoff outer_diameter=20 hole=8.4 height=2 --print petg --name "washer"'),
+    ("I need a spacer for an M5 bolt, 12 mm diameter, 15 mm long",
+     'ea make standoff outer_diameter=12 hole=5.5 height=15 --print petg --name "spacer"'),
+    ("3d print a 30 mm cube", 'ea make plate length=30 width=30 thickness=30 --print petg --name "cube"'),
+    ("a PLA disc 40 mm diameter 3 mm thick", 'ea make standoff outer_diameter=40 hole=0 height=3 --print pla --name "disc"'),
+    ("a block 60 x 40 x 10 with M4 holes in the corners",
+     'ea make plate length=60 width=40 thickness=10 hole_diameter=4.5 --print petg --name "block"'),
+    ("plate 80 x 50 x 5 with a 10 mm hole in the middle",
+     'ea make plate length=80 width=50 thickness=5 center_hole=10 --print petg --name "plate"'),
+    ("tube 25 mm od 21 mm id 100 mm long", 'ea make standoff outer_diameter=25 hole=21 height=100 --print petg --name "tube"'),
+])
+def test_simple_shapes_from_words(text, expected):
+    assert _req(text) == expected
