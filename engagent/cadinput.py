@@ -215,3 +215,10 @@ def _direction(clause: str, face: dict | None, unit: str):
     if face is not None and re.search(r"\b(pull|pulling|pulls)\b", clause):
         return tuple(face["normal"])                     # out of the face
     return None
+
+
+QUESTION_ONE = ("**What should I do with it?** Reply in a comment, for example:\n"
+                "> steel, fix F1, 500 N down on F2\n\n"
+                "to check its strength (say the material, the face(s) held, and each load with its size, unit, "
+                "direction and face - 'down', 'along +X', or 'pushing on F3'). To design an adapter to another "
+                "part, add that part too and say e.g. *join `{a}` F2 to `other` F1, M6*.")

@@ -278,7 +278,8 @@ def _cad_parts(latest: str, issue, comment_id):
             names = list(data) + ["other_part"] * 2
             head = ("### 🔩 Your parts, measured\n" + md + "\n\n" + pics
                     + ("\n\n⚠️ " + "; ".join(problems) if problems else "")
-                    + "\n\n" + cadinput.QUESTION.format(a=names[0], b=names[1])
+                    + "\n\n" + (cadinput.QUESTION.format(a=names[0], b=names[1]) if len(data) > 1 else
+                                  cadinput.QUESTION_ONE.format(a=names[0]))
                     + f"\n\n<sub>Parts saved in `{rel}`. Engineering assistance, not sign-off.</sub>")
     except Exception as e:
         head = f"### ❌ Unexpected error while reading your parts\n`{type(e).__name__}: {e}`\n\n[Log]({RUN_URL})"
