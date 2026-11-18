@@ -399,7 +399,8 @@ def ask(conversation: list[dict] | str, *, max_fixes: int = 2, run: bool = True,
     if os.environ.get("ENGAGENT_NO_RULES") != "1":
         from .rules import form_from_words          # common requests need no model at all
         user_text = "\n".join(m["content"] for m in conversation if m.get("role") == "user")
-        form = form_from_words(user_text)
+        first = next((m["content"] for m in conversation if m.get("role") == "user"), user_text)
+        form = form_from_words(user_text, first=first)
         if form:
             say("understood", 0)
             out = {"attempts": 0, "form": form, "by_rules": True,

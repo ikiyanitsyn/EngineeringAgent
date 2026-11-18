@@ -141,7 +141,8 @@ def needs_model() -> bool:
     f = find_inputs(latest, ROOT)
     if f["urls"] or f["paths"] or JOIN_RX.search(latest or ""):   # own parts / adapter design: no model
         return False
-    return form_from_words("\n".join(m["content"] for m in convo if m["role"] == "user")) is None
+    users = [m["content"] for m in convo if m["role"] == "user"]
+    return form_from_words("\n".join(users), first=users[0] if users else None) is None
 
 
 def main() -> int:

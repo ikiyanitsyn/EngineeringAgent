@@ -298,14 +298,22 @@ def _joined_bars(user_text: str, t: str) -> dict | None:
     return {"action": "job", "job": job, "name": "joined bars"}
 
 
-def form_from_words(user_text: str) -> dict | None:
-    """A complete form for a common request, or None when the rules are not sure."""
+def form_from_words(user_text: str, first: str | None = None) -> dict | None:
+    """A complete form for a common request, or None when the rules are not sure.
+
+    ``first`` is the original request of a conversation: the KIND of part comes from it only, so a
+    follow-up comment ("the standoff you made was wrong") can add details but never change the part.
+    """
+    if first is not None and first.strip() != user_text.strip():
+        f = " " + first.lower() + " "
+        if not template_of(f) and not (analysis_intent(first) and _joined_bars(first, f)):
+            return None                                  # the original request is not a rules case
     t = " " + user_text.lower().replace("×", "x") + " "
     if analysis_intent(user_text):
         joined = _joined_bars(user_text, t)
         if joined:
             return joined
-    tmpl = template_of(t)
+    tmpl = template_of(" " + first.lower().replace("×", "x") + " ") if first else template_of(t)
     if not tmpl:
         return None
     word = re.search(dict(TEMPLATE_WORDS)[tmpl], t)

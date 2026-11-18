@@ -1,3 +1,0 @@
-```bash
-ea make standoff --print petg --name "standoff"
-```

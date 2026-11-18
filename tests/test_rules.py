@@ -204,3 +204,13 @@ def test_holding_cables_is_not_an_analysis_question():
     from engagent.guard import analysis_intent
     assert not analysis_intent("a clip that holds three 6 mm cables under the desk")
     assert analysis_intent("will it hold 5 kg?") and analysis_intent("is it strong enough")
+
+
+def test_a_follow_up_comment_never_changes_the_part():
+    """Live issue #18: 'the previous answer (a plain standoff) was wrong' made the rules build a standoff."""
+    orig = "A 3D-printable cable organizer clip that holds three 6 mm cables and screws under a desk with one M4."
+    later = "The previous answer (a plain standoff) was wrong. Try again please."
+    assert form_from_words(orig + "\n" + later, first=orig) is None
+    c = "run a simple cantilever beam loaded at one end 500 newtons, material is steel, length is 2meters"
+    f = form_from_words(c + "\n60 x 120 mm, straight down", first=c)
+    assert f["action"] == "analyze" and f["params"]["height"] == 120
