@@ -1,0 +1,64 @@
+{
+ "valid": true,
+ "solids": 1,
+ "faces": 23,
+ "edges": 63,
+ "volume": 10636.534841181307,
+ "area": 7914.124958551518,
+ "bbox_min": [
+  -2.220446049250313e-16,
+  0.0,
+  -40.0
+ ],
+ "bbox_max": [
+  40.0,
+  30.0,
+  3.0
+ ],
+ "bbox_size": [
+  40.0,
+  30.0,
+  43.0
+ ],
+ "center_of_mass": [
+  14.228932605154386,
+  14.99999999999999,
+  -18.640225689284662
+ ],
+ "inertia_unit_density": [
+  [
+   4001976.7797064846,
+   -3.259629011154175e-09,
+   -18900.681862552185
+  ],
+  [
+   -3.259629011154175e-09,
+   4915806.625620109,
+   -9.313225746154785e-10
+  ],
+  [
+   -18900.681862552185,
+   -9.313225746154785e-10,
+   2516346.2394793825
+  ]
+ ],
+ "face_types": {
+  "plane": 12,
+  "cylinder": 11
+ },
+ "cylinder_diameters": [
+  {
+   "diameter": 2.0,
+   "faces": 10
+  },
+  {
+   "diameter": 4.5,
+   "faces": 1
+  }
+ ],
+ "files": [
+  "/home/runner/work/EngineeringAgent/EngineeringAgent/jobs/35-headphone-hook-i19/part.step",
+  "/home/runner/work/EngineeringAgent/EngineeringAgent/jobs/35-headphone-hook-i19/part.stl",
+  "/home/runner/work/EngineeringAgent/EngineeringAgent/jobs/35-headphone-hook-i19/part.3mf"
+ ]
+}

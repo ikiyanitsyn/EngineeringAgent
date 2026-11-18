@@ -1,0 +1,13 @@
+{
+ "name": "35-headphone-hook-i19",
+ "units": "metric",
+ "title": "geometry (defaults)",
+ "geometry": {
+  "script": "geometry.py"
+ },
+ "material": "petg",
+ "print": {
+  "process": "fdm",
+  "material": "petg"
+ }
+}
