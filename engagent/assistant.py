@@ -167,7 +167,12 @@ def complete(messages: list[dict], *, model: str | None = None, timeout: float =
         targets += [(GITHUB_MODELS_AZURE, m.split("/", 1)[-1]) for m in (first,) + FALLBACK_MODELS]
     else:
         # other providers: same endpoint and key, next model in the fallback list
-        targets += [(s["url"], m) for m in fallback_models(s["url"]) if m != first]
+        extra = [m for m in fallback_models(s["url"]) if m != first]
+        if os.environ.get("ENGAGENT_STRONG_ONLY") and time_left() > 600:
+            # hard requests (custom shapes): a 'lite' model designs poor geometry - wait for a strong one
+            # (the busy-provider rounds retry), and use 'lite' only when little time is left
+            extra = [m for m in extra if "lite" not in m.lower()] or extra
+        targets += [(s["url"], m) for m in extra]
     errors: list[str] = []
     import sys
     rounds = 4 if os.environ.get("ENGAGENT_DEADLINE") else 1      # the bot waits out outages; the CLI does not
@@ -427,6 +432,12 @@ def ask(conversation: list[dict] | str, *, max_fixes: int = 2, run: bool = True,
     if local and os.environ.get("ENGAGENT_FREEFORM") != "1":
         return _ask_structured(conversation, say, run)
     messages = [{"role": "system", "content": chatbot_prompt(compact=local)}] + conversation
+    from .rules import template_of as _tpl
+    _ut = " ".join(m["content"] for m in conversation if m.get("role") == "user").lower()
+    if not _tpl(" " + _ut + " "):                      # a custom shape: needs a strong model
+        os.environ["ENGAGENT_STRONG_ONLY"] = "1"
+    else:
+        os.environ.pop("ENGAGENT_STRONG_ONLY", None)
     from .guard import material_from_words as _mfw
     _mat = _mfw("\n".join(m["content"] for m in conversation if m.get("role") == "user"))
     if _mat:                                          # say which library material the user's words mean, so the

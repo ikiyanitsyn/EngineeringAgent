@@ -374,3 +374,26 @@ def test_a_design_request_question_is_pushed_back(llm):
     out = assistant.ask("A 3D-printable cable organizer clip in PETG for three 6 mm cables", run=False)
     assert out["kind"] == "request" and out["attempts"] == 2
     assert "no analysis was asked for" in llm.seen[-1]["messages"][-1]["content"]
+
+
+def test_custom_shapes_skip_lite_models_while_time_allows(monkeypatch):
+    """Issue #20: a busy main model left a custom stopper to gemini-flash-lite, which designed poor geometry."""
+    import time as _t
+    monkeypatch.setenv("ENGAGENT_LLM_URL", "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions")
+    monkeypatch.setenv("ENGAGENT_LLM_MODEL", "gemini-main")
+    monkeypatch.setenv("ENGAGENT_LLM_KEY", "k")
+    monkeypatch.setenv("ENGAGENT_LLM_FALLBACK_MODELS", "gemini-flash,gemini-flash-lite")
+    asked = []
+    monkeypatch.setattr(assistant, "_post", lambda url, key, m, msgs, t: asked.append(m) or (_ for _ in ()).throw(
+        assistant.LLMError("busy")))
+    monkeypatch.setenv("ENGAGENT_STRONG_ONLY", "1")
+    monkeypatch.setenv("ENGAGENT_DEADLINE", str(_t.time() + 5000))
+    monkeypatch.setattr(assistant.time, "sleep", lambda s: None)
+    with pytest.raises(assistant.LLMError):
+        assistant.complete([{"role": "user", "content": "x"}])
+    assert "gemini-flash-lite" not in asked and "gemini-flash" in asked
+    asked.clear()
+    monkeypatch.delenv("ENGAGENT_STRONG_ONLY")
+    with pytest.raises(assistant.LLMError):
+        assistant.complete([{"role": "user", "content": "x"}])
+    assert "gemini-flash-lite" in asked
