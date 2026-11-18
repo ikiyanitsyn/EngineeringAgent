@@ -28,7 +28,7 @@ TEMPLATE_WORDS = [  # order matters: more specific first
     ("standoff", r"\b(standoff|stand-off|spacer|washer|ring|bushing|bush|sleeve|tube|cylinder|disc|disk|puck|"
                  r"grommet|collar)\b"),
     ("plate", r"\b(plate|sheet|panel|block|cube|brick|tile|slab)\b"),
-    ("beam", r"\b(beam|bar|rod|cantilever|joist|rail)\b"),
+    ("beam", r"\b(beam|bar|rod|cantilever|joist|rail|column|strut|post)\b"),
 ]
 PRINT_WORDS = r"3d[- ]?print|printable|\bprint\b|\bstl\b|\b3mf\b|filament|\bfdm\b"
 PRINT_MATERIALS = ["petg", "pla", "abs", "asa", "pc", "nylon", "tpu", "pa12"]
@@ -378,5 +378,80 @@ def form_from_words(user_text: str, first: str | None = None) -> dict | None:
     if not material_from_words(user_text):
         return None                                    # the model (or the code) will ask
     form.update(action="analyze", material_words="")
+    if tmpl == "beam":
+        special = _restrained_heating(t, form) or _column(t, form)
+        if special:
+            return special
     thermal = re.search(r"\b(how hot|temperature|heat|cool|cooled|thermal|warm)\b", t)
     return _thermal(t, tmpl, form) if thermal else _mechanical(t, tmpl, form)
+
+
+def _section(form) -> tuple[float, float, float] | None:
+    p = form["params"]
+    if {"length", "width", "height"} <= set(p):
+        return p["length"], p["width"], p["height"]
+    return None
+
+
+def _restrained_heating(t: str, form: dict) -> dict | None:
+    """A bar held rigidly at both ends and heated (or cooled) evenly from T1 to T2: sigma = E alpha dT."""
+    if not re.search(r"\b(rigidly|both ends|each end|restrained|fixed at both|clamped at both|cannot expand)\b", t):
+        return None
+    m = re.search(r"from\s+" + NUM + r"\s*(?:°\s*|deg(?:rees?)?\s*)?([cf])\b\s*to\s+" + NUM
+                  + r"\s*(?:°\s*|deg(?:rees?)?\s*)?([cf])\b", t)
+    sec = _section(form)
+    from .guard import material_from_words
+    mat = material_from_words(t)
+    if not m or not sec or not mat:
+        return None
+    c = lambda v, u: (float(v) - 32) * 5 / 9 if u == "f" else float(v)          # noqa: E731
+    t0, t1 = c(m.group(1), m.group(2)), c(m.group(3), m.group(4))
+    L, b, h = sec
+    from . import materials
+    mm = materials.get(mat, "metric")
+    req = (f'ea make beam length={L:g} width={b:g} height={h:g} --name "restrained bar"\n'
+           f'ea analyze last -m {mat} -a thermal_stress --slide xmin x --slide xmax x '
+           f'--fix point:0,0,0 --fix point:{L:g},0,0 --t0 {t0:g} --dT {t1:g} '
+           f'--check "thermal.restrained_bar E={mm.get("E"):g}MPa cte={mm.get("cte") * 1e6:g} dT={t1 - t0:g} '
+           f'-> stress@max_von_mises tol=0.03"')
+    return {"action": "raw", "request": req,
+            "plan": f"_Held at both ends and heated from {t0:g} to {t1:g} degC: the bar cannot grow, so it is "
+                    f"squeezed; checked against sigma = E alpha dT._"}
+
+
+def _column(t: str, form: dict) -> dict | None:
+    """A column pushed along its axis: Euler buckling with the end conditions the user named."""
+    if not re.search(r"\b(column|strut|post|buckl\w*)\b", t):
+        return None
+    ends = None
+    if re.search(r"fixed at the bottom and free at the top|fixed at one end and free|free at the top|cantilever(ed)? column", t):
+        ends, sup = "fixed_free", "--fix xmin"
+    elif re.search(r"pinned at both ends|pin-?ended|hinged at both ends", t):
+        ends, sup = "pinned_pinned", "--pin xmin --slide xmax y --slide xmax z"
+    forces = re.findall(FORCE_RX, t)
+    sec = _section(form) or (None if "length" not in form["params"] else None)
+    p = form["params"]
+    if ends is None or len(forces) != 1:
+        return None
+    sq = re.search(NUM + LEN_UNIT + r"\s*[x×*]\s*" + NUM + LEN_UNIT + r"\s*(?:square|section|cross)", t)
+    if "width" not in p and sq:
+        p["width"], p["height"] = _mm(float(sq.group(1)), sq.group(2) or sq.group(4)), _mm(float(sq.group(3)), sq.group(4) or sq.group(2))
+    sec = _section(form)
+    from .guard import material_from_words
+    mat = material_from_words(t)
+    if not sec or not mat:
+        return None
+    mag, unit = forces[0]
+    from .structured import TO_N
+    unit = {"n": "N", "newton": "N", "newtons": "N", "kn": "kN", "lbf": "lbf", "lb": "lb", "lbs": "lb",
+            "pound": "lb", "pounds": "lb"}.get(unit, "kg")
+    P = float(mag) * TO_N[unit]
+    L, b, h = sec
+    from . import materials
+    E = materials.get(mat, "metric").get("E")
+    req = (f'ea make beam length={L:g} width={b:g} height={h:g} --name "column"\n'
+           f'ea analyze last -m {mat} -a buckling {sup} --force xmax {-P:g},0,0 '
+           f'--check "column.euler_buckling L={L:g} E={E:g}MPa b={b:g} h={h:g} ends={ends}"')
+    return {"action": "raw", "request": req,
+            "plan": f"_Column modelled along X ({ends.replace('_', '-')} ends), {P:g} N along its axis; the buckling "
+                    f"factor is checked against Euler's formula._"}

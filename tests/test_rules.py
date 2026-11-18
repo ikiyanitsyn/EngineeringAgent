@@ -231,3 +231,13 @@ def test_simply_supported_beam_asks_only_for_what_is_missing():
     f = form_from_words("steel beam 1 m long, both ends supported, 2 kN in the middle - stress?")
     q = f["question"]
     assert f["action"] == "question" and "cross-section" in q and "direction" in q and "length" not in q
+
+
+def test_column_and_restrained_bar_rules():
+    """Benchmarks 003 / 006: Gemini's backup model got the column ends wrong and misused --dT."""
+    c = form_from_words(open("benchmarks/003-column-buckling/prompt.md").read())
+    assert c["action"] == "raw" and "-a buckling --fix xmin --force xmax -1000,0,0" in c["request"]
+    assert "ends=fixed_free" in c["request"]
+    r = form_from_words(open("benchmarks/006-restrained-bar-heating/prompt.md").read())
+    assert r["action"] == "raw" and "--t0 20 --dT 70" in r["request"] and "--slide xmin x" in r["request"]
+    assert "dT=50" in r["request"]
