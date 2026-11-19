@@ -18,12 +18,17 @@ Peterson, Lame, Incropera; one public CAD dataset (NIST MBE PMI STEP files) for 
 | Rules only (no AI model), 19 cases | 10, one of them false (comb built without slots) | 10, all real (adds the fixed-fixed beam) |
 | Claude chat (Sonnet given only docs/CHATBOT-PROMPT.md, no tools), 19 cases | 14 | 18 |
 | Claude chat round 2 (fresh blind replies to the improved sheet), 19 cases | - | **19** |
-| Gemini via the issue bot (10 original cases) | 9 (case 010: quota 429) | after-score runs once the free quota resets |
+| Gemini via the issue bot, original 10 cases | 9 (case 010: quota 429) | **10** |
+| Gemini via the issue bot, all 19 cases (first run after midnight) | - | 13 (3 quota errors; 1 units slip, 2 time-budget artifacts - fixed, re-run below) |
 
 The chat solver's replies were written once and re-scored on the improved toolkit, so the gain is the
 toolkit absorbing the slips any AI makes, not a different answer.
 
 ### Improvements merged
+(after midnight) 10. A bare moment must match the user's number in N*m (Gemini wrote 100 N*m as 100000 and got a
+    1000x result). 11. An exact hand check that FAILs is fed back to the model once to find the wrong input.
+    12. Each benchmark case gets its own time budget, as each issue does.
+
 1. Requests naming a feature no template has (slots, notches, D-shafts, knobs, combs ...) go to the model
    instead of a plain template that only matched the size (found: comb built with no slots).
 2. "aluminium 6061 bar" is no longer read as a pressure of 6061 bar.
