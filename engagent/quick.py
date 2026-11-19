@@ -453,6 +453,14 @@ def link_check(spec: str, job: dict, system: str | None = None) -> dict:
             if cand in outs:
                 out_name = cand
                 break
+    if out_name not in outs and metric is None and re.search(
+            r"displacement|von_mises|stress|principal|temperature|frequency|^probe\.|^heat_flow", out_name):
+        metric = out_name                          # "-> max_displacement": a result named, not an output
+        prefer = (("deflection", "growth", "elongation", "twist_displacement") if "displacement" in metric else
+                  ("von_mises_inner", "peak_stress", "von_mises", "stress") if re.search("stress|mises|principal", metric)
+                  else ("T_tip", "T_surface", "T_at_x") if "temperature" in metric else
+                  ("f1",) if "frequency" in metric else ("heat_flow",))
+        out_name = next((c for c in prefer if c in outs), out_name)
     if out_name not in outs:
         raise ValueError(f"{name} has no output {out_name!r}; outputs: {', '.join(outs)}")
     tol = 0.05

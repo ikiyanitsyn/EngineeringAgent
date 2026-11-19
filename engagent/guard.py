@@ -59,9 +59,10 @@ def _supported_number(v: float, user_nums: list[float], kind: str = "force") -> 
     that makes sense for this kind of quantity."""
     if v == 0:
         return True
+    sym = (1, 0.5, 0.25) if kind in ("force", "moment", "heat") else (1,)   # half / quarter symmetry models
     for u in user_nums:
         for f in FACTORS.get(kind, (1,)):
-            if abs(v - u * f) <= 0.01 * abs(v):
+            if any(abs(v - u * f * k) <= 0.01 * abs(v) for k in sym):
                 return True
         if kind in ("temperature", "convection") and abs(v - (u - 32) * 5 / 9) <= 0.01 * max(abs(v), 1):
             return True                                                       # degF -> degC

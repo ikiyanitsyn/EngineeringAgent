@@ -224,7 +224,15 @@ def test_simply_supported_beam_uses_half_model_symmetry():
     r = f["request"]
     assert "length=500" in r and "--slide xmin z" in r and "--slide xmax x" in r and "0,0,-1000" in r
     assert "--fix" not in r and "simply_supported_center_load P=2000 L=1000" in r
-    assert form_from_words(t.replace("rests on supports", "is welded")) is None    # fixed ends: not this case
+    fx = form_from_words(t.replace("rests on supports", "is welded"))["request"]   # fixed ends: held fully
+    assert "--fix xmin --slide xmax x" in fx and "fixed_fixed_center_load P=2000 L=1000" in fx
+
+
+def test_an_alloy_number_is_not_a_pressure():
+    import re
+    from engagent.rules import PRESSURE_RX
+    assert not re.findall(PRESSURE_RX, "aluminium 6061 bar, 400 mm long")
+    assert re.findall(PRESSURE_RX, "a pipe at 10 bar") == [("10", "bar")]
 
 
 def test_simply_supported_beam_asks_only_for_what_is_missing():

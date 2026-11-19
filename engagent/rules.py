@@ -38,7 +38,10 @@ CUSTOM_RX = (r"\b(slots?|slotted|notch(?:es|ed)?|grooves?|cut-?outs?|pockets?|ri
              r"logos?|text|letters?|countersunk|counterbor\w*|chamfered|teeth|fingers?|dovetails?|keyways?)\b")
 PRINT_MATERIALS = ["petg", "pla", "abs", "asa", "pc", "nylon", "tpu", "pa12"]
 FORCE_RX = NUM + r"\s*(kn|n|newtons?|kg|kgs|kilos?|kilograms?|lbf|lbs?|pounds?)(?![a-z])"
-PRESSURE_RX = NUM + r"\s*(mpa|kpa|bar|psi)(?![a-z])"
+# an alloy number is not a pressure: "aluminium 6061 bar" is a bar of 6061, not 6061 bar
+_ALLOY = "".join(f"(?<!{w} )" for w in ("aluminium", "aluminum", "al", "aa", "aisi", "sae", "steel", "alloy",
+                                        "grade", "type", "en", "ss", "stainless"))
+PRESSURE_RX = r"(?<![\d.])" + _ALLOY + NUM + r"\s*(mpa|kpa|bar|psi)(?![a-z])"
 TEMP_RX = NUM + r"\s*(?:°\s*|deg(?:rees?)?\s*)?([cf])(?![a-z])"
 
 
@@ -153,7 +156,7 @@ def _mechanical(t: str, tmpl: str, form: dict) -> dict | None:
     if len(forces) + len(pressures) != 1:                # none, or several loads: let the model handle it
         return None
     if tmpl == "beam":
-        if re.search(r"\bboth ends\b|\beach end\b|simply supported|\btwo supports\b", t):
+        if re.search(r"\bboth ends\b|\beach end\b|simply supported|\btwo supports\b|\bat each end\b", t):
             return _simply_supported(t, form, forces)
         if not re.search(r"\b(one end|an end|cantilever|to a wall|into a wall|wall at|clamped at|fixed at|"
                          r"bolted at|welded at|built[- ]in)\b", t):
@@ -207,8 +210,7 @@ def _simply_supported(t: str, form: dict, forces) -> dict | None:
     the mid-span face is a symmetry plane (cannot move along the beam) carrying half the load, and the
     far end is a simple support (held vertically only, free to rotate). Same mid-span deflection as the
     whole beam, with no point-load singularity, and a textbook hand check."""
-    if re.search(r"\b(clamped|fixed|welded|built[- ]in|bolted)\b", t):
-        return None                                      # fixed ends: not a simple support - model/Claude
+    fixed = bool(re.search(r"\b(clamped|fixed|welded|built[- ]in|bolted|rigidly)\b", t))
     if not re.search(r"\b(middle|centre|center|mid-?span|halfway)\b", t) or len(forces) != 1:
         return None
     p = form["params"]
@@ -232,6 +234,16 @@ def _simply_supported(t: str, form: dict, forces) -> dict | None:
     L, b, h = p["length"], p["width"], p["height"]
     from .guard import material_from_words
     mat = material_from_words(t)
+    if fixed:                                            # both ends built in: the end face is held fully
+        from . import materials
+        nu = materials.get(mat).props.get("nu", 0.3)
+        req = (f'ea make beam length={L / 2:g} width={b:g} height={h:g} --name "fixed-fixed beam (half, symmetry)"\n'
+               f'ea analyze last -m {mat} --fix xmin --slide xmax x --force xmax 0,0,{sgn * P / 2:g} '
+               f'--check "beam.fixed_fixed_center_load P={P:g} L={L:g} E={_E(mat)} nu={nu:g} b={b:g} h={h:g}"')
+        return {"action": "raw", "request": req,
+                "plan": "_Modelled as half the beam using symmetry: the mid-span face carries half the load and "
+                        "cannot move along the beam (so it stays square, as at the middle of a fixed beam); the "
+                        "end is held fully._"}
     req = (f'ea make beam length={L / 2:g} width={b:g} height={h:g} --name "simply supported beam (half, symmetry)"\n'
            f'ea analyze last -m {mat} --slide xmin z --slide xmax x --slide xmax y '
            f'--force xmax 0,0,{sgn * P / 2:g} '

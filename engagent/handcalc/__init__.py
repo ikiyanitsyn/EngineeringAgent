@@ -80,6 +80,32 @@ def calc(name: str, title: str, inputs: dict[str, str], outputs: dict[str, str],
     return deco
 
 
+SYNONYMS = {"alpha": "cte", "length": "L", "load": "P", "force": "P", "torque": "T", "thickness": "t",
+            "width": "b", "diameter": "D", "pressure": "p"}
+
+
+def _aliases(inputs: dict[str, Any], params: list[str]) -> dict[str, Any]:
+    """Forgive the usual spellings of an input (W for w, alpha for cte, ...), as an AI often writes them."""
+    out: dict[str, Any] = {}
+    lower = {p.lower(): p for p in params}
+    for k, v in inputs.items():
+        key = k
+        if k not in params:
+            if SYNONYMS.get(k.lower()) in params:
+                key = SYNONYMS[k.lower()]
+            elif k.lower() in lower and sum(p.lower() == k.lower() for p in params) == 1:
+                key = lower[k.lower()]
+        if key == "cte":                   # a coefficient written per kelvin (12e-6) -> um/m/K (12)
+            try:
+                f = float(v)
+                if 0 < abs(f) < 1e-3:
+                    v = f * 1e6
+            except (TypeError, ValueError):
+                pass
+        out[key] = v
+    return out
+
+
 def run(name: str, inputs: dict[str, Any], system: str | None = None) -> CalcResult:
     """Run a registered calculation with inputs in the active (or given) unit system."""
     _load_all()
@@ -89,6 +115,7 @@ def run(name: str, inputs: dict[str, Any], system: str | None = None) -> CalcRes
         raise KeyError(f"unknown calculation {name!r}" + (f"; did you mean {', '.join(hint)}?" if hint else ""))
     e = REGISTRY[name]
     sig = inspect.signature(e.fn)
+    inputs = _aliases(inputs, list(sig.parameters))
     unknown = [k for k in inputs if k not in sig.parameters]
     if unknown:
         raise ValueError(f"{name}: unknown input(s) {', '.join(unknown)}; "
