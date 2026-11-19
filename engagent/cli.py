@@ -8,6 +8,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -241,7 +242,8 @@ def cmd_bench(a):
     if a.export_prompts:
         files = bench.export_prompts(Path(a.export_prompts))
         return _out(a, [str(f) for f in files], [f"Wrote {len(files)} prompts (no answers) to {a.export_prompts}"])
-    name = "SCOREBOARD.md" if not a.replies else f"SCOREBOARD-{a.solver or 'replies'}.md"
+    slug = re.sub(r"[^A-Za-z0-9]+", "-", a.solver or "replies").strip("-").lower()
+    name = "SCOREBOARD.md" if not a.replies else f"SCOREBOARD-{slug}.md"
     out = None if a.no_write or a.only else bench.project_root() / "benchmarks" / name
     rows = bench.run(only=a.only, out_md=out, replies=Path(a.replies) if a.replies else None, solver=a.solver)
     _out(a, rows, [bench.scoreboard(rows)] + ([f"Wrote {out}"] if out else []))
