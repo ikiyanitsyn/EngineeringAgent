@@ -149,7 +149,7 @@ Run everything: `.venv/bin/python -m pytest -q` then `.venv/bin/python -m pytest
   poppler, sent to the hosted model as images). Pressure equilibrium on curved quadratic faces fixed.
   Issue #20 (push-connect stopper) delivered.
 - Next, in order:
-  1. Live-test drawing route with `examples/23-drawing-to-part` after the Gemini quota resets (scheduled).
+  1. DONE: drawing route live-tested on issue #23 (dimensions, THRU holes and title-block material read correctly).
   2. Confirm whether the bot can download private-repo attachments (`.step.txt`, `.pdf`); if not, the
      reply already points users to `inbox/` uploads - consider a workflow that turns attachments into
      inbox commits via the user's browser upload only.
