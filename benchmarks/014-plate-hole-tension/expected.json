@@ -1,0 +1,11 @@
+{
+ "source": "Peterson's Stress Concentration Factors, chart 4.1 (Kt = 2.506 at d/w = 0.2, net section)",
+ "expect": [
+  {
+   "metric": "max_von_mises",
+   "expected": 125.3,
+   "unit": "MPa",
+   "tol": 0.06
+  }
+ ]
+}

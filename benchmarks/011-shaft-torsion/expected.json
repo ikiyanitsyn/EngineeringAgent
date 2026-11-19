@@ -1,0 +1,11 @@
+{
+ "source": "Shigley 10th ed. Eq. 4-5: phi = T L / (G J); surface displacement r phi",
+ "expect": [
+  {
+   "metric": "max_displacement",
+   "expected": 0.1576391817291154,
+   "unit": "mm",
+   "tol": 0.05
+  }
+ ]
+}

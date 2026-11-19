@@ -1,0 +1,11 @@
+{
+ "source": "Lame thick-walled cylinder, open ends (axial stress 0): von Mises at the bore",
+ "expect": [
+  {
+   "metric": "max_von_mises",
+   "expected": 276.41680484369977,
+   "unit": "MPa",
+   "tol": 0.05
+  }
+ ]
+}

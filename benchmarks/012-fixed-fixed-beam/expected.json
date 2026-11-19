@@ -1,0 +1,11 @@
+{
+ "source": "Roark, Table 8.1 case 1c (both ends fixed, centre load) plus shear (Timoshenko)",
+ "expect": [
+  {
+   "metric": "max_displacement",
+   "expected": 0.3744267053701016,
+   "unit": "mm",
+   "tol": 0.05
+  }
+ ]
+}

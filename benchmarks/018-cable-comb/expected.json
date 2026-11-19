@@ -1,0 +1,27 @@
+{
+ "source": "dimensions as asked",
+ "expect": [
+  {
+   "metric": "cad.size",
+   "expected": [
+    60,
+    20,
+    5
+   ],
+   "unit": "mm",
+   "tol": 0.001
+  },
+  {
+   "metric": "cad.valid",
+   "expected": true,
+   "unit": "",
+   "tol": 0
+  },
+  {
+   "metric": "cad.volume",
+   "max": 5900,
+   "unit": "mm3",
+   "note": "slots remove material from the 6000 mm3 plate"
+  }
+ ]
+}

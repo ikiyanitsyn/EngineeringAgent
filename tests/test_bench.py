@@ -12,7 +12,7 @@ def test_cases_are_well_formed():
         assert exp["source"] and exp["expect"]
         prompt = (c / "prompt.md").read_text()
         for e in exp["expect"]:                      # the answer must never leak into the prompt
-            if isinstance(e["expected"], float):
+            if isinstance(e.get("expected"), float):
                 assert f"{e['expected']:.3g}" not in prompt
 
 
@@ -39,3 +39,8 @@ def test_no_benchmark_answer_leaks_into_the_chatbot_prompt():
         nums = re.findall(r"\d+(?:\.\d+)?", (c / "prompt.md").read_text())
         key = " ".join(nums)
         assert len(nums) < 3 or key not in " ".join(re.findall(r"\d+(?:\.\d+)?", text)), c.name
+
+
+def test_judge_bounds_catch_a_missing_feature():
+    assert not bench._judge({"metric": "cad.volume", "max": 5900}, 6000.0)[0]   # plain plate, no slots
+    assert bench._judge({"metric": "cad.volume", "max": 5900}, 5600.0)[0]

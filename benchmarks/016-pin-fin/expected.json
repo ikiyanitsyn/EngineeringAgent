@@ -1,0 +1,11 @@
+{
+ "source": "Incropera 3.6.2, fin with convective tip: theta_L/theta_b = 1 / (cosh mL + (h/mk) sinh mL)",
+ "expect": [
+  {
+   "metric": "min_temperature",
+   "expected": 65.07373229995932,
+   "unit": "degC",
+   "tol": 0.015
+  }
+ ]
+}

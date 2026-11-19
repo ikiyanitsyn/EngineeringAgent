@@ -35,7 +35,8 @@ def _metric(job_folder: Path, name: str):
         if not info:
             return None
         d = json.loads(info.read_text())
-        return {"cad.size": d.get("bbox_size"), "cad.valid": bool(d.get("valid")) and d.get("solids", 1) == 1}.get(name)
+        return {"cad.size": d.get("bbox_size"), "cad.valid": bool(d.get("valid")) and d.get("solids", 1) == 1,
+                "cad.volume": d.get("volume")}.get(name)
     r = job_folder / "results.json"
     if not r.exists():
         return None
@@ -44,9 +45,12 @@ def _metric(job_folder: Path, name: str):
 
 
 def _judge(exp: dict, got) -> tuple[bool, str]:
-    want, tol = exp["expected"], float(exp.get("tol", 0.05))
     if got is None:
         return False, "no such result"
+    if "max" in exp or "min" in exp:               # a feature must be there: e.g. slots take volume away
+        ok = got <= exp.get("max", float("inf")) and got >= exp.get("min", float("-inf"))
+        return ok, f"{got:.4g} (allowed {exp.get('min', '-')} .. {exp.get('max', '-')})"
+    want, tol = exp["expected"], float(exp.get("tol", 0.05))
     if isinstance(want, bool):
         return bool(got) == want, f"{got}"
     if isinstance(want, list):
@@ -98,7 +102,7 @@ def run_case(case: Path, work: Path, reply: str | None = None, solver: str | Non
             if got is not None:
                 break
         ok, detail = _judge(exp, got)
-        checks.append({"metric": exp["metric"], "expected": exp["expected"], "ok": ok, "detail": detail})
+        checks.append({"metric": exp["metric"], "expected": exp.get("expected", {k: exp[k] for k in ("min", "max") if k in exp}), "ok": ok, "detail": detail})
     row["checks"] = checks
     row["outcome"] = "PASS" if checks and all(c["ok"] for c in checks) else "FAIL"
     row["detail"] = "; ".join(f"{c['metric']}: {c['detail']}" for c in checks) + \

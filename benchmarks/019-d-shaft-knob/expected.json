@@ -1,0 +1,27 @@
+{
+ "source": "dimensions as asked; D-shaft 6 mm with 4.5 mm flat",
+ "expect": [
+  {
+   "metric": "cad.size",
+   "expected": [
+    30,
+    30,
+    15
+   ],
+   "unit": "mm",
+   "tol": 0.001
+  },
+  {
+   "metric": "cad.valid",
+   "expected": true,
+   "unit": "",
+   "tol": 0
+  },
+  {
+   "metric": "cad.volume",
+   "max": 10500,
+   "unit": "mm3",
+   "note": "the shaft hole removes material from the 10603 mm3 cylinder"
+  }
+ ]
+}

@@ -1,0 +1,11 @@
+{
+ "source": "Roark, Table 8.1 case 1a (cantilever, end load), inch units",
+ "expect": [
+  {
+   "metric": "max_displacement",
+   "expected": 6.663054738287836,
+   "unit": "mm",
+   "tol": 0.05
+  }
+ ]
+}

@@ -31,6 +31,11 @@ TEMPLATE_WORDS = [  # order matters: more specific first
     ("beam", r"\b(beam|bar|rod|cantilever|joist|rail|column|strut|post)\b"),
 ]
 PRINT_WORDS = r"3d[- ]?print|printable|\bprint\b|\bstl\b|\b3mf\b|filament|\bfdm\b"
+# features the standard templates cannot make: such a request is a custom shape for the model, never a
+# plain template that only matches its size (benchmark 018: a "cable comb ... plate" came out with no slots)
+CUSTOM_RX = (r"\b(slots?|slotted|notch(?:es|ed)?|grooves?|cut-?outs?|pockets?|ribs?|tabs?|d-?shaped|d-?shaft|"
+             r"knobs?|combs?|handles?|hinges?|latch(?:es)?|snap[- ]?fits?|gears?|pulleys?|engrav\w*|emboss\w*|"
+             r"logos?|text|letters?|countersunk|counterbor\w*|chamfered|teeth|fingers?|dovetails?|keyways?)\b")
 PRINT_MATERIALS = ["petg", "pla", "abs", "asa", "pc", "nylon", "tpu", "pa12"]
 FORCE_RX = NUM + r"\s*(kn|n|newtons?|kg|kgs|kilos?|kilograms?|lbf|lbs?|pounds?)(?![a-z])"
 PRESSURE_RX = NUM + r"\s*(mpa|kpa|bar|psi)(?![a-z])"
@@ -363,6 +368,8 @@ def form_from_words(user_text: str, first: str | None = None) -> dict | None:
     tmpl = template_of(" " + first.lower().replace("×", "x") + " ") if first else template_of(t)
     if not tmpl:
         return None
+    if re.search(CUSTOM_RX, (" " + (first or user_text).lower() + " ")):
+        return None                                      # a feature no template has: the model designs it
     word = re.search(dict(TEMPLATE_WORDS)[tmpl], t)
     name = word.group(0).strip() if word and tmpl in ("standoff", "plate", "enclosure", "beam") else tmpl.replace("_", " ")
     form: dict = {"template": tmpl, "params": dimensions(t, tmpl), "name": name}

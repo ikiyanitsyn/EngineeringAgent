@@ -1,0 +1,11 @@
+{
+ "source": "Free thermal expansion dL = alpha L dT (alpha 12e-6 /K)",
+ "expect": [
+  {
+   "metric": "max_displacement",
+   "expected": 0.48,
+   "unit": "mm",
+   "tol": 0.03
+  }
+ ]
+}
