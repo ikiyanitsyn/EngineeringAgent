@@ -48,7 +48,12 @@ ea analyze <last|template> [name=value ...] -m MATERIAL [supports] [loads] [opti
              Add "-> stress@max_von_mises" for a stress bound. Every analysis gets a --check or a --bound.
              Useful: beam.cantilever_end_load P L E b h | beam.simply_supported_center_load P L E b h |
              beam.natural_frequency L E b h density | column.euler_buckling L E b h ends=fixed_free |
-             axial.bar P L A E | thermal.wall_conduction_convection k L h T_fixed T_ambient
+             axial.bar P L A E | thermal.wall_conduction_convection k L h T_fixed T_ambient |
+             beam.fixed_fixed_center_load P L E b h | torsion.round_shaft T L D (G or E nu) -> twist |
+             pressure.thick_cylinder p ri ro -> von_mises_inner | kt.plate_hole_tension P w d t -> peak_stress |
+             thermal.fin_straight k h P(perimeter) A L T_base T_ambient -> T_tip | thermal.free_expansion L cte dT | thermal.restrained_bar E cte dT |
+             thermal.lumped_transient | plate.circular_uniform | plate.rectangular_uniform
+             (use only these names; `ea calc` lists all of them and `ea calc NAME --help-calc` their inputs)
 ea calc <name> key=value ...        hand calculation (e.g. beam.cantilever_end_load P=100 L=100 E=210GPa b=10 h=10)
 ea gdt fit 25 H7/g6 | ea gdt hole M6 --joint fixed | ea gdt general 120 m
 ea units imperial                   (switch units for the rest of this request)
