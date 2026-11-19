@@ -162,7 +162,10 @@ def load_job(spec: dict | str | Path, folder: str | Path | None = None,
     raw = dict(spec)
     folder = Path(folder or ".").resolve()
     system = U.normalize_system(raw.get("units"))
-    a = str(raw.get("analysis", "static")).lower().replace("-", "_").replace(" ", "_")
+    an = raw.get("analysis", "static")
+    if isinstance(an, dict):                       # {"type": "static", ...}: the type is what counts
+        an = an.get("type") or an.get("kind") or an.get("name") or "static"
+    a = str(an).lower().replace("-", "_").replace(" ", "_")
     a = ANALYSIS_ALIASES.get(a, a)
     if a not in ANALYSES:
         raise ValueError(f"unknown analysis {raw.get('analysis')!r}; choose from {', '.join(ANALYSES)}")

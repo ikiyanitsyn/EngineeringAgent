@@ -106,6 +106,10 @@ def _hand_calcs(job: Job, metrics: dict) -> list[dict]:
     rows = []
     for hc in job.hand_calcs:
         row: dict[str, Any] = {"name": hc.get("name", hc.get("calc", "hand calculation"))}
+        if hc.get("setup_error"):                 # the requested check could not be built: not done, not a FAIL
+            row.update(status=NOT_DONE, error=hc["setup_error"])
+            rows.append(row)
+            continue
         try:
             if "calc" in hc:
                 res = handcalc.run(hc["calc"], hc.get("inputs", {}), job.system)
@@ -208,6 +212,8 @@ def _checks(job: Job, mesh: Mesh, log: RunLog, metrics: dict, info: dict, hand: 
         w = f"{len(log.warnings)} warning(s): " + " | ".join(log.warnings[:3]) if log.warnings else "no warnings"
         add("solver", "Solver finished without errors", WARN if len(log.warnings) > 0 else PASS,
             f"CalculiX {log.version}, {log.seconds:.1f} s, {w}")
+    if info.get("free_motion"):
+        add("supports", "Supports hold the part against rigid-body motion", WARN, info["free_motion"])
     # 2 units and material plausibility
     odd = []
     for p in job.parts:
@@ -274,8 +280,12 @@ def _checks(job: Job, mesh: Mesh, log: RunLog, metrics: dict, info: dict, hand: 
     compared = [h for h in hand if "diff" in h or h["status"] == FAIL]
     bounds = [h for h in hand if "bound" in h]
     bound_txt = "; ".join(bound_text(h) for h in bounds)
+    unset = [h for h in hand if h["status"] == NOT_DONE]
+    hand = [h for h in hand if h["status"] != NOT_DONE]
+    compared = [h for h in compared if h["status"] != NOT_DONE]
     if not hand:
         add("hand_calc", "Agreement with hand calculation", NOT_DONE,
+            "; ".join(f"the requested hand check could not be set up ({h['error']})" for h in unset) or
             "no hand calculation supplied - a result that cannot be predicted cannot be trusted")
     elif compared:
         bad = [h for h in compared if h["status"] == FAIL]

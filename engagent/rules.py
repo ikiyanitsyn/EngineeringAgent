@@ -430,7 +430,7 @@ def _restrained_heating(t: str, form: dict) -> dict | None:
     mm = materials.get(mat, "metric")
     req = (f'ea make beam length={L:g} width={b:g} height={h:g} --name "restrained bar"\n'
            f'ea analyze last -m {mat} -a thermal_stress --slide xmin x --slide xmax x '
-           f'--fix point:0,0,0 --fix point:{L:g},0,0 --t0 {t0:g} --dT {t1:g} '
+           f'--fix point:0,0,0 --fix point:{L:g},0,0 --slide point:0,{b:g},0 z --t0 {t0:g} --dT {t1:g} '
            f'--check "thermal.restrained_bar E={mm.get("E"):g}MPa cte={mm.get("cte") * 1e6:g} dT={t1 - t0:g} '
            f'-> stress@max_von_mises tol=0.03"')
     return {"action": "raw", "request": req,

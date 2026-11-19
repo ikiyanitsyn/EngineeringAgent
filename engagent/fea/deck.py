@@ -129,6 +129,32 @@ def _moment_forces(mesh: Mesh, fs: FaceSet, M: np.ndarray, about: np.ndarray | N
     return {int(i): wi * np.cross(omega, ri) for i, wi, ri in zip(ids, w, r)}
 
 
+def free_rigid_motions(nodes: np.ndarray, held: np.ndarray) -> list[str]:
+    """Rigid-body motions (3 translations, 3 rotations) the held degrees of freedom do not stop.
+
+    A held dof d at node x forbids t_d + (w x x)_d, i.e. the row [e_d, x x e_d] of the 6 rigid modes;
+    the supports are enough when those rows span all six."""
+    idx, dof = np.nonzero(held)
+    if len(idx) == 0:
+        return ["move and rotate in every direction (no support at all)"]
+    x = nodes[idx]
+    c = nodes.mean(axis=0)
+    scale = max(float(np.ptp(nodes, axis=0).max()), 1e-9)
+    x = (x - c) / scale
+    E = np.eye(3)[dof]
+    rows = np.hstack([E, np.cross(x, E)])
+    w, v = np.linalg.eigh(rows.T @ rows)
+    out = []
+    for k in np.nonzero(w < 1e-9 * max(w.max(), 1e-30))[0]:
+        m = v[:, k]
+        t, r = m[:3], m[3:]
+        if np.linalg.norm(r) > np.linalg.norm(t):
+            out.append("rotate about " + "XYZ"[int(np.argmax(np.abs(r)))])
+        else:
+            out.append("move along " + "XYZ"[int(np.argmax(np.abs(t)))])
+    return list(dict.fromkeys(out))
+
+
 def minimal_constraint_nodes(mesh: Mesh) -> list[tuple[int, tuple[int, ...]]]:
     """3-2-1 restraint: removes the six rigid-body motions without resisting deformation."""
     lo, _ = mesh.bbox()
@@ -266,6 +292,15 @@ def write_deck(job: Job, mesh: Mesh, path: Path) -> dict:
                 for ax, d in (("x", 0), ("y", 1), ("z", 2)):
                     if ax in c and c[ax] is not None:
                         held[idx, d] = True
+        if mech and job.analysis in ("static", "nonlinear", "thermal_stress", "buckling") and \
+                not any(c["type"] == "minimal" for c in job.constraints):
+            free = free_rigid_motions(mesh.nodes, held)
+            if free:                              # reported as a WARN (owner to decide on making it a hard stop)
+                info["free_motion"] = (
+                    "the supports leave the part free to " + " and ".join(free) + " (a rigid-body motion: the "
+                    "result may be meaningless). Hold it more: e.g. add `--slide FACE AXIS` on another face, "
+                    "or `--slide point:x,y,z AXIS` at a second point away from the first (as in a 3-2-1 support), "
+                    "keeping the part free to expand where it should")
         on_supports = np.zeros(3)
         sup_nodes = np.nonzero(held.any(axis=1))[0] + 1
         if mech:

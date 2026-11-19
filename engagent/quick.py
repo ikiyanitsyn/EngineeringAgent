@@ -26,6 +26,7 @@ import json
 import os
 import re
 import shutil
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -68,6 +69,11 @@ def _nums(text: str) -> list[Any]:
             and not m.group(1).strip().endswith(("e", "E")):
         t, unit = m.group(1).strip(), m.group(2)
     parts = [p.strip() for p in re.split(r"[,;\s]+", t.strip("()[] ")) if p.strip()]
+    if not unit:                                   # '100N*m,0,0': a unit written on one component
+        units = {re.sub(r"^[-+\d.eE]+", "", p) for p in parts} - {""}
+        if len(units) == 1 and all(re.match(r"^[-+]?[\d.]+(?:[eE][-+]?\d+)?", p) for p in parts):
+            unit = units.pop()
+            parts = [re.match(r"^[-+]?[\d.]+(?:[eE][-+]?\d+)?", p).group(0) for p in parts]
     try:
         vals = [float(p) for p in parts]
     except ValueError as e:
@@ -322,8 +328,19 @@ def build_analysis_job(source: str, *, material: str | None, analysis: str = "st
         auto = _auto_beam_check(source, params or {}, mat, cons, loads, a, system)
         checks = (auto if isinstance(auto, list) else [auto]) if auto else None
     if checks:
-        job["hand_calcs"] = [link_check(c, job, system) for c in checks]
+        job["hand_calcs"] = [_safe_link(c, job, system) for c in checks]
     return job
+
+
+def _safe_link(spec: str, job: dict, system: str | None) -> dict:
+    """link_check, but a hand check that cannot be built never stops the analysis: it is reported
+    as NOT DONE (verdict REVIEW) with the reason, and the FEA still runs."""
+    try:
+        return link_check(spec, job, system)
+    except (ValueError, KeyError) as e:
+        msg = str(e).strip("'\"")
+        print(f"WARNING: hand check not set up - {msg}", file=sys.stderr)
+        return {"name": f"Hand check: {spec.split()[0] if spec.split() else spec}", "setup_error": msg}
 
 
 def _auto_bar_conduction_check(source, params, mat, cons, loads, analysis, system) -> list[str] | None:
@@ -461,6 +478,12 @@ def link_check(spec: str, job: dict, system: str | None = None) -> dict:
                   else ("T_tip", "T_surface", "T_at_x") if "temperature" in metric else
                   ("f1",) if "frequency" in metric else ("heat_flow",))
         out_name = next((c for c in prefer if c in outs), out_name)
+    if out_name not in outs:                       # "stress" -> the one output that contains it
+        near = [o for o in outs if out_name and out_name.lower() in o.lower()]
+        if metric and "mises" in metric:
+            near = [o for o in near if "mises" in o] or near
+        if len(near) == 1 or (near and metric):
+            out_name = near[0]
     if out_name not in outs:
         raise ValueError(f"{name} has no output {out_name!r}; outputs: {', '.join(outs)}")
     tol = 0.05

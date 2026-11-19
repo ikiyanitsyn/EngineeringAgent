@@ -1,0 +1,369 @@
+[
+ {
+  "case": "001-cantilever-mass",
+  "source": "Roark's Formulas, Table 8.1 case 1a (cantilever, end load), with shear",
+  "seconds": 10.290651321411133,
+  "request": "Plan: 200 mm mild steel bar (steel_s235), 10 wide x 20 tall, clamped at the wall end (xmin). The 50 kg hanging mass is a weight of 50 x 9.81 = 490.5 N acting straight down (-Z) on the free end. Checked against the cantilever formula.\n```bash\nea make beam length=200 width=10 height=20 --name \"wall bar\"\nea analyze last -m steel_s235 --fix xmin --force xmax 0,0,-490.5 --check \"beam.cantilever_end_load P=490.5 L=200 E=210GPa b=10 h=20 nu=0.3\"\n```\n",
+  "answered_by": "Claude chat (Sonnet, sheet only)",
+  "checks": [
+   {
+    "metric": "max_displacement",
+    "expected": 0.9412516066666666,
+    "ok": true,
+    "detail": "0.9391 (0.2 % off, tol 5 %)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "max_displacement: 0.9391 (0.2 % off, tol 5 %)"
+ },
+ {
+  "case": "002-simply-supported",
+  "source": "Roark, Table 8.1 case 1e (simply supported, centre load)",
+  "seconds": 5.266530752182007,
+  "request": "Plan: steel beam 1 m long, 40 wide x 80 tall, simply supported at both ends with 2 kN down at mid-span. I model half the beam (500 mm): the mid-span face is a symmetry plane carrying half the load (1 kN), and the end is held vertically only so it can rotate. Checked against the simply supported formula for the full beam.\n```bash\nea make beam length=500 width=40 height=80 --name \"simply supported beam (half)\"\nea analyze last -m steel_generic --slide xmin z --slide xmax x --slide xmax y --force xmax 0,0,-1000 --check \"beam.simply_supported_center_load P=2000 L=1000 E=210GPa b=40 h=80\"\n```\n",
+  "answered_by": "Claude chat (Sonnet, sheet only)",
+  "checks": [
+   {
+    "metric": "max_displacement",
+    "expected": 0.11625744047619048,
+    "ok": true,
+    "detail": "0.1182 (1.7 % off, tol 7 %)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "max_displacement: 0.1182 (1.7 % off, tol 7 %)"
+ },
+ {
+  "case": "003-column-buckling",
+  "source": "Euler buckling, fixed-free (K = 2)",
+  "seconds": 13.294596672058105,
+  "request": "Plan: steel column 1000 mm long, 20 x 20 mm, fixed at the base (xmin), free at the top. The column axis is along X, so the 1 kN push \"down\" on the top is axial compression: -1000 N in X on the top face (xmax). Linear buckling analysis, checked against Euler (fixed-free).\n```bash\nea make beam length=1000 width=20 height=20 --name \"steel column\"\nea analyze last -m steel_generic -a buckling --fix xmin --force xmax -1000,0,0 --check \"column.euler_buckling L=1000 E=210GPa b=20 h=20 ends=fixed_free\"\n```\n",
+  "answered_by": "Claude chat (Sonnet, sheet only)",
+  "checks": [
+   {
+    "metric": "buckling_factor_1",
+    "expected": 6.90872308076255,
+    "ok": true,
+    "detail": "6.915 (0.1 % off, tol 5 %)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "buckling_factor_1: 6.915 (0.1 % off, tol 5 %)"
+ },
+ {
+  "case": "004-cantilever-frequency",
+  "source": "Euler-Bernoulli beam, clamped-free, first mode",
+  "seconds": 93.10681343078613,
+  "request": "Plan: aluminium 6061 cantilever 300 mm long, 20 wide, 5 thick (height=5 is the bending direction), clamped at xmin. Modal analysis for the first frequency, checked against the cantilever natural frequency formula.\n```bash\nea analyze beam length=300 width=20 height=5 -m al_6061_t6 -a modal --fix xmin --check \"beam.natural_frequency L=300 E=69GPa b=20 h=5 density=2700\"\n```\n",
+  "answered_by": "Claude chat (Sonnet, sheet only)",
+  "checks": [
+   {
+    "metric": "frequency_1",
+    "expected": 45.33519132729243,
+    "ok": true,
+    "detail": "45.54 (0.4 % off, tol 5 %)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "frequency_1: 45.54 (0.4 % off, tol 5 %)"
+ },
+ {
+  "case": "005-hot-bar-convection",
+  "source": "Incropera 3.1.3, thermal circuit",
+  "seconds": 2.4016973972320557,
+  "request": "Plan: steel bar 100 mm long (default 10 x 10 section), hot end (xmin) held at 100 C, cooled end (xmax) in air at 20 C with h = 25. Steady heat conduction, checked against the wall conduction-convection formula (k = 50 W/mK for generic steel).\n```bash\nea make beam length=100 --name \"hot bar\"\nea analyze last -m steel_generic --temp xmin 100 --convect xmax 25 20 --check \"thermal.wall_conduction_convection k=50 L=100 h=25 T_fixed=100 T_ambient=20\"\n```\n",
+  "answered_by": "Claude chat (Sonnet, sheet only)",
+  "checks": [
+   {
+    "metric": "min_temperature",
+    "expected": 96.19047619047618,
+    "ok": true,
+    "detail": "96.19 (0.0 % off, tol 1 %)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "min_temperature: 96.19 (0.0 % off, tol 1 %)"
+ },
+ {
+  "case": "006-restrained-bar-heating",
+  "source": "sigma = E alpha dT (bar held axially at both ends)",
+  "seconds": 4.187078952789307,
+  "request": "Plan: steel bar 100 x 10 x 10 mm held rigidly along its length at both ends, heated evenly from 20 C to 70 C. End faces are slid in X (so they cannot expand sideways-restrained by mistake) with one centre point pinned at each end. Checked against the fully restrained bar formula (dT = +50, steel CTE about 12 um/mK).\n```bash\nea make beam length=100 width=10 height=10 --name \"restrained bar\"\nea analyze last -m steel_generic -a thermal_stress --slide xmin x --slide xmax x --fix point:0,0,0 --fix point:100,0,0 --t0 20 --dT 70 --check \"thermal.restrained_bar E=210GPa cte=12 dT=50 -> stress@max_von_mises\"\n```\n",
+  "answered_by": "Claude chat (Sonnet, sheet only)",
+  "checks": [
+   {
+    "metric": "max_von_mises",
+    "expected": -126.0,
+    "ok": true,
+    "detail": "126 (0.0 % off, tol 3 %)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "max_von_mises: 126 (0.0 % off, tol 3 %)"
+ },
+ {
+  "case": "007-bonded-bars",
+  "source": "series springs: P L1/(A E1) + P L2/(A E2)",
+  "seconds": 47.5994017124176,
+  "request": "Plan: two-part assembly, steel (steel_generic) bar from x=0 to 50 and aluminium (al_6061_t6) bar from x=50 to 100, both 10 x 10 mm, bonded (tie) at x=50. Steel end at x=0 is fixed, the aluminium end at x=100 is pulled with 5000 N along +X. Stretch is checked against the sum of the two axial bar elongations (P L / A E for each).\n```json\n{\n  \"name\": \"bonded steel-aluminium bars\",\n  \"parts\": [\n    {\"name\": \"steel\", \"material\": \"steel_generic\",\n     \"geometry\": {\"template\": \"beam\", \"params\": {\"length\": 50, \"width\": 10, \"height\": 10}}},\n    {\"name\": \"aluminium\", \"material\": \"al_6061_t6\",\n     \"geometry\": {\"template\": \"beam\", \"params\": {\"length\": 50, \"width\": 10, \"height\": 10},\n                  \"position\": [50, 0, 0]}}\n  ],\n  \"sets\": {\n    \"fixed\": {\"part\": \"steel\", \"plane\": \"x\", \"at\": 0},\n    \"joint_a\": {\"part\": \"steel\", \"plane\": \"x\", \"at\": 50},\n    \"joint_b\": {\"part\": \"aluminium\", \"plane\": \"x\", \"at\": 50},\n    \"tip\": {\"part\": \"aluminium\", \"plane\": \"x\", \"at\": 100}\n  },\n  \"interactions\": [{\"type\": \"tie\", \"master\": \"joint_a\", \"slave\": \"joint_b\"}],\n  \"analysis\": {\"type\": \"static\"},\n  \"constraints\": [{\"type\": \"fixed\", \"on\": \"fixed\"}],\n  \"loads\": [{\"type\": \"force\", \"on\": \"tip\", \"value\": [5000, 0, 0]}],\n  \"hand_calcs\": [\n    {\"calc\": \"axial.bar\", \"params\": {\"P\": 5000, \"L\": 50, \"A\": 100, \"E\": \"210GPa\"}},\n    {\"calc\": \"axial.bar\", \"params\": {\"P\": 5000, \"L\": 50, \"A\": 100, \"E\": \"69GPa\"}}\n  ]\n}\n```\n",
+  "answered_by": "Claude chat (Sonnet, sheet only)",
+  "checks": [
+   {
+    "metric": "max_displacement",
+    "expected": 0.0481892321514963,
+    "ok": true,
+    "detail": "0.04806 (0.3 % off, tol 3 %)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "max_displacement: 0.04806 (0.3 % off, tol 3 %)"
+ },
+ {
+  "case": "008-printable-box",
+  "source": "dimensions as asked",
+  "seconds": 0.9003205299377441,
+  "request": "Plan: PETG enclosure 110 x 75 x 45 mm, 2 mm walls, floor and the other settings at template defaults (2.4 mm floor, 4 mm corner radius, screw bosses), FDM print check.\n```bash\nea make enclosure length=110 width=75 height=45 wall=2 --print petg --name \"electronics box\"\n```\n",
+  "answered_by": "Claude chat (Sonnet, sheet only)",
+  "checks": [
+   {
+    "metric": "cad.size",
+    "expected": [
+     110,
+     75,
+     45
+    ],
+    "ok": true,
+    "detail": "110x75x45"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "cad.size: 110x75x45"
+ },
+ {
+  "case": "009-m5-spacer",
+  "source": "dimensions as asked; ISO 273 medium clearance 5.5 mm",
+  "seconds": 0.13613629341125488,
+  "request": "Plan: round spacer 12 mm OD, 15 mm long, with a 5.5 mm through hole (ISO medium clearance for M5), printed in PETG (FDM default).\n```bash\nea make standoff outer_diameter=12 hole=5.5 height=15 --print petg --name \"M5 spacer\"\n```\n",
+  "answered_by": "Claude chat (Sonnet, sheet only)",
+  "checks": [
+   {
+    "metric": "cad.size",
+    "expected": [
+     12,
+     12,
+     15
+    ],
+    "ok": true,
+    "detail": "12x12x15"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "cad.size: 12x12x15"
+ },
+ {
+  "case": "010-cable-clip",
+  "source": "custom shape: a valid printable solid; fit judged by eye",
+  "seconds": 2.188171625137329,
+  "request": "Plan: PETG clip, FDM. Defaults I chose: body 30 x 16 x 11 mm with three 6.4 mm cable channels (6 mm cable + 0.4 clearance) along Y at 9 mm pitch, each with a 5 mm snap-in slot opening downward; a 16 x 4 mm mounting tab at one end with a 4.5 mm M4 clearance hole. The top face (z = 11) goes against the desk underside; the screw is driven from below through the tab.\n```python\nfrom build123d import *\nfrom engagent.cad import params, save\nP = params(cable=6.4, pitch=9.0, body_h=11.0, depth=16.0, slot=5.0, tab_t=4.0, tab_l=16.0, hole=4.5)\nn = 3\nbody_l = P.pitch * n + 3.0\nbody = Box(body_l, P.depth, P.body_h, align=(Align.MIN, Align.MIN, Align.MIN))\ntab = Pos(body_l, 0, P.body_h - P.tab_t) * Box(P.tab_l, P.depth, P.tab_t, align=(Align.MIN, Align.MIN, Align.MIN))\npart = body + tab\nzc = 5.0\nfor i in range(n):\n    x = 1.5 + P.pitch * (i + 0.5)\n    part -= Pos(x, P.depth / 2, zc) * Rot(90, 0, 0) * Cylinder(P.cable / 2, P.depth * 2)\n    part -= Pos(x, P.depth / 2, zc / 2 - 1) * Box(P.slot, P.depth * 2, zc + 2)\npart -= Pos(body_l + P.tab_l / 2, P.depth / 2, P.body_h - P.tab_t / 2) * Cylinder(P.hole / 2, P.tab_t * 3)\nsave(part)\n```\n```bash\nea make geometry.py --print petg --name \"cable clip\"\n```\n",
+  "answered_by": "Claude chat (Sonnet, sheet only)",
+  "checks": [
+   {
+    "metric": "cad.valid",
+    "expected": true,
+    "ok": true,
+    "detail": "True"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "cad.valid: True"
+ },
+ {
+  "case": "011-shaft-torsion",
+  "source": "Shigley 10th ed. Eq. 4-5: phi = T L / (G J); surface displacement r phi",
+  "seconds": 5.73228120803833,
+  "request": "Plan: round steel shaft 20 mm diameter, 200 mm long along X (custom cylinder, no round-bar template), clamped at xmin, 100 N*m torque about X at the free end (xmax). Twist is checked against the solid circular shaft torsion formula (T L / G J).\n```python\nfrom build123d import *\nfrom engagent.cad import params, save\nP = params(diameter=20.0, length=200.0)\npart = Rot(0, 90, 0) * Cylinder(P.diameter / 2, P.length, align=(Align.CENTER, Align.CENTER, Align.MIN))\nsave(part)\n```\n```bash\nea make geometry.py --name \"torsion shaft\"\nea analyze last -m steel_generic --fix xmin --moment xmax \"100N*m,0,0\" --check \"torsion.solid_shaft T=100N*m L=200 G=80GPa d=20\"\n```\n",
+  "answered_by": "Claude chat (Sonnet, sheet only)",
+  "checks": [
+   {
+    "metric": "max_displacement",
+    "expected": 0.1576391817291154,
+    "ok": true,
+    "detail": "0.1577 (0.0 % off, tol 5 %)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "max_displacement: 0.1577 (0.0 % off, tol 5 %)"
+ },
+ {
+  "case": "012-fixed-fixed-beam",
+  "source": "Roark, Table 8.1 case 1c (both ends fixed, centre load) plus shear (Timoshenko)",
+  "seconds": 4.095490455627441,
+  "request": "Plan: aluminium 6061 bar 400 mm long, 20 x 20 mm, both ends welded (fully clamped), 1 kN down at the middle. I model half the bar (200 mm): fixed at xmin, and the mid-span face is a symmetry plane (slid in X so it cannot rotate) carrying half the load, 500 N. The half model is a guided cantilever, so the hand check is the equivalent cantilever with P = 125 N, L = 200 mm, which gives exactly P L^3 / 192 E I for the full bar.\n```bash\nea make beam length=200 width=20 height=20 --name \"fixed-fixed bar (half)\"\nea analyze last -m al_6061_t6 --fix xmin --slide xmax x --force xmax 0,0,-500 --check \"beam.cantilever_end_load P=125 L=200 E=69GPa b=20 h=20\"\n```\n",
+  "answered_by": "Claude chat (Sonnet, sheet only)",
+  "checks": [
+   {
+    "metric": "max_displacement",
+    "expected": 0.3744267053701016,
+    "ok": true,
+    "detail": "0.3709 (0.9 % off, tol 5 %)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "max_displacement: 0.3709 (0.9 % off, tol 5 %)"
+ },
+ {
+  "case": "013-thick-tube-pressure",
+  "source": "Lame thick-walled cylinder, open ends (axial stress 0): von Mises at the bore",
+  "seconds": 14.379639863967896,
+  "request": "Plan: steel tube OD 100, bore 60 (radius 30), 200 long, axis along Z. Open ends, so the pressure acts on the bore only (no end-cap force). I model a quarter: the tube intersected with the +X/+Y quadrant, symmetry planes slid (xmin in X, ymin in Y), one end slid axially (zmin in Z) so the tube is free to grow. 100 MPa on the bore surface. Checked against the thick-wall (Lame) solution for the bore stress.\n```python\nfrom build123d import *\nfrom engagent.cad import params, save\nP = params(od=100.0, bore=60.0, length=200.0)\ntube = Cylinder(P.od / 2, P.length, align=(Align.CENTER, Align.CENTER, Align.MIN))\ntube -= Cylinder(P.bore / 2, P.length * 3)\nquarter = Box(P.od / 2 + 1, P.od / 2 + 1, P.length, align=(Align.MIN, Align.MIN, Align.MIN))\npart = tube & quarter\nsave(part)\n```\n```bash\nea make geometry.py --name \"thick tube quarter\"\nea analyze last -m steel_generic --slide xmin x --slide ymin y --slide zmin z --pressure cyl:30 100 --check \"pressure.thick_cylinder p=100 ri=30 ro=50 -> stress@max_von_mises\"\n```\n",
+  "answered_by": "Claude chat (Sonnet, sheet only)",
+  "checks": [
+   {
+    "metric": "max_von_mises",
+    "expected": 276.41680484369977,
+    "ok": true,
+    "detail": "276 (0.1 % off, tol 5 %)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "max_von_mises: 276 (0.1 % off, tol 5 %)"
+ },
+ {
+  "case": "014-plate-hole-tension",
+  "source": "Peterson's Stress Concentration Factors, chart 4.1 (Kt = 2.506 at d/w = 0.2, net section)",
+  "seconds": 143.4623634815216,
+  "request": "Plan: steel plate 200 x 50 x 5 mm with a 10 mm centre hole, fixed at xmin, 10 kN pulling along +X on xmax. No exact textbook case (hole stress raiser), so the hand calculation is a bound: net-section nominal stress 10000 / ((50 - 10) x 5) = 50 MPa; the FEA peak at the hole should be above it (Kt is about 2.5). The peak at the clamped end is mesh-dependent; judge the hole stress.\n```bash\nea make plate length=200 width=50 thickness=5 center_hole=10 --name \"plate with hole\"\nea analyze last -m steel_generic --fix xmin --force xmax 10000,0,0 --bound \"axial.bar P=10000 L=200 A=200 E=210GPa -> stress@max_von_mises\"\n```\n",
+  "answered_by": "Claude chat (Sonnet, sheet only)",
+  "checks": [
+   {
+    "metric": "max_von_mises",
+    "expected": 125.3,
+    "ok": true,
+    "detail": "125.7 (0.3 % off, tol 6 %)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "max_von_mises: 125.7 (0.3 % off, tol 6 %)"
+ },
+ {
+  "case": "015-imperial-cantilever",
+  "source": "Roark, Table 8.1 case 1a (cantilever, end load), inch units",
+  "seconds": 29.04175901412964,
+  "request": "Plan: switching to imperial for this request. Aluminum 6061 bar 8 in long, 1 in wide, 0.25 in thick (bending through the 0.25 in thickness, so height = 0.25), clamped at xmin, 20 lbf down (-Z) at the free end. Checked against the cantilever formula.\n```bash\nea units imperial\nea make beam length=8 width=1 height=0.25 --name \"aluminum flat bar\"\nea analyze last -m al_6061_t6 --fix xmin --force xmax 0,0,-20 --check \"beam.cantilever_end_load P=20lbf L=8in E=69GPa b=1in h=0.25in\"\n```\n",
+  "answered_by": "Claude chat (Sonnet, sheet only)",
+  "checks": [
+   {
+    "metric": "max_displacement",
+    "expected": 6.663054738287836,
+    "ok": true,
+    "detail": "6.584 (1.2 % off, tol 5 %)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "max_displacement: 6.584 (1.2 % off, tol 5 %)"
+ },
+ {
+  "case": "016-pin-fin",
+  "source": "Incropera 3.6.2, fin with convective tip: theta_L/theta_b = 1 / (cosh mL + (h/mk) sinh mL)",
+  "seconds": 4.544068336486816,
+  "request": "Plan: aluminium 6061 pin 5 mm diameter, 50 mm long along X (custom cylinder), wall end (xmin) at 80 C, convection on the side surface and tip (h = 50, air 20 C). Tip temperature is checked against the pin-fin formula with convecting tip (k about 167 W/mK for 6061).\n```python\nfrom build123d import *\nfrom engagent.cad import params, save\nP = params(diameter=5.0, length=50.0)\npart = Rot(0, 90, 0) * Cylinder(P.diameter / 2, P.length, align=(Align.CENTER, Align.CENTER, Align.MIN))\nsave(part)\n```\n```bash\nea make geometry.py --name \"pin fin\"\nea analyze last -m al_6061_t6 --temp xmin 80 --convect cyl:2.5+xmax 50 20 --check \"thermal.pin_fin k=167 L=50 d=5 h=50 T_base=80 T_ambient=20\"\n```\n",
+  "answered_by": "Claude chat (Sonnet, sheet only)",
+  "checks": [
+   {
+    "metric": "min_temperature",
+    "expected": 65.07373229995932,
+    "ok": true,
+    "detail": "65.07 (0.0 % off, tol 1.5 %)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "min_temperature: 65.07 (0.0 % off, tol 1.5 %)"
+ },
+ {
+  "case": "017-free-expansion",
+  "source": "Free thermal expansion dL = alpha L dT (alpha 12e-6 /K)",
+  "seconds": 4.989412069320679,
+  "request": "Plan: steel bar 500 x 20 x 20 mm, the wall end (xmin) held in X only, a single centre point pinned so the bar cannot drift sideways, free everywhere else, heated evenly from 20 C to 100 C. The free-end movement is the thermal growth (about alpha L dT, steel CTE about 12 um/mK, dT = 80) and the stress should be near zero.\n```bash\nea make beam length=500 width=20 height=20 --name \"free bar\"\nea analyze last -m steel_generic -a thermal_stress --slide xmin x --fix point:0,0,0 --t0 20 --dT 100 --check \"thermal.free_expansion L=500 cte=12 dT=80\"\n```\n",
+  "answered_by": "Claude chat (Sonnet, sheet only)",
+  "checks": [
+   {
+    "metric": "max_displacement",
+    "expected": 0.48,
+    "ok": false,
+    "detail": "0.5611 (16.9 % off, tol 3 %)"
+   }
+  ],
+  "outcome": "FAIL",
+  "detail": "max_displacement: 0.5611 (16.9 % off, tol 3 %)"
+ },
+ {
+  "case": "018-cable-comb",
+  "source": "dimensions as asked",
+  "seconds": 2.450443983078003,
+  "request": "Plan: PETG comb, FDM. Plate 60 x 20 x 5 mm, five 4 mm slots cut 12 mm deep into the long edge at y = 20, evenly spaced along X (equal gaps between slots and at both ends), leaving an 8 mm solid spine. Default PETG.\n```python\nfrom build123d import *\nfrom engagent.cad import params, save\nP = params(length=60.0, width=20.0, thickness=5.0, slot=4.0, depth=12.0)\nn = 5\npart = Box(P.length, P.width, P.thickness, align=(Align.MIN, Align.MIN, Align.MIN))\ngap = (P.length - n * P.slot) / (n + 1)\nfor i in range(n):\n    x = gap * (i + 1) + P.slot * i + P.slot / 2\n    part -= Pos(x, P.width - P.depth / 2 + 1, P.thickness / 2) * Box(P.slot, P.depth + 2, P.thickness * 3)\nsave(part)\n```\n```bash\nea make geometry.py --print petg --name \"cable comb\"\n```\n",
+  "answered_by": "Claude chat (Sonnet, sheet only)",
+  "checks": [
+   {
+    "metric": "cad.size",
+    "expected": [
+     60,
+     20,
+     5
+    ],
+    "ok": true,
+    "detail": "60x20x5"
+   },
+   {
+    "metric": "cad.valid",
+    "expected": true,
+    "ok": true,
+    "detail": "True"
+   },
+   {
+    "metric": "cad.volume",
+    "expected": {
+     "max": 5900
+    },
+    "ok": true,
+    "detail": "4800 (allowed - .. 5900)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "cad.size: 60x20x5; cad.valid: True; cad.volume: 4800 (allowed - .. 5900)"
+ },
+ {
+  "case": "019-d-shaft-knob",
+  "source": "dimensions as asked; D-shaft 6 mm with 4.5 mm flat",
+  "seconds": 2.7154862880706787,
+  "request": "Plan: PETG knob, FDM. Defaults I chose: 30 mm diameter x 15 mm tall cylinder with a 1.5 mm fillet on the top edge, and a blind D-hole 9 mm deep from the bottom (z = 0): 6 mm circle with the flat 4.5 mm from the opposite side. The hole is drawn at nominal size, so expect to ream or adjust slightly after printing for a snug fit.\n```python\nfrom build123d import *\nfrom engagent.cad import params, save\nP = params(diameter=30.0, height=15.0, shaft=6.0, flat=4.5, depth=9.0, fillet_r=1.5)\nc = P.diameter / 2\npart = Pos(c, c, 0) * Cylinder(c, P.height, align=(Align.CENTER, Align.CENTER, Align.MIN))\npart = fillet(part.edges().group_by(Axis.Z)[-1], P.fillet_r)\nr = P.shaft / 2\nflat_x = c - r + P.flat\nd_hole = Pos(c, c, P.depth / 2 - 1) * Cylinder(r, P.depth + 2)\nd_hole = d_hole & (Pos(flat_x - 5, c, P.depth / 2) * Box(10, 10, P.depth * 3))\npart -= d_hole\nsave(part)\n```\n```bash\nea make geometry.py --print petg --name \"D-shaft knob\"\n```\n",
+  "answered_by": "Claude chat (Sonnet, sheet only)",
+  "checks": [
+   {
+    "metric": "cad.size",
+    "expected": [
+     30,
+     30,
+     15
+    ],
+    "ok": true,
+    "detail": "30x30x15"
+   },
+   {
+    "metric": "cad.valid",
+    "expected": true,
+    "ok": true,
+    "detail": "True"
+   },
+   {
+    "metric": "cad.volume",
+    "expected": {
+     "max": 10500
+    },
+    "ok": true,
+    "detail": "1.035e+04 (allowed - .. 10500)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "cad.size: 30x30x15; cad.valid: True; cad.volume: 1.035e+04 (allowed - .. 10500)"
+ }
+]
