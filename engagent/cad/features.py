@@ -76,6 +76,8 @@ def _holes(shape) -> list[dict]:
         d = np.array(tuple(ax.direction), float)
         d /= np.linalg.norm(d)
         p = np.array(tuple(ax.position), float)
+        if f.radius is None:                     # e.g. a trimmed or non-circular cylindrical patch
+            continue
         dia = 2 * float(f.radius)
         vs = np.array([tuple(v) for v in f.vertices()], float) if f.vertices() else np.zeros((1, 3))
         span = (float((vs @ d).min()), float((vs @ d).max()))   # extent along the axis (hole depth)
