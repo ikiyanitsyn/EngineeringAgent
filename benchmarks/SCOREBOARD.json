@@ -2,7 +2,7 @@
  {
   "case": "001-cantilever-mass",
   "source": "Roark's Formulas, Table 8.1 case 1a (cantilever, end load), with shear",
-  "seconds": 10.890324831008911,
+  "seconds": 15.699219703674316,
   "request": "```bash\nea make beam length=200 width=10 height=20 --name \"bar\"\nea analyze last -m steel_generic --fix xmin --force xmax 0,0,-490.332\n```",
   "answered_by": "rules",
   "checks": [
@@ -19,7 +19,7 @@
  {
   "case": "002-simply-supported",
   "source": "Roark, Table 8.1 case 1e (simply supported, centre load)",
-  "seconds": 4.858932733535767,
+  "seconds": 6.769164085388184,
   "request": "```bash\nea make beam length=500 width=40 height=80 --name \"simply supported beam (half, symmetry)\"\nea analyze last -m steel_generic --slide xmin z --slide xmax x --slide xmax y --force xmax 0,0,-1000 --check \"beam.simply_supported_center_load P=2000 L=1000 E=210000MPa b=40 h=80\"\n```",
   "answered_by": "rules",
   "checks": [
@@ -36,7 +36,7 @@
  {
   "case": "003-column-buckling",
   "source": "Euler buckling, fixed-free (K = 2)",
-  "seconds": 12.26161003112793,
+  "seconds": 15.28006386756897,
   "request": "```bash\nea make beam length=1000 width=20 height=20 --name \"column\"\nea analyze last -m steel_generic -a buckling --fix xmin --force xmax -1000,0,0 --check \"column.euler_buckling L=1000 E=210000MPa b=20 h=20 ends=fixed_free\"\n```",
   "answered_by": "rules",
   "checks": [
@@ -53,9 +53,9 @@
  {
   "case": "004-cantilever-frequency",
   "source": "Euler-Bernoulli beam, clamped-free, first mode",
-  "seconds": 149.18509340286255,
-  "request": "I will create the cantilever beam (300 x 20 x 5 mm, vibrating in the thin 5 mm Z direction) and run a modal analysis using aluminium `al_6061_t6`, clamping one end and checking against the analytical beam frequency formula.\n\n```bash\nea make beam length=300 width=20 height=5 --name \"aluminium cantilever\"\nea analyze last -m al_6061_t6 -a modal --fix xmin --check \"beam.natural_frequency L=300 E=69GPa b=20 h=5 density=2700\"\n```",
-  "answered_by": "gemini-3.5-flash-lite",
+  "seconds": 256.44934940338135,
+  "request": "Plan:\n1. Set up a modal FEA of a 300 x 20 x 5 mm rectangular beam clamped at one end (`xmin`).\n2. Orient the cross-section with height = 5 mm so the fundamental mode corresponds to bending in the thin direction.\n3. Verify the first natural frequency against the Euler-Bernoulli cantilever beam formula.\n\n```bash\nea analyze beam length=300 width=20 height=5 -m al_6061_t6 -a modal --fix xmin --check \"beam.natural_frequency L=300 E=69GPa b=20 h=5 density=2700\"\n```",
+  "answered_by": "gemini-3.8-flash",
   "checks": [
    {
     "metric": "frequency_1",
@@ -70,7 +70,7 @@
  {
   "case": "005-hot-bar-convection",
   "source": "Incropera 3.1.3, thermal circuit",
-  "seconds": 2.09010910987854,
+  "seconds": 3.116009473800659,
   "request": "```bash\nea make beam length=100 --name \"bar\"\nea analyze last -m steel_generic -a thermal --temp xmin 100 --convect xmax 25 20\n```",
   "answered_by": "rules",
   "checks": [
@@ -87,7 +87,7 @@
  {
   "case": "006-restrained-bar-heating",
   "source": "sigma = E alpha dT (bar held axially at both ends)",
-  "seconds": 3.9164247512817383,
+  "seconds": 5.787230491638184,
   "request": "```bash\nea make beam length=100 width=10 height=10 --name \"restrained bar\"\nea analyze last -m steel_generic -a thermal_stress --slide xmin x --slide xmax x --fix point:0,0,0 --fix point:100,0,0 --t0 20 --dT 70 --check \"thermal.restrained_bar E=210000MPa cte=12 dT=50 -> stress@max_von_mises tol=0.03\"\n```",
   "answered_by": "rules",
   "checks": [
@@ -104,7 +104,7 @@
  {
   "case": "007-bonded-bars",
   "source": "series springs: P L1/(A E1) + P L2/(A E2)",
-  "seconds": 45.16317272186279,
+  "seconds": 57.572105407714844,
   "request": "```json\n{\n \"name\": \"joined-bars\",\n \"units\": \"metric\",\n \"analysis\": \"static\",\n \"title\": \"steel_generic and al_6061_t6 bars joined end to end\",\n \"parts\": [\n  {\n   \"name\": \"steel\",\n   \"material\": \"steel_generic\",\n   \"geometry\": {\n    \"template\": \"beam\",\n    \"params\": {\n     \"length\": 50.0,\n     \"width\": 10.0,\n     \"height\": 10.0\n    },\n    \"step\": \"steel.step\"\n   }\n  },\n  {\n   \"name\": \"al\",\n   \"material\": \"al_6061_t6\",\n   \"geometry\": {\n    \"template\": \"beam\",\n    \"params\": {\n     \"length\": 50.0,\n     \"width\": 10.0,\n     \"height\": 10.0\n    },\n    \"position\": [\n     50.0,\n     0,\n     0\n    ],\n    \"step\": \"al.step\"\n   }\n  }\n ],\n \"sets\": {\n  \"fixed\": {\n   \"part\": \"steel\",\n   \"plane\": \"x\",\n   \"at\": 0\n  },\n  \"joint_a\": {\n   \"part\": \"steel\",\n   \"plane\": \"x\",\n   \"at\": 50.0\n  },\n  \"joint_b\": {\n   \"part\": \"al\",\n   \"plane\": \"x\",\n   \"at\": 50.0\n  },\n  \"tip\": {\n   \"part\": \"al\",\n   \"plane\": \"x\",\n   \"at\": 100.0\n  }\n },\n \"interactions\": [\n  {\n   \"type\": \"tie\",\n   \"master\": \"joint_a\",\n   \"slave\": \"joint_b\"\n  }\n ],\n \"constraints\": [\n  {\n   \"type\": \"fixed\",\n   \"on\": \"fixed\"\n  }\n ],\n \"loads\": [\n  {\n   \"type\": \"force\",\n   \"on\": \"tip\",\n   \"value\": [\n    5000.0,\n    0,\n    0\n   ]\n  }\n ],\n \"probes\": {\n  \"tip\": {\n   \"set\": \"tip\"\n  }\n },\n \"hand_calcs\": [\n  {\n   \"name\": \"Series elongation P L1/(A E1) + P L2/(A E2)\",\n   \"expected\": \"0.0481892 mm\",\n   \"kind\": \"length\",\n   \"formula\": \"delta = P L1 / (A E1) + P L2 / (A E2)\",\n   \"metric\": \"probe.tip.ux\",\n   \"tol\": 0.03\n  }\n ]\n}\n```",
   "answered_by": "rules",
   "checks": [
@@ -121,7 +121,7 @@
  {
   "case": "008-printable-box",
   "source": "dimensions as asked",
-  "seconds": 0.890587568283081,
+  "seconds": 1.3633339405059814,
   "request": "```bash\nea make enclosure length=110 width=75 height=45 wall=2 --print petg --name \"box\"\n```",
   "answered_by": "rules",
   "checks": [
@@ -142,7 +142,7 @@
  {
   "case": "009-m5-spacer",
   "source": "dimensions as asked; ISO 273 medium clearance 5.5 mm",
-  "seconds": 0.1416759490966797,
+  "seconds": 0.25418710708618164,
   "request": "```bash\nea make standoff outer_diameter=12 hole=5.5 height=15 --print petg --name \"spacer\"\n```",
   "answered_by": "rules",
   "checks": [
@@ -163,10 +163,8 @@
  {
   "case": "010-cable-clip",
   "source": "custom shape: a valid printable solid; fit judged by eye",
-  "seconds": 173.44539880752563,
-  "request": "What load (force value and direction) should be applied to the cable clip for the structural analysis?",
-  "answered_by": "gemini-3.5-flash-lite",
-  "outcome": "ASKED",
-  "detail": "What load (force value and direction) should be applied to the cable clip for the structural analysis?"
+  "outcome": "ERROR",
+  "detail": "LLMError: the language model could not be used. gemini-3.8-flash at https://generativelanguage.googleapis.com/v1beta/openai/chat/completions: HTTP 429 [{\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceed",
+  "seconds": 1097.877954006195
  }
 ]
