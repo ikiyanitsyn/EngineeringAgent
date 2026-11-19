@@ -197,7 +197,7 @@ def main() -> int:
                {"body": f"{MARK}\n⏳ Working on it - common requests take 1 to 3 minutes; up to 15 if the free built-in AI model is needed. [Live log]({RUN_URL})"})
         comment_id = c["id"]
 
-    cad = _cad_parts(latest, issue, comment_id)       # the user's own STEP parts: list faces, ask what to join
+    cad = _cad_parts(latest, issue, comment_id, convo)       # the user's own STEP parts: list faces, ask what to join
     if cad is not None:
         return cad
     join = _cad_join(latest, convo, issue, comment_id)  # "join camera F2 to arm_flange F2": design the adapter
@@ -268,7 +268,7 @@ def main() -> int:
     return 0
 
 
-def _cad_parts(latest: str, issue, comment_id):
+def _cad_parts(latest: str, issue, comment_id, convo: list[dict] | None = None):
     """Stage 1 of 'design an adapter between my two parts': fetch the STEP files, list the numbered
     faces and hole patterns with pictures, and ask which faces to join. None when there are no parts."""
     from engagent import cadinput, quick
@@ -276,6 +276,16 @@ def _cad_parts(latest: str, issue, comment_id):
     if d["commands"] or d["json"] or d["python"]:      # `ea ...` lines that name a STEP file run as written
         return None
     found = cadinput.find_inputs(latest, ROOT)
+    picking = latest
+    if not (found["urls"] or found["paths"]) and convo:     # answer to "which part?": reuse the earlier link
+        bots = [m["content"] for m in convo if m["role"] == "assistant"]
+        if bots and cadinput.PICK_MARK in bots[-1]:
+            earlier = [m["content"] for m in convo if m["role"] == "user" and m["content"] != latest]
+            for e in reversed(earlier):
+                f = cadinput.find_inputs(e, ROOT)
+                if f["urls"] or f["paths"]:
+                    found = f
+                    break
     if not (found["urls"] or found["paths"]):
         return None
     folders: list[str] = []
@@ -293,6 +303,11 @@ def _cad_parts(latest: str, issue, comment_id):
                 parts += cadinput.fetch(url, folder / "parts", TOKEN, alt)
             except Exception as e:
                 problems.append(f"{url.rsplit('/', 1)[-1]}: {e}")
+        parts, pick = cadinput.choose_parts(parts, picking)
+        if pick:                                        # a zip of many parts and none named: ask which
+            shutil.rmtree(folder, ignore_errors=True)
+            _finish(pick + "\n\n<sub>Answered by: built-in CAD measurement (no AI model)</sub>", comment_id, [])
+            return 0
         for p in list(parts):
             if p.parent != folder:
                 shutil.move(str(p), folder / p.name)

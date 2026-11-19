@@ -90,3 +90,13 @@ def test_step_from_a_share_link(tmp_path):
         srv.shutdown()
     assert cadinput.direct_link("https://drive.google.com/file/d/AbC-1_x/view?usp=sharing") == \
         "https://drive.google.com/uc?export=download&id=AbC-1_x"
+
+
+def test_many_parts_ask_which_unless_named(tmp_path):
+    from pathlib import Path
+    parts = [Path(f"nist_ctc_0{i}_ap203.step") for i in range(1, 7)]
+    got, q = cadinput.choose_parts(parts, "check my parts")
+    assert not got and cadinput.PICK_MARK in q and "`nist_ctc_01_ap203`" in q
+    got, q = cadinput.choose_parts(parts, "use nist_ctc_03_ap203 please")
+    assert [p.stem for p in got] == ["nist_ctc_03_ap203"] and q is None
+    assert cadinput.choose_parts(parts[:2], "x") == (parts[:2], None)

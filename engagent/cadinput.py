@@ -142,6 +142,23 @@ def list_parts(parts: list[Path], folder: Path) -> tuple[dict, str]:
     return data, "\n\n".join(md)
 
 
+PICK_MARK = "Which part(s) should I use?"
+
+
+def choose_parts(parts: list[Path], text: str, limit: int = 4) -> tuple[list[Path], str | None]:
+    """Keep the parts named in the text; with many parts and none named, ask which (listing them)."""
+    t = (text or "").lower()
+    named = [p for p in parts if p.stem.lower() in t]
+    if named:
+        return named, None
+    if len(parts) <= limit:
+        return parts, None
+    names = sorted(p.stem for p in parts)
+    return [], (f"### 📦 {len(parts)} parts found\n**{PICK_MARK}** Reply with one or two names, e.g. "
+                f"*use {names[0]}*, plus what to do with it (or I will list its faces first).\n\n"
+                + "\n".join(f"- `{n}`" for n in names[:60]) + ("\n- ..." if len(names) > 60 else ""))
+
+
 QUESTION = ("**Which faces should the adapter join?** Reply in a comment, for example:\n"
             "> join `{a}` F2 to `{b}` F2, aluminium 6061, machined\n\n"
             "Also say anything that matters: the material or 3D-print filament, a maximum thickness or "
