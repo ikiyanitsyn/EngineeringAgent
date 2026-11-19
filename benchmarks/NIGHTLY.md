@@ -17,6 +17,7 @@ Peterson, Lame, Incropera; one public CAD dataset (NIST MBE PMI STEP files) for 
 |---|---|---|
 | Rules only (no AI model), 19 cases | 10, one of them false (comb built without slots) | 10, all real (adds the fixed-fixed beam) |
 | Claude chat (Sonnet given only docs/CHATBOT-PROMPT.md, no tools), 19 cases | 14 | 18 |
+| Claude chat round 2 (fresh blind replies to the improved sheet), 19 cases | - | **19** |
 | Gemini via the issue bot (10 original cases) | 9 (case 010: quota 429) | after-score runs once the free quota resets |
 
 The chat solver's replies were written once and re-scored on the improved toolkit, so the gain is the
@@ -51,5 +52,5 @@ toolkit absorbing the slips any AI makes, not a different answer.
   shown. Recommended: yes.
 
 ### Still open
-- Case 017 for the chat solver: its supports let the bar spin (now flagged by the WARN above).
+- Case 017 in round 1 (supports let the bar spin) is solved in round 2 by the sheet's new support rule.
 - Gemini after-score (quota).
