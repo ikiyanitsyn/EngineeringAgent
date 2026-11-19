@@ -62,3 +62,31 @@ def test_private_attachment_falls_back_to_the_signed_link():
             drawings.download(f"{base}/user-attachments/assets/ffffffff-0123-4567-89ab-0123456789ab", "tok", alt)
     finally:
         srv.shutdown()
+
+
+def test_step_from_a_share_link(tmp_path):
+    import threading
+    from http.server import BaseHTTPRequestHandler, HTTPServer
+    seen = []
+
+    class H(BaseHTTPRequestHandler):
+        def do_GET(self):
+            seen.append(self.path)
+            ok = "dl=1" in self.path
+            self.send_response(200); self.end_headers()
+            self.wfile.write(b"ISO-10303-21;\nHEADER;" if ok else b"<!DOCTYPE html><html>preview")
+
+        def log_message(self, *a):
+            pass
+
+    srv = HTTPServer(("127.0.0.1", 0), H)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    try:
+        # a Dropbox-style link: the preview page unless dl=1
+        url = f"http://127.0.0.1:{srv.server_port}/dropbox.com/s/x/bracket.step?dl=0"
+        got = cadinput.fetch(url, tmp_path, None)
+        assert got[0].name == "bracket.step" and seen[-1].endswith("dl=1")
+    finally:
+        srv.shutdown()
+    assert cadinput.direct_link("https://drive.google.com/file/d/AbC-1_x/view?usp=sharing") == \
+        "https://drive.google.com/uc?export=download&id=AbC-1_x"

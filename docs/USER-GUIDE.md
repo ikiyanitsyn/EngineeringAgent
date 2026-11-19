@@ -301,6 +301,8 @@ A finished version of exactly this job is in
      STEP files are plain text, so nothing is lost.
    - Attach a **.zip** of them.
    - Upload them to the repository (e.g. an `inbox/` folder) and write their paths.
+   - Or paste a **share link** (Dropbox, Google Drive, OneDrive, or any direct https link to a .step/.zip),
+     shared as *anyone with the link can view*. Nothing to rename or upload.
 2. The bot measures both parts. It replies with numbered faces (F1, F2, ...), the hole patterns on them
    (bolt circle or rectangle, and the screw size) and pictures with the numbers on the faces.
 3. Reply `join arm_flange F2 to camera F2, M6, aluminium 6061`. If a hole size could be two screws

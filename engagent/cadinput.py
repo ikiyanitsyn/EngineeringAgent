@@ -22,9 +22,28 @@ MAX_PART = 60 * 1024 * 1024
 MAX_TOTAL = 150 * 1024 * 1024
 
 
+SHARE_RX = re.compile(r"https://(?:www\.)?(?:dropbox\.com/\S+|drive\.google\.com/\S+|1drv\.ms/\S+|"
+                      r"onedrive\.live\.com/\S+|[\w.-]+/\S+?\.(?:step|stp|zip)(?:\?\S*)?)(?=[\s)>\]]|$)", re.I)
+
+
+def direct_link(url: str) -> str:
+    """A cloud share link -> its direct-download form (Dropbox, Google Drive, OneDrive)."""
+    if "dropbox.com" in url:
+        url = re.sub(r"([?&])dl=0", r"\1dl=1", url)
+        return url if "dl=1" in url else url + ("&" if "?" in url else "?") + "dl=1"
+    m = re.search(r"drive\.google\.com/(?:file/d/|open\?id=|uc\?id=)([\w-]+)", url)
+    if m:
+        return f"https://drive.google.com/uc?export=download&id={m.group(1)}"
+    if "1drv.ms" in url or "onedrive.live.com" in url:
+        return url + ("&" if "?" in url else "?") + "download=1"
+    return url
+
+
 def find_inputs(text: str, root: Path) -> dict:
-    """{'urls': [attachment urls], 'paths': [existing repo STEP paths]} mentioned in the text."""
+    """{'urls': [attachment / share links], 'paths': [existing repo STEP paths]} mentioned in the text."""
     urls = list(dict.fromkeys(u.rstrip(").,") for u in ATTACH_RX.findall(text or "")))
+    urls += [u.rstrip(").,") for u in SHARE_RX.findall(text or "")
+             if "github.com" not in u and u.rstrip(").,") not in urls]
     urls = [u for u in urls if not re.search(r"\.(pdf|png|jpe?g|gif)$", u, re.I)]   # drawings: engagent.drawings
     paths = []
     root = root.resolve()
@@ -49,12 +68,19 @@ def fetch(url: str, dest: Path, token: str | None = None, alt: dict | None = Non
     from .drawings import get_bytes
     dest.mkdir(parents=True, exist_ok=True)
     tmp = dest / "_download.bin"
-    data = get_bytes(url, token, MAX_DOWNLOAD, alt)
+    on_github = url.startswith("https://github.com/")
+    try:
+        data = get_bytes(url if on_github else direct_link(url), token if on_github else None, MAX_DOWNLOAD, alt)
+    except ValueError:
+        if on_github:
+            raise
+        raise ValueError("the link gave a web page, not the file - share it as 'anyone with the link can view' "
+                         "(Google Drive files over 100 MB need a direct link), or attach the file here") from None
     if len(data) > MAX_DOWNLOAD:
         raise ValueError("the attachment is larger than 25 MB")
     tmp.write_bytes(data)
     try:
-        name = url.rsplit("/", 1)[-1]
+        name = url.split("?", 1)[0].rsplit("/", 1)[-1]          # no query string (share links)
         if zipfile.is_zipfile(tmp):
             return _unzip_steps(tmp, dest)
         head = tmp.read_bytes()[:200].lstrip()
