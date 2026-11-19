@@ -70,3 +70,10 @@ toolkit absorbing the slips any AI makes, not a different answer.
 - Per domain, chat round 2: structures 10/10, thermal 4/4, 3D-print 5/5.
 - Average time per case: Gemini 306 s (median 43 s; waits on a busy free tier dominate), chat replies 22 s.
 - Run ended at 6 am PT.
+
+### Follow-up (2026-11-19 afternoon, after the owner's go-ahead)
+- Owner approved: supports that leave a rigid-body motion free now STOP the run (the AI fixes them first).
+  Chat round 2 still 19 / 19, toolkit check 6 / 6.
+- Repository made public by the owner: GitHub Actions minutes are now free; attachments no longer need a login.
+- Case 019 (D-shaft knob) with a strong Gemini model: PASS in 76 s. Every one of the 19 cases has now passed
+  with Gemini at least once (017 in the first run, 019 here, the rest after the fixes).
