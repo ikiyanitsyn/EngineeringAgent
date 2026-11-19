@@ -279,7 +279,7 @@ def _cad_parts(latest: str, issue, comment_id, convo: list[dict] | None = None):
     picking = latest
     if not (found["urls"] or found["paths"]) and convo:     # answer to "which part?": reuse the earlier link
         bots = [m["content"] for m in convo if m["role"] == "assistant"]
-        if bots and cadinput.PICK_MARK in bots[-1]:
+        if any(cadinput.PICK_MARK in b for b in bots[-3:]):   # asked recently (an error reply may follow)
             earlier = [m["content"] for m in convo if m["role"] == "user" and m["content"] != latest]
             for e in reversed(earlier):
                 f = cadinput.find_inputs(e, ROOT)
