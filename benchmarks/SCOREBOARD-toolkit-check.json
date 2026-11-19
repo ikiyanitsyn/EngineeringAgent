@@ -2,7 +2,7 @@
  {
   "case": "011-shaft-torsion",
   "source": "Shigley 10th ed. Eq. 4-5: phi = T L / (G J); surface displacement r phi",
-  "seconds": 7.9459521770477295,
+  "seconds": 10.273638010025024,
   "request": "Plan: solid steel shaft along X, clamped at x=0, torque 100 N m about X on the far end.\n```python\nfrom build123d import *\nfrom engagent.cad import save\nsave(Pos(100, 0, 0) * Rot(0, 90, 0) * Cylinder(10, 200))\n```\n```bash\nea make geometry.py --name shaft\nea analyze last -m steel_generic --fix xmin --moment xmax 100,0,0 --check \"torsion.round_shaft T=100 L=200 D=20 E=210000 nu=0.3 -> twist\"\n```\n",
   "answered_by": "toolkit check",
   "checks": [
@@ -19,7 +19,7 @@
  {
   "case": "012-fixed-fixed-beam",
   "source": "Roark, Table 8.1 case 1c (both ends fixed, centre load) plus shear (Timoshenko)",
-  "seconds": 4.476414442062378,
+  "seconds": 5.365166187286377,
   "request": "Plan: half model by symmetry - end held fully, mid-span face cannot move along the beam, half the load on it.\n```bash\nea make beam length=200 width=20 height=20 --name \"fixed-fixed beam (half)\"\nea analyze last -m al_6061_t6 --fix xmin --slide xmax x --force xmax 0,0,-500 --check \"beam.fixed_fixed_center_load P=1000 L=400 E=68900 nu=0.33 b=20 h=20\"\n```\n",
   "answered_by": "toolkit check",
   "checks": [
@@ -36,7 +36,7 @@
  {
   "case": "013-thick-tube-pressure",
   "source": "Lame thick-walled cylinder, open ends (axial stress 0): von Mises at the bore",
-  "seconds": 52.14974904060364,
+  "seconds": 66.49707269668579,
   "request": "Plan: quarter-free model: full tube along Z, ends free to slide axially (open ends), held against rigid motion by symmetry planes.\n```python\nfrom build123d import *\nfrom engagent.cad import save\nsave(Cylinder(50, 200, align=(Align.CENTER, Align.CENTER, Align.MIN)) - Cylinder(30, 200, align=(Align.CENTER, Align.CENTER, Align.MIN)))\n```\n```bash\nea make geometry.py --name tube\nea analyze last -m steel_generic --slide zmin z --fix point:50,0,0 --slide point:0,50,0 x --pressure cyl:30 100 --check \"pressure.thick_cylinder p=100 ri=30 ro=50 -> hoop_stress_inner\"\n```\n",
   "answered_by": "toolkit check",
   "checks": [
@@ -53,7 +53,7 @@
  {
   "case": "014-plate-hole-tension",
   "source": "Peterson's Stress Concentration Factors, chart 4.1 (Kt = 2.506 at d/w = 0.2, net section)",
-  "seconds": 149.1588909626007,
+  "seconds": 187.19607853889465,
   "request": "```python\nfrom build123d import *\nfrom engagent.cad import save\nsave(Box(200, 50, 5, align=(Align.MIN, Align.MIN, Align.MIN)) - Pos(100, 25, 0) * Cylinder(5, 20))\n```\n```bash\nea make geometry.py --name plate\nea analyze last -m steel_generic --slide xmin x --fix point:0,0,0 --slide point:0,50,0 z --force xmax 10000,0,0 --check \"kt.plate_hole_tension P=10000 w=50 d=10 t=5 -> peak_stress@max_von_mises tol=0.06\"\n```\n",
   "answered_by": "toolkit check",
   "checks": [
@@ -70,7 +70,7 @@
  {
   "case": "016-pin-fin",
   "source": "Incropera 3.6.2, fin with convective tip: theta_L/theta_b = 1 / (cosh mL + (h/mk) sinh mL)",
-  "seconds": 3.9619200229644775,
+  "seconds": 5.489871263504028,
   "request": "```python\nfrom build123d import *\nfrom engagent.cad import save\nsave(Pos(25, 0, 0) * Rot(0, 90, 0) * Cylinder(2.5, 50))\n```\n```bash\nea make geometry.py --name pin\nea analyze last -a thermal -m al_6061_t6 --temp xmin 80 --convect xmax+cyl:2.5 50 20\n```\n",
   "answered_by": "toolkit check",
   "checks": [
@@ -87,7 +87,7 @@
  {
   "case": "017-free-expansion",
   "source": "Free thermal expansion dL = alpha L dT (alpha 12e-6 /K)",
-  "seconds": 4.896022081375122,
+  "seconds": 6.641511917114258,
   "request": "```bash\nea make beam length=500 width=20 height=20 --name bar\nea analyze last -m steel_generic --slide xmin x --fix point:0,0,0 --slide point:0,20,0 z --t0 20 --dT 100 --check \"thermal.free_expansion L=500 alpha=12e-6 dT=80 -> max_displacement\"\n```\n",
   "answered_by": "toolkit check",
   "checks": [
