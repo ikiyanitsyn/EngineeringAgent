@@ -1,0 +1,525 @@
+{
+ "engagent_version": "0.1.0",
+ "name": "51-nist-ctc-01-asme1-ap203-check-i24",
+ "title": "static analysis of nist_ctc_01_asme1_ap203",
+ "description": "",
+ "analysis": "static",
+ "units": "metric",
+ "standard": "iso",
+ "status": "ok",
+ "verdict": "REVIEW",
+ "solver": {
+  "version": "2.21",
+  "seconds": 74.31,
+  "errors": [],
+  "warnings": [],
+  "command": "ccx -i job",
+  "tail": ""
+ },
+ "mesh": {
+  "nodes": 159544,
+  "elements": 101105,
+  "element_type": "C3D10",
+  "size_mm": 24.9999995,
+  "parts": [
+   "part"
+  ],
+  "bbox_min": [
+   -400.0,
+   -225.0,
+   -100.0
+  ],
+  "bbox_max": [
+   400.0000000000001,
+   225.0000000000001,
+   50.0
+  ],
+  "volume_mm3": 14639052.343774542,
+  "quality_min": 0.029697053967592296,
+  "quality_mean": 0.7818738382110194,
+  "quality_below_0p1": 19
+ },
+ "parts": [
+  {
+   "name": "part",
+   "geometry": "nist_ctc_01_asme1_ap203.step",
+   "material": {
+    "key": "al_6061_t6",
+    "name": "Aluminium 6061-T6",
+    "family": "aluminium",
+    "orthotropic": false,
+    "properties": {
+     "E": "68.9 GPa",
+     "nu": "0.33",
+     "density": "2700 kg/m^3",
+     "cte": "23.6 um/m/K",
+     "k": "167 W/m/K",
+     "cp": "896 J/kg/K",
+     "yield": "276 MPa",
+     "uts": "310 MPa",
+     "elongation": "0.12",
+     "endurance": "96.5 MPa"
+    },
+    "meta": {
+     "spec": "ASTM B209 6061-T6"
+    }
+   },
+   "orientation": null
+  }
+ ],
+ "sets": {
+  "near_36_47_23_64_50": {
+   "area": 175495.30369704837,
+   "faces": [
+    69
+   ],
+   "nodes": 11551,
+   "centroid": [
+    -0.7604212432262888,
+    -0.9557782553375594,
+    -49.999999999999986
+   ]
+  },
+  "near_45_38_73_42_0": {
+   "area": 222979.59597053804,
+   "faces": [
+    4
+   ],
+   "nodes": 16775,
+   "centroid": [
+    -1.7899776806293217,
+    -1.393293081016555,
+    0.0
+   ]
+  }
+ },
+ "constraints": [
+  "Fixed (all translations) on 'near_36_47_23_64_50'"
+ ],
+ "loads": [
+  "Force (0, 0, -5000) N on 'near_45_38_73_42_0' (area 222980 mm^2)"
+ ],
+ "interactions": [],
+ "notes": [],
+ "initial_temperature": null,
+ "metrics": {
+  "max_displacement": {
+   "value": 0.0009090127455701598,
+   "kind": "length",
+   "label": "Maximum displacement",
+   "location": [
+    350.0,
+    -225.0,
+    -100.0
+   ],
+   "vector": [
+    -2.6714e-05,
+    0.000430583,
+    -0.000800118
+   ]
+  },
+  "max_ux": {
+   "value": -3.19644e-05,
+   "kind": "length",
+   "label": "Largest ux",
+   "location": [
+    264.64466094067257,
+    -210.35533905932732,
+    -100.0
+   ]
+  },
+  "max_uy": {
+   "value": 0.000432736,
+   "kind": "length",
+   "label": "Largest uy",
+   "location": [
+    250.0,
+    -125.0,
+    -100.0
+   ]
+  },
+  "max_uz": {
+   "value": -0.000814628,
+   "kind": "length",
+   "label": "Largest uz",
+   "location": [
+    350.0,
+    -225.0,
+    0.0
+   ]
+  },
+  "peak_von_mises": {
+   "value": 1.1257342335249472,
+   "kind": "pressure",
+   "label": "Peak von Mises stress (anywhere)",
+   "location": [
+    -240.0,
+    -130.0,
+    -50.0
+   ],
+   "in_exclusion": true
+  },
+  "max_von_mises": {
+   "value": 0.2543839572657144,
+   "kind": "pressure",
+   "label": "Design von Mises stress (away from supports/contacts)",
+   "location": [
+    246.65063509461095,
+    -137.49999999999997,
+    0.0
+   ]
+  },
+  "max_principal": {
+   "value": 0.24586312389810527,
+   "kind": "pressure",
+   "label": "Maximum principal stress (design zone)",
+   "location": [
+    246.65063509461095,
+    -137.49999999999997,
+    0.0
+   ]
+  },
+  "min_principal": {
+   "value": -0.0560830119428134,
+   "kind": "pressure",
+   "label": "Minimum principal stress (design zone)",
+   "location": [
+    307.94794206421176,
+    -171.06587746066282,
+    -43.17651315335352
+   ]
+  },
+  "safety_factor_yield": {
+   "value": 1084.9740799955666,
+   "kind": "ratio",
+   "label": "Safety factor on yield (design stress)",
+   "part": "part",
+   "yield_strength": 276.0
+  },
+  "reaction.near_36_47_23_64_50": {
+   "value": 5000.0,
+   "kind": "force",
+   "label": "Reaction force on 'near_36_47_23_64_50'",
+   "vector": [
+    2.97086e-12,
+    -1.089978e-11,
+    5000.0
+   ]
+  },
+  "reaction_total": {
+   "value": 5000.0,
+   "kind": "force",
+   "label": "Total reaction force",
+   "vector": [
+    2.97086e-12,
+    -1.089978e-11,
+    5000.0
+   ]
+  },
+  "applied_force": {
+   "value": 5000.0,
+   "kind": "force",
+   "label": "Total applied force",
+   "vector": [
+    0.0,
+    0.0,
+    -5000.0
+   ]
+  },
+  "probe.near_45_38_73_42_0.ux": {
+   "value": 1.1772892197019376e-07,
+   "kind": "length",
+   "label": "ux at probe 'near_45_38_73_42_0'",
+   "location": [
+    7.9860461670996,
+    2.268646818087431,
+    0.0
+   ]
+  },
+  "probe.near_45_38_73_42_0.uy": {
+   "value": -3.500338603052114e-07,
+   "kind": "length",
+   "label": "uy at probe 'near_45_38_73_42_0'",
+   "location": [
+    7.9860461670996,
+    2.268646818087431,
+    0.0
+   ]
+  },
+  "probe.near_45_38_73_42_0.uz": {
+   "value": -5.0402265276900045e-05,
+   "kind": "length",
+   "label": "uz at probe 'near_45_38_73_42_0'",
+   "location": [
+    7.9860461670996,
+    2.268646818087431,
+    0.0
+   ]
+  },
+  "probe.near_45_38_73_42_0.displacement": {
+   "value": 5.0403618211844996e-05,
+   "kind": "length",
+   "label": "Displacement at probe 'near_45_38_73_42_0'",
+   "location": [
+    7.9860461670996,
+    2.268646818087431,
+    0.0
+   ]
+  },
+  "probe.near_45_38_73_42_0.sxx": {
+   "value": -0.0022385686162425026,
+   "kind": "pressure",
+   "label": "sxx at probe 'near_45_38_73_42_0'",
+   "location": [
+    7.9860461670996,
+    2.268646818087431,
+    0.0
+   ]
+  },
+  "probe.near_45_38_73_42_0.syy": {
+   "value": 0.013849660292302224,
+   "kind": "pressure",
+   "label": "syy at probe 'near_45_38_73_42_0'",
+   "location": [
+    7.9860461670996,
+    2.268646818087431,
+    0.0
+   ]
+  },
+  "probe.near_45_38_73_42_0.szz": {
+   "value": -0.022248411053949448,
+   "kind": "pressure",
+   "label": "szz at probe 'near_45_38_73_42_0'",
+   "location": [
+    7.9860461670996,
+    2.268646818087431,
+    0.0
+   ]
+  },
+  "probe.near_45_38_73_42_0.sxy": {
+   "value": -0.0001921839879577347,
+   "kind": "pressure",
+   "label": "sxy at probe 'near_45_38_73_42_0'",
+   "location": [
+    7.9860461670996,
+    2.268646818087431,
+    0.0
+   ]
+  },
+  "probe.near_45_38_73_42_0.syz": {
+   "value": 1.1421170239929495e-05,
+   "kind": "pressure",
+   "label": "syz at probe 'near_45_38_73_42_0'",
+   "location": [
+    7.9860461670996,
+    2.268646818087431,
+    0.0
+   ]
+  },
+  "probe.near_45_38_73_42_0.szx": {
+   "value": 1.640866386400597e-06,
+   "kind": "pressure",
+   "label": "szx at probe 'near_45_38_73_42_0'",
+   "location": [
+    7.9860461670996,
+    2.268646818087431,
+    0.0
+   ]
+  },
+  "probe.near_45_38_73_42_0.von_mises": {
+   "value": 0.03132505439452153,
+   "kind": "pressure",
+   "label": "von Mises at probe 'near_45_38_73_42_0'",
+   "location": [
+    7.9860461670996,
+    2.268646818087431,
+    0.0
+   ]
+  }
+ },
+ "hand_calcs": [],
+ "checks": [
+  {
+   "id": "solver",
+   "name": "Solver finished without errors",
+   "status": "PASS",
+   "detail": "CalculiX 2.21, 74.3 s, no warnings"
+  },
+  {
+   "id": "units",
+   "name": "Unit set and material values",
+   "status": "PASS",
+   "detail": "deck written in mm, tonne, s, N, MPa, mJ, mW, degC; inputs read as metric"
+  },
+  {
+   "id": "mesh",
+   "name": "Mesh quality",
+   "status": "WARN",
+   "detail": "159,544 nodes, 101,105 C3D10, size 25 mm, min quality (SICN) 0.03"
+  },
+  {
+   "id": "equilibrium",
+   "name": "Reactions balance the applied load",
+   "status": "PASS",
+   "detail": "applied (0, 0, -5000) N, reactions (0, 0, 5000) N, imbalance 2.26e-13 %"
+  },
+  {
+   "id": "hand_calc",
+   "name": "Agreement with hand calculation",
+   "status": "NOT DONE",
+   "detail": "no hand calculation supplied - a result that cannot be predicted cannot be trusted"
+  },
+  {
+   "id": "convergence",
+   "name": "Mesh convergence (size x0.7, change < 5 %)",
+   "status": "PASS",
+   "detail": "max_displacement: 0.32 %; max_von_mises: 2.32 % (for information, not required: probe.near_45_38_73_42_0.displacement 6.1 %)"
+  },
+  {
+   "id": "singularity",
+   "name": "Stress singularities identified and excluded",
+   "status": "PASS",
+   "detail": "peak 1.126 MPa lies within 50 mm of a support/contact (sets: near_36_47_23_64_50) and is mesh-dependent, so it is not a design value; design stress 0.2544 MPa is taken outside that zone; peak changed 0.4 % on refinement"
+  },
+  {
+   "id": "linearity",
+   "name": "Linear analysis is valid",
+   "status": "PASS",
+   "detail": "small displacement and stress below yield"
+  },
+  {
+   "id": "sanity",
+   "name": "Displacement follows the load direction",
+   "status": "PASS",
+   "detail": "cosine between peak displacement and net load = 0.88"
+  },
+  {
+   "id": "criteria",
+   "name": "Safety factor on yield >= 1.5",
+   "status": "PASS",
+   "detail": "achieved 1.08e+03"
+  }
+ ],
+ "convergence": {
+  "ratio": 0.7,
+  "tol": 0.05,
+  "rows": [
+   {
+    "metric": "max_displacement",
+    "coarse": 0.0009090127455701598,
+    "fine": 0.0009119096059899577,
+    "kind": "length",
+    "change": 0.0031766969015016217,
+    "required": true
+   },
+   {
+    "metric": "max_von_mises",
+    "coarse": 0.2543839572657144,
+    "fine": 0.2604288523435143,
+    "kind": "pressure",
+    "change": 0.023211310971898422,
+    "required": true
+   },
+   {
+    "metric": "peak_von_mises",
+    "coarse": 1.1257342335249472,
+    "fine": 1.130523674202942,
+    "kind": "pressure",
+    "change": 0.004236479772413113,
+    "required": false
+   },
+   {
+    "metric": "probe.near_45_38_73_42_0.displacement",
+    "coarse": 5.0403618211844996e-05,
+    "fine": 5.3674224993459906e-05,
+    "kind": "length",
+    "change": 0.06093440160548993,
+    "required": false
+   },
+   {
+    "metric": "probe.near_45_38_73_42_0.von_mises",
+    "coarse": 0.03132505439452153,
+    "fine": 0.03203063786292348,
+    "kind": "pressure",
+    "change": 0.022028392672713143,
+    "required": false
+   }
+  ],
+  "coarse": {
+   "size": 24.9999995,
+   "nodes": 159544,
+   "elements": 101105
+  },
+  "fine": {
+   "size": 17.49999965,
+   "nodes": 196072,
+   "elements": 125759
+  }
+ },
+ "fatigue": null,
+ "history": null,
+ "frequencies": [],
+ "buckling_factors": [],
+ "exclusion": {
+  "distance": 49.999999,
+  "sets": [
+   "near_36_47_23_64_50"
+  ]
+ },
+ "criteria": {
+  "yield_sf": 1.5
+ },
+ "gdt": null,
+ "runtime_s": 287.0,
+ "job": {
+  "name": "51-nist-ctc-01-asme1-ap203-check-i24",
+  "units": "metric",
+  "analysis": "static",
+  "title": "static analysis of nist_ctc_01_asme1_ap203",
+  "geometry": {
+   "step": "nist_ctc_01_asme1_ap203.step"
+  },
+  "material": "al_6061_t6",
+  "sets": {
+   "near_36_47_23_64_50": {
+    "near": [
+     -36.47,
+     -23.64,
+     -50.0
+    ]
+   },
+   "near_45_38_73_42_0": {
+    "near": [
+     -45.38,
+     -73.42,
+     0.0
+    ]
+   }
+  },
+  "constraints": [
+   {
+    "type": "fixed",
+    "on": "near_36_47_23_64_50"
+   }
+  ],
+  "loads": [
+   {
+    "type": "force",
+    "on": "near_45_38_73_42_0",
+    "value": [
+     0.0,
+     0.0,
+     -5000.0
+    ]
+   }
+  ],
+  "probes": {
+   "near_45_38_73_42_0": {
+    "set": "near_45_38_73_42_0"
+   }
+  },
+  "criteria": {
+   "yield_sf": 1.5
+  }
+ }
+}

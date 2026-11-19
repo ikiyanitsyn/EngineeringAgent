@@ -1,0 +1,1 @@
+ea analyze jobs/50-parts-i24/nist_ctc_01_asme1_ap203.step -m al_6061_t6 --fix near:-36.47,-23.64,-50 --force near:-45.38,-73.42,0 0,0,-5000 --name "nist_ctc_01_asme1_ap203 check"

@@ -1,0 +1,51 @@
+{
+ "name": "51-nist-ctc-01-asme1-ap203-check-i24",
+ "units": "metric",
+ "analysis": "static",
+ "title": "static analysis of nist_ctc_01_asme1_ap203",
+ "geometry": {
+  "step": "nist_ctc_01_asme1_ap203.step"
+ },
+ "material": "al_6061_t6",
+ "sets": {
+  "near_36_47_23_64_50": {
+   "near": [
+    -36.47,
+    -23.64,
+    -50.0
+   ]
+  },
+  "near_45_38_73_42_0": {
+   "near": [
+    -45.38,
+    -73.42,
+    0.0
+   ]
+  }
+ },
+ "constraints": [
+  {
+   "type": "fixed",
+   "on": "near_36_47_23_64_50"
+  }
+ ],
+ "loads": [
+  {
+   "type": "force",
+   "on": "near_45_38_73_42_0",
+   "value": [
+    0.0,
+    0.0,
+    -5000.0
+   ]
+  }
+ ],
+ "probes": {
+  "near_45_38_73_42_0": {
+   "set": "near_45_38_73_42_0"
+  }
+ },
+ "criteria": {
+  "yield_sf": 1.5
+ }
+}
