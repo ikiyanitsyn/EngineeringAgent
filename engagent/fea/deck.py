@@ -370,7 +370,8 @@ def write_deck(job: Job, mesh: Mesh, path: Path) -> dict:
                     dload.append(f"E_{l['on']}_S{fn}, P{fn}, {p:.8g}")
                 # resultant = -p * integral(n dA) from the surface triangles
                 pc = mesh.nodes[fs.tris[:, :3] - 1]
-                nA = 0.5 * np.cross(pc[:, 1] - pc[:, 0], pc[:, 2] - pc[:, 0])
+                from .mesh import tri_area_vectors
+                nA = tri_area_vectors(mesh.nodes, fs.tris)   # true area on curved quadratic faces
                 # orient outward using the owning element's opposite corner
                 el = fs.elem_faces
                 if len(el) == len(nA):

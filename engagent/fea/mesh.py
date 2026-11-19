@@ -19,6 +19,18 @@ AXES = {"x": 0, "y": 1, "z": 2}
 TET_FACES = np.array([[0, 1, 2], [0, 3, 1], [1, 3, 2], [2, 3, 0]])
 
 
+
+def tri_area_vectors(nodes: np.ndarray, tris: np.ndarray) -> np.ndarray:
+    """Area vectors (n, 3) of surface triangles; 6-node triangles are split at their mid-side nodes
+    (Gmsh order: 3 = mid 0-1, 4 = mid 1-2, 5 = mid 2-0) so curved faces get their true area."""
+    def av(a, b, c):
+        return 0.5 * np.cross(b - a, c - a)
+    p = nodes[tris - 1]
+    if tris.shape[1] < 6:
+        return av(p[:, 0], p[:, 1], p[:, 2])
+    c0, c1, c2, m01, m12, m20 = (p[:, i] for i in range(6))
+    return av(c0, m01, m20) + av(m01, c1, m12) + av(m20, m12, c2) + av(m01, m12, m20)
+
 @dataclass
 class FaceSet:
     name: str
@@ -454,7 +466,7 @@ def build_mesh(parts: list[tuple[str, str]], sets: dict[str, Any] | None = None,
             if len(tris) == 0:
                 raise RuntimeError(f"set {name!r}: no surface elements found on faces {face_tags}")
             pc = nodes[tris[:, :3] - 1]
-            a = 0.5 * np.linalg.norm(np.cross(pc[:, 1] - pc[:, 0], pc[:, 2] - pc[:, 0]), axis=1)
+            a = np.linalg.norm(tri_area_vectors(nodes, tris), axis=1)
             w: dict[int, float] = {}
             loaded = tris[:, 3:] if order == 2 else tris
             for col in range(loaded.shape[1]):
