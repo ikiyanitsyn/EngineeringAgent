@@ -32,3 +32,33 @@ def test_pdf_pages_are_rendered(tmp_path):
            b"endobj 3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 1191 842]>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF")
     out = drawings.pages(pdf)                          # an A3 landscape sheet
     assert len(out) == 1 and drawings.kind(out[0]) == "png"
+
+
+def test_private_attachment_falls_back_to_the_signed_link():
+    import threading
+    from http.server import BaseHTTPRequestHandler, HTTPServer
+
+    class H(BaseHTTPRequestHandler):
+        def do_GET(self):
+            if "jwt=" in self.path:
+                self.send_response(200); self.end_headers(); self.wfile.write(b"%PDF-1.4 drawing")
+            else:                                     # what a private repository gives a bot: a login page
+                self.send_response(200); self.end_headers(); self.wfile.write(b"<!DOCTYPE html><html>login")
+
+        def log_message(self, *a):
+            pass
+
+    srv = HTTPServer(("127.0.0.1", 0), H)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    uid = "0123abcd-0123-4567-89ab-0123456789ab"
+    base = f"http://127.0.0.1:{srv.server_port}"
+    html = f'<img src="https://private-user-images.githubusercontent.com/1/2-{uid}.png?jwt=abc&amp;x=1">'
+    alt = drawings.signed_alternates([html])
+    assert alt[uid].endswith("jwt=abc&x=1")
+    alt[uid] = f"{base}/signed/{uid}?jwt=abc"             # point the signed link at the fake server
+    try:
+        assert drawings.download(f"{base}/user-attachments/assets/{uid}", "tok", alt).startswith(b"%PDF")
+        with pytest.raises(ValueError, match="inbox/"):
+            drawings.download(f"{base}/user-attachments/assets/ffffffff-0123-4567-89ab-0123456789ab", "tok", alt)
+    finally:
+        srv.shutdown()

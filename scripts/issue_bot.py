@@ -36,13 +36,29 @@ RUN_URL = f"{SERVER}/{REPO}/actions/runs/{os.environ.get('GITHUB_RUN_ID', '')}"
 BRANCH = os.environ.get("GITHUB_REF_NAME", "main")
 
 
-def gh(method: str, path: str, body: dict | None = None):
+def gh(method: str, path: str, body: dict | None = None, accept: str = "application/vnd.github+json"):
     req = urllib.request.Request(API + path, method=method, data=json.dumps(body).encode() if body else None,
-                                 headers={"Authorization": f"Bearer {TOKEN}", "Accept": "application/vnd.github+json",
+                                 headers={"Authorization": f"Bearer {TOKEN}", "Accept": accept,
                                           "X-GitHub-Api-Version": "2022-11-28", "Content-Type": "application/json"})
     with urllib.request.urlopen(req, timeout=60) as r:
         data = r.read()
         return json.loads(data) if data else None
+
+
+def signed_links(issue) -> dict:
+    """Signed download links of this issue's attachments (needed in a private repository)."""
+    from engagent.drawings import signed_alternates
+    if not issue:
+        return {}
+    full = "application/vnd.github.full+json"
+    try:
+        htmls = [(gh("GET", f"/repos/{REPO}/issues/{issue['number']}", accept=full) or {}).get("body_html", "")]
+        htmls += [c.get("body_html", "") for c in
+                  gh("GET", f"/repos/{REPO}/issues/{issue['number']}/comments?per_page=100", accept=full) or []]
+        return signed_alternates(htmls)
+    except Exception as e:                          # only a fallback: the plain link may work anyway
+        print(f"Could not read signed attachment links: {e}", file=sys.stderr)
+        return {}
 
 
 def conversation(issue: dict) -> list[dict]:
@@ -102,7 +118,8 @@ def _ask_drawing(convo: list[dict]) -> dict | None:
     users = [m["content"] for m in convo if m["role"] == "user"]
     if not any(drawings.find(t, ROOT)["urls"] or drawings.find(t, ROOT)["paths"] for t in users):
         return None
-    imgs, problems = drawings.collect(users, ROOT, TOKEN)
+    issue = _inputs()[0]
+    imgs, problems = drawings.collect(users, ROOT, TOKEN, signed_links(issue))
     if not imgs:
         return {"kind": "question", "reply": "### ❌ I could not read your drawing\n"
                 + "\n".join(f"- {p}" for p in problems)}
@@ -270,9 +287,10 @@ def _cad_parts(latest: str, issue, comment_id):
             shutil.copy(ROOT / pth, dst)
             parts.append(dst)
         problems = []
+        alt = signed_links(issue) if found["urls"] else {}
         for url in found["urls"]:
             try:
-                parts += cadinput.fetch(url, folder / "parts", TOKEN)
+                parts += cadinput.fetch(url, folder / "parts", TOKEN, alt)
             except Exception as e:
                 problems.append(f"{url.rsplit('/', 1)[-1]}: {e}")
         for p in list(parts):

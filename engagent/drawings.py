@@ -27,9 +27,10 @@ MAX_BYTES = 25 * 1024 * 1024
 MAX_PAGES = 2
 DPI = 150                      # an A3 sheet -> about 2480 x 1750 px: title block and dimensions stay legible
 
-NOT_ALLOWED = ("GitHub did not let the bot download the drawing (attachments of a private repository need a "
+NOT_ALLOWED = ("GitHub did not let the bot download the file (attachments of a private repository need a "
                "browser login). Upload it to the repository instead - on GitHub: **Add file > Upload files**, "
-               "into an `inbox/` folder - and write its path in a comment, e.g. `inbox/bracket.pdf`.")
+               "into an `inbox/` folder - and write its path in a comment, e.g. `inbox/bracket.pdf` or "
+               "`inbox/camera.step`.")
 
 
 def find(text: str, root: Path) -> dict:
@@ -54,16 +55,53 @@ def kind(data: bytes) -> str | None:
     return None
 
 
-def download(url: str, token: str | None = None) -> bytes:
-    req = urllib.request.Request(url, headers={"User-Agent": "engagent-bot", "Accept": "*/*",
-                                               **({"Authorization": f"Bearer {token}"} if token else {})})
-    try:
+SIGNED_RX = re.compile(r"https://[\w.-]*githubusercontent\.com/[^\s\"'<>]+", re.I)
+_ID_RX = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|files/\d+", re.I)
+
+
+def signed_alternates(htmls: list[str]) -> dict[str, str]:
+    """{attachment id: signed download URL} from the rendered HTML of issue comments.
+
+    In a private repository GitHub serves attachments only to a logged-in browser, but the API's
+    rendered HTML (Accept: application/vnd.github.full+json) carries short-lived signed links."""
+    out: dict[str, str] = {}
+    for h in htmls:
+        for u in SIGNED_RX.findall(h or ""):
+            u = u.replace("&amp;", "&")
+            for i in _ID_RX.findall(u):
+                out.setdefault(i.lower(), u)
+    return out
+
+
+def alternate_for(url: str, alt: dict | None) -> str | None:
+    for i in _ID_RX.findall(url):
+        if alt and i.lower() in alt:
+            return alt[i.lower()]
+    return None
+
+
+def get_bytes(url: str, token: str | None, limit: int, alt: dict | None = None) -> bytes:
+    """Download an attachment; when GitHub refuses (private repository), retry with its signed link."""
+    def one(u, tok):
+        req = urllib.request.Request(u, headers={"User-Agent": "engagent-bot", "Accept": "*/*",
+                                                 **({"Authorization": f"Bearer {tok}"} if tok else {})})
         with urllib.request.urlopen(req, timeout=120) as r:
-            data = r.read(MAX_BYTES + 1)
+            return r.read(limit + 1)
+    try:
+        data = one(url, token)
+        if not data.lstrip()[:15].lower().startswith((b"<!doctype", b"<html")):
+            return data
     except urllib.error.HTTPError as e:
-        if e.code in (401, 403, 404):
-            raise ValueError(NOT_ALLOWED) from None
-        raise
+        if e.code not in (401, 403, 404):
+            raise
+    signed = alternate_for(url, alt)
+    if not signed:
+        raise ValueError(NOT_ALLOWED)
+    return one(signed, None)                      # the signature is the credential
+
+
+def download(url: str, token: str | None = None, alt: dict | None = None) -> bytes:
+    data = get_bytes(url, token, MAX_BYTES, alt)
     if len(data) > MAX_BYTES:
         raise ValueError("the drawing is larger than 25 MB")
     if kind(data) is None:              # a login page instead of the file
@@ -104,14 +142,15 @@ def pages(data: bytes) -> list[bytes]:
         return out
 
 
-def collect(texts: list[str], root: Path, token: str | None = None) -> tuple[list[bytes], list[str]]:
+def collect(texts: list[str], root: Path, token: str | None = None,
+            alt: dict | None = None) -> tuple[list[bytes], list[str]]:
     """Page images of every drawing mentioned in the messages, and the problems met."""
     imgs, problems = [], []
     for t in texts:
         f = find(t, root)
         for src in f["urls"] + f["paths"]:
             try:
-                data = src.read_bytes()[:MAX_BYTES + 1] if isinstance(src, Path) else download(src, token)
+                data = src.read_bytes()[:MAX_BYTES + 1] if isinstance(src, Path) else download(src, token, alt)
                 imgs += pages(data)
             except Exception as e:
                 problems.append(f"{str(src).rsplit('/', 1)[-1]}: {e}")

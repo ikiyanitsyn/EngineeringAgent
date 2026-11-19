@@ -43,19 +43,16 @@ def _safe_name(name: str) -> str:
     return stem + ".step"
 
 
-def fetch(url: str, dest: Path, token: str | None = None) -> list[Path]:
-    """Download one attachment into dest; returns the STEP files it holds (zip members extracted safely)."""
+def fetch(url: str, dest: Path, token: str | None = None, alt: dict | None = None) -> list[Path]:
+    """Download one attachment into dest; returns the STEP files it holds (zip members extracted safely).
+    ``alt``: signed links from the rendered comments, used when a private repository refuses the plain link."""
+    from .drawings import get_bytes
     dest.mkdir(parents=True, exist_ok=True)
-    req = urllib.request.Request(url, headers={"User-Agent": "engagent-bot", "Accept": "application/octet-stream",
-                                               **({"Authorization": f"Bearer {token}"} if token else {})})
     tmp = dest / "_download.bin"
-    with urllib.request.urlopen(req, timeout=120) as r, open(tmp, "wb") as f:
-        total = 0
-        while chunk := r.read(1 << 16):
-            total += len(chunk)
-            if total > MAX_DOWNLOAD:
-                raise ValueError("the attachment is larger than 25 MB")
-            f.write(chunk)
+    data = get_bytes(url, token, MAX_DOWNLOAD, alt)
+    if len(data) > MAX_DOWNLOAD:
+        raise ValueError("the attachment is larger than 25 MB")
+    tmp.write_bytes(data)
     try:
         name = url.rsplit("/", 1)[-1]
         if zipfile.is_zipfile(tmp):
