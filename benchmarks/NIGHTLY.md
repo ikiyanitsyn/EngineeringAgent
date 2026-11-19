@@ -40,6 +40,11 @@ toolkit absorbing the slips any AI makes, not a different answer.
 9. Hole recognition knows inch (UNC) screws when no metric one fits (the NIST part is an inch design:
    its 9.78 mm holes are 3/8-16 close-fit clearance holes).
 
+### Verified live on GitHub
+- Issue #24: a public share link (NIST's 14 MB zip of 33 STEP parts) -> "which part?" -> measured faces and
+  holes with a picture -> "aluminium 6061, fix F2, 5000 N down on F1" -> FEA (REVIEW: no hand check for an
+  arbitrary part), all without an AI model. Two routing bugs found and fixed on the way.
+
 ### Waiting for the owner (major change)
 - Make "supports leave the part free to move" a hard stop instead of a WARN. Today the run still
   completes with a warning; as a stop, the AI gets the error and fixes its supports before any result is
