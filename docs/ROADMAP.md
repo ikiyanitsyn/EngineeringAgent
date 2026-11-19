@@ -156,3 +156,7 @@ Run everything: `.venv/bin/python -m pytest -q` then `.venv/bin/python -m pytest
   3. A STEP part plus its PDF drawing in the same request: today the STEP route wins and the PDF is
      ignored. Pass the drawing pages to the model for loads/material/tolerances of the measured part.
   4. Nightly improvement loop (benchmarks/README.md) - runs only after the owner's "yes" at 8 pm.
+  5. Built but not yet exercised on real input (needs the owner): a dragged-in attachment in the private
+     repo (plain download, then the signed-link fallback from the API's body_html, then the inbox/ message),
+     and a real Dropbox / Google Drive / OneDrive share link to a STEP file. Each is unit-tested against a
+     fake server; read the first real run's log and fix what differs.
