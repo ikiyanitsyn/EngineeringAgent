@@ -25,6 +25,7 @@ MAX_TOTAL = 150 * 1024 * 1024
 def find_inputs(text: str, root: Path) -> dict:
     """{'urls': [attachment urls], 'paths': [existing repo STEP paths]} mentioned in the text."""
     urls = list(dict.fromkeys(u.rstrip(").,") for u in ATTACH_RX.findall(text or "")))
+    urls = [u for u in urls if not re.search(r"\.(pdf|png|jpe?g|gif)$", u, re.I)]   # drawings: engagent.drawings
     paths = []
     root = root.resolve()
     for p in STEP_PATH_RX.findall(text or ""):

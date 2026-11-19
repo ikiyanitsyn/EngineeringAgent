@@ -96,6 +96,23 @@ def _ask_with_fallback(convo: list[dict]) -> dict:
         return out
 
 
+def _ask_drawing(convo: list[dict]) -> dict | None:
+    """A PDF / picture drawing in the conversation: the model reads it and models the part. None if none."""
+    from engagent import drawings
+    users = [m["content"] for m in convo if m["role"] == "user"]
+    if not any(drawings.find(t, ROOT)["urls"] or drawings.find(t, ROOT)["paths"] for t in users):
+        return None
+    imgs, problems = drawings.collect(users, ROOT, TOKEN)
+    if not imgs:
+        return {"kind": "question", "reply": "### ❌ I could not read your drawing\n"
+                + "\n".join(f"- {p}" for p in problems)}
+    print(f"Reading {len(imgs)} drawing page(s)", file=sys.stderr, flush=True)
+    out = assistant.ask(convo, on_event=_progress, images=imgs)
+    if problems:
+        out["plan"] = (out.get("plan", "") + "\n\n⚠️ " + "; ".join(problems)).strip()
+    return out
+
+
 def commit(folders: list[str], label: str) -> bool:
     if not folders:
         return False
@@ -141,6 +158,10 @@ def needs_model() -> bool:
     f = find_inputs(latest, ROOT)
     if f["urls"] or f["paths"] or JOIN_RX.search(latest or "") or re.search(r"\bF\d+\b", latest or ""):
         return False
+    from engagent import drawings
+    if any(drawings.find(m["content"], ROOT)["urls"] or drawings.find(m["content"], ROOT)["paths"]
+           for m in convo if m["role"] == "user"):
+        return False                                  # drawings need a model that can see (hosted)
     users = [m["content"] for m in convo if m["role"] == "user"]
     return form_from_words("\n".join(users), first=users[0] if users else None) is None
 
@@ -181,7 +202,7 @@ def main() -> int:
             result = run_request(latest, link_base=link_base)
             req_text = latest
         else:
-            out = _ask_with_fallback(convo)
+            out = _ask_drawing(convo) or _ask_with_fallback(convo)
             out_by_rules = bool(out.get("by_rules"))
             plan = out.get("plan", "")
             if out.get("corrections"):

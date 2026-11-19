@@ -315,6 +315,23 @@ A finished version of exactly this job is in
 
 All of this runs without an AI model. Try it with `examples/22-camera-adapter/`.
 
+### E. Make a part from your drawing (PDF or picture)
+
+1. Open a request issue, write what you want (e.g. *model this bracket from my drawing and print it in PETG*,
+   or add the material, the support and the load for an FEA check), and drag the **PDF drawing** in
+   (an A3 sheet is fine; the first two pages are read). A photo or screenshot of the drawing works too.
+2. The AI model reads the views, dimensions and title block. It models the part and lists the
+   dimensions it read in the plan, so check them against your drawing. If a dimension is unreadable
+   it asks instead of guessing. A material named in the title block is used and shown as
+   `Drawing material: ...`.
+3. **Private repository:** GitHub may not let the bot download attachments. If the reply says so,
+   upload the PDF to an `inbox/` folder in the repository (**Add file > Upload files**) and write its path in
+   a comment, e.g. `inbox/bracket.pdf`.
+
+This needs the hosted AI model (your free Gemini key). The small backup model cannot read pictures.
+In the Claude app you can do the same without the bot: give Claude the PDF together with
+`docs/CHATBOT-PROMPT.md`, then paste its reply into an issue.
+
 ## 5. Reading the result
 
 1. **Look at the verdict first** (section 3).
@@ -560,6 +577,7 @@ with a computer.
   from laminate formulas.
 - It does not produce 2D manufacturing drawings; it gives the 3D model plus a
   tolerance scheme and its checks.
+- It reads drawings through the AI model: always check the dimensions it lists against your sheet.
 
 More detail when you want it: `README.md` (overview), `docs/job-reference.md` (every
 input), `docs/validation.md` (how accurate it is and how that was tested),

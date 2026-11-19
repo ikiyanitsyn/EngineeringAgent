@@ -397,3 +397,17 @@ def test_custom_shapes_skip_lite_models_while_time_allows(monkeypatch):
     with pytest.raises(assistant.LLMError):
         assistant.complete([{"role": "user", "content": "x"}])
     assert "gemini-flash-lite" in asked
+
+
+def test_drawing_pages_go_to_the_model_and_its_title_block_material_is_accepted(llm, monkeypatch):
+    monkeypatch.delenv("ENGAGENT_NO_RULES")           # a drawing skips the rules even for words they know
+    png = b"\x89PNG\r\n\x1a\n" + b"0" * 20
+    llm.replies = ["Plan: plate 80 long as drawn.\nDrawing material: aluminium 6061\n```bash\n"
+                   "ea make plate length=80 --name drawn\nea analyze last -m al_6061_t6 --fix xmin "
+                   "--force xmax 0,0,-10 --quick\n```"]
+    out = assistant.ask("make the plate in my drawing, fixed at one end, 10 N down at the other",
+                        run=False, images=[png])
+    assert out["kind"] == "request"                   # material from the drawing, not invented
+    content = llm.seen[0]["messages"][-1]["content"]
+    assert isinstance(content, list) and content[1]["image_url"]["url"].startswith("data:image/png;base64,")
+    assert "engineering drawing" in content[0]["text"]

@@ -409,16 +409,17 @@ def _run_form(form: dict, user_text: str, say, run: bool, out: dict) -> dict:
 
 
 def ask(conversation: list[dict] | str, *, max_fixes: int = 2, run: bool = True, model: str | None = None,
-        on_event=None) -> dict:
+        on_event=None, images: list[bytes] | None = None) -> dict:
     """Turn a conversation (or one message) into results.
 
     Returns {"kind": "question"|"results"|"error", "reply", "plan", "request", "result", "attempts"}.
     A "question" means the model needs information (e.g. the load); show it to the user.
+    ``images``: pages of an engineering drawing (PNG/JPEG bytes) for a model that can see.
     """
     say = on_event or (lambda *_: None)
     if isinstance(conversation, str):
         conversation = [{"role": "user", "content": conversation}]
-    if os.environ.get("ENGAGENT_NO_RULES") != "1":
+    if os.environ.get("ENGAGENT_NO_RULES") != "1" and not images:   # a drawing holds what the words lack
         from .rules import form_from_words          # common requests need no model at all
         user_text = "\n".join(m["content"] for m in conversation if m.get("role") == "user")
         first = next((m["content"] for m in conversation if m.get("role") == "user"), user_text)
@@ -429,6 +430,9 @@ def ask(conversation: list[dict] | str, *, max_fixes: int = 2, run: bool = True,
                    "plan": "_Understood directly from your words - no AI model needed._"}
             return _run_form(form, user_text, say, run, out)
     local = ":11434" in settings()["url"]           # small CPU model: shorter instructions, faster
+    if images and local:
+        raise LLMError("reading a drawing needs an AI model that can see pictures (e.g. a free Gemini key - "
+                       "docs/USER-GUIDE.md section 2A); the small backup model on the runner cannot")
     if local and os.environ.get("ENGAGENT_FREEFORM") != "1":
         return _ask_structured(conversation, say, run)
     messages = [{"role": "system", "content": chatbot_prompt(compact=local)}] + conversation
@@ -440,6 +444,10 @@ def ask(conversation: list[dict] | str, *, max_fixes: int = 2, run: bool = True,
     if _mat:                                          # say which library material the user's words mean, so the
         messages = messages[:-1] + [dict(messages[-1], content=messages[-1]["content"]      # model never asks
                                          + f"\n\n(Library material for my words: `{_mat}` - use exactly this key.)")]
+    if images:                                        # the drawing goes with the latest user message
+        from .drawings import HINT, content_parts
+        messages = messages[:-1] + [dict(messages[-1], content=content_parts(messages[-1]["content"] + HINT,
+                                                                                images))]
     out: dict = {"attempts": 0}
     for attempt in range(max_fixes + 1):
         out["attempts"] = attempt + 1
@@ -461,7 +469,7 @@ def ask(conversation: list[dict] | str, *, max_fixes: int = 2, run: bool = True,
                               f"Loads I stated: {', '.join(stated_quantities(user_text)) or 'see my words'}. "
                               "A weight hanging down is a force in -Z. Use the supports I described."}]
                 continue
-            if attempt < max_fixes and not analysis_intent(user_text):
+            if attempt < max_fixes and not analysis_intent(user_text) and not images:  # drawing: may ask
                 say("fixing", attempt)                 # a design / print request: no load is needed
                 messages += [{"role": "assistant", "content": reply},
                              {"role": "user", "content":
@@ -473,6 +481,9 @@ def ask(conversation: list[dict] | str, *, max_fixes: int = 2, run: bool = True,
             out["kind"] = "question"
             return out
         user_text = "\n".join(m["content"] for m in conversation if m.get("role") == "user")
+        dm = re.search(r"Drawing material:\s*([^\n]+)", reply) if images else None
+        if dm:                                         # read from the drawing's title block (shown in the plan)
+            user_text += "\nmaterial: " + dm.group(1).strip(" *`.")
         from .guard import check_request, question
         from .guard import autocorrect
         fixed, notes = autocorrect(reply, user_text)     # use the user's own material / load
