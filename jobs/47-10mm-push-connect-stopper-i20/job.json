@@ -1,0 +1,59 @@
+{
+ "name": "47-10mm-push-connect-stopper-i20",
+ "units": "metric",
+ "analysis": "static",
+ "title": "static analysis of part",
+ "geometry": {
+  "script": "geometry.py"
+ },
+ "material": "pla",
+ "sets": {
+  "cyl_5": {
+   "cylinder": {
+    "radius": 5.0
+   }
+  },
+  "zmax": "zmax"
+ },
+ "constraints": [
+  {
+   "type": "fixed",
+   "on": "cyl_5"
+  }
+ ],
+ "loads": [
+  {
+   "type": "pressure",
+   "on": "zmax",
+   "value": 0.207
+  }
+ ],
+ "probes": {
+  "zmax": {
+   "set": "zmax"
+  }
+ },
+ "criteria": {
+  "yield_sf": 1.5
+ },
+ "hand_calcs": [
+  {
+   "name": "Estimate: Axially loaded prismatic bar (stress)",
+   "calc": "axial.bar",
+   "inputs": {
+    "P": 16.26,
+    "L": 20,
+    "A": 78.54,
+    "E": "3.5GPa"
+   },
+   "output": "stress",
+   "tol": 0.05,
+   "bound": "order",
+   "metric": "max_von_mises"
+  }
+ ],
+ "print": {
+  "process": "fdm",
+  "material": "pla"
+ }
+}

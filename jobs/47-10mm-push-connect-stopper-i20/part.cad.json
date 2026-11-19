@@ -1,0 +1,69 @@
+{
+ "valid": true,
+ "solids": 1,
+ "faces": 9,
+ "edges": 13,
+ "volume": 4507.7006054351505,
+ "area": 1766.5187978582933,
+ "bbox_min": [
+  -9.0,
+  -9.0,
+  0.0
+ ],
+ "bbox_max": [
+  9.0,
+  9.0,
+  33.0
+ ],
+ "bbox_size": [
+  18.0,
+  18.0,
+  33.0
+ ],
+ "center_of_mass": [
+  -7.061763268765175e-16,
+  4.610813846567348e-17,
+  11.81995020021898
+ ],
+ "inertia_unit_density": [
+  [
+   448878.1245959869,
+   1.0091710977841292e-11,
+   -1.3978775042020449e-11
+  ],
+  [
+   1.0091710977841292e-11,
+   448878.12459598505,
+   -2.224659699717888e-12
+  ],
+  [
+   -1.3978775042020449e-11,
+   -2.224659699717888e-12,
+   129431.76973526954
+  ]
+ ],
+ "face_types": {
+  "cylinder": 3,
+  "cone": 2,
+  "plane": 4
+ },
+ "cylinder_diameters": [
+  {
+   "diameter": 10.0,
+   "faces": 1
+  },
+  {
+   "diameter": 14.0,
+   "faces": 1
+  },
+  {
+   "diameter": 18.0,
+   "faces": 1
+  }
+ ],
+ "files": [
+  "/home/runner/work/EngineeringAgent/EngineeringAgent/jobs/47-10mm-push-connect-stopper-i20/part.step",
+  "/home/runner/work/EngineeringAgent/EngineeringAgent/jobs/47-10mm-push-connect-stopper-i20/part.stl",
+  "/home/runner/work/EngineeringAgent/EngineeringAgent/jobs/47-10mm-push-connect-stopper-i20/part.3mf"
+ ]
+}

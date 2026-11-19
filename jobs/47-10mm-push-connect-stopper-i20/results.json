@@ -1,0 +1,567 @@
+{
+ "engagent_version": "0.1.0",
+ "name": "47-10mm-push-connect-stopper-i20",
+ "title": "static analysis of part",
+ "description": "",
+ "analysis": "static",
+ "units": "metric",
+ "standard": "iso",
+ "status": "ok",
+ "verdict": "REVIEW",
+ "solver": {
+  "version": "2.21",
+  "seconds": 1.52,
+  "errors": [],
+  "warnings": [],
+  "command": "ccx -i job",
+  "tail": ""
+ },
+ "mesh": {
+  "nodes": 8558,
+  "elements": 5132,
+  "element_type": "C3D10",
+  "size_mm": 1.6670932787339765,
+  "parts": [
+   "part"
+  ],
+  "bbox_min": [
+   -9.0,
+   -9.0,
+   0.0
+  ],
+  "bbox_max": [
+   9.0,
+   9.0,
+   33.0
+  ],
+  "volume_mm3": 4472.513191614419,
+  "quality_min": 0.1877933585059025,
+  "quality_mean": 0.7797686103979368,
+  "quality_below_0p1": 0
+ },
+ "parts": [
+  {
+   "name": "part",
+   "geometry": "part.step",
+   "material": {
+    "key": "pla",
+    "name": "PLA (FDM printed, XY)",
+    "family": "print_polymer",
+    "orthotropic": false,
+    "properties": {
+     "E": "3.3 GPa",
+     "nu": "0.36",
+     "density": "1240 kg/m^3",
+     "cte": "68 um/m/K",
+     "k": "0.13 W/m/K",
+     "cp": "1800 J/kg/K",
+     "yield": "50 MPa",
+     "uts": "55 MPa",
+     "elongation": "0.04",
+     "Tg": "60 degC",
+     "T_max_service": "50 degC"
+    },
+    "meta": {
+     "process": "FDM",
+     "note": "Z (layer) strength is typically 40-60 % of XY."
+    }
+   },
+   "orientation": null
+  }
+ ],
+ "sets": {
+  "cyl_5": {
+   "area": 601.5203677264553,
+   "faces": [
+    7
+   ],
+   "nodes": 1110,
+   "centroid": [
+    -9.379666589541129e-05,
+    0.0004747080709363765,
+    22.59989723245696
+   ]
+  },
+  "zmax": {
+   "area": 55.062292485832046,
+   "faces": [
+    9
+   ],
+   "nodes": 145,
+   "centroid": [
+    0.00013436011505958172,
+    5.1973364889675785e-05,
+    33.0
+   ]
+  }
+ },
+ "constraints": [
+  "Fixed (all translations) on 'cyl_5'"
+ ],
+ "loads": [
+  "Pressure 0.207 MPa on 'zmax' (area 55.06 mm^2)"
+ ],
+ "interactions": [],
+ "notes": [],
+ "initial_temperature": null,
+ "metrics": {
+  "max_displacement": {
+   "value": 0.00024310173534518794,
+   "kind": "length",
+   "label": "Maximum displacement",
+   "location": [
+    -0.07121761699787654,
+    -0.24061949891140166,
+    33.0
+   ],
+   "vector": [
+    2.07547e-06,
+    2.94797e-06,
+    -0.000243075
+   ]
+  },
+  "max_ux": {
+   "value": -4.04356e-05,
+   "kind": "length",
+   "label": "Largest ux",
+   "location": [
+    3.504815054329681,
+    0.2749891139674159,
+    33.0
+   ]
+  },
+  "max_uy": {
+   "value": -3.97707e-05,
+   "kind": "length",
+   "label": "Largest uy",
+   "location": [
+    0.3106789084356829,
+    3.6618883457493334,
+    33.0
+   ]
+  },
+  "max_uz": {
+   "value": -0.000243075,
+   "kind": "length",
+   "label": "Largest uz",
+   "location": [
+    -0.07121761699787654,
+    -0.24061949891140166,
+    33.0
+   ]
+  },
+  "peak_von_mises": {
+   "value": 0.18760149243329596,
+   "kind": "pressure",
+   "label": "Peak von Mises stress (anywhere)",
+   "location": [
+    3.386407858128722,
+    -3.678619553365643,
+    32.2
+   ],
+   "in_exclusion": true
+  },
+  "max_von_mises": {
+   "value": 0.11438996577478316,
+   "kind": "pressure",
+   "label": "Design von Mises stress (away from supports/contacts)",
+   "location": [
+    -0.009841623044504021,
+    0.0032782263809668917,
+    30.903593441565697
+   ]
+  },
+  "max_principal": {
+   "value": 0.0004154199194585955,
+   "kind": "pressure",
+   "label": "Maximum principal stress (design zone)",
+   "location": [
+    0.40701380237328766,
+    -6.98815710789888,
+    10.0
+   ]
+  },
+  "min_principal": {
+   "value": -0.23343572463829979,
+   "kind": "pressure",
+   "label": "Minimum principal stress (design zone)",
+   "location": [
+    -1.6748107538991885,
+    -0.22584254592314074,
+    33.0
+   ]
+  },
+  "safety_factor_yield": {
+   "value": 437.1012759846661,
+   "kind": "ratio",
+   "label": "Safety factor on yield (design stress)",
+   "part": "part",
+   "yield_strength": 50.0
+  },
+  "reaction.cyl_5": {
+   "value": 11.4709,
+   "kind": "force",
+   "label": "Reaction force on 'cyl_5'",
+   "vector": [
+    -6.08953e-15,
+    1.21938e-14,
+    11.4709
+   ]
+  },
+  "reaction_total": {
+   "value": 11.4709,
+   "kind": "force",
+   "label": "Total reaction force",
+   "vector": [
+    -6.08953e-15,
+    1.21938e-14,
+    11.4709
+   ]
+  },
+  "applied_force": {
+   "value": 11.397894544567228,
+   "kind": "force",
+   "label": "Total applied force",
+   "vector": [
+    0.0,
+    0.0,
+    -11.397894544567228
+   ]
+  },
+  "probe.zmax.ux": {
+   "value": -1.1507172000000002e-06,
+   "kind": "length",
+   "label": "ux at probe 'zmax'",
+   "location": [
+    0.05976376822070087,
+    -0.048574398240123405,
+    33.0
+   ]
+  },
+  "probe.zmax.uy": {
+   "value": 5.2253530137931e-07,
+   "kind": "length",
+   "label": "uy at probe 'zmax'",
+   "location": [
+    0.05976376822070087,
+    -0.048574398240123405,
+    33.0
+   ]
+  },
+  "probe.zmax.uz": {
+   "value": -0.00016083522068965518,
+   "kind": "length",
+   "label": "uz at probe 'zmax'",
+   "location": [
+    0.05976376822070087,
+    -0.048574398240123405,
+    33.0
+   ]
+  },
+  "probe.zmax.displacement": {
+   "value": 0.00016084018592225528,
+   "kind": "length",
+   "label": "Displacement at probe 'zmax'",
+   "location": [
+    0.05976376822070087,
+    -0.048574398240123405,
+    33.0
+   ]
+  },
+  "probe.zmax.sxx": {
+   "value": -0.15106359655172413,
+   "kind": "pressure",
+   "label": "sxx at probe 'zmax'",
+   "location": [
+    0.05976376822070087,
+    -0.048574398240123405,
+    33.0
+   ]
+  },
+  "probe.zmax.syy": {
+   "value": -0.15164518689655174,
+   "kind": "pressure",
+   "label": "syy at probe 'zmax'",
+   "location": [
+    0.05976376822070087,
+    -0.048574398240123405,
+    33.0
+   ]
+  },
+  "probe.zmax.szz": {
+   "value": -0.20508386896551725,
+   "kind": "pressure",
+   "label": "szz at probe 'zmax'",
+   "location": [
+    0.05976376822070087,
+    -0.048574398240123405,
+    33.0
+   ]
+  },
+  "probe.zmax.sxy": {
+   "value": 0.0001615762351724139,
+   "kind": "pressure",
+   "label": "sxy at probe 'zmax'",
+   "location": [
+    0.05976376822070087,
+    -0.048574398240123405,
+    33.0
+   ]
+  },
+  "probe.zmax.syz": {
+   "value": -0.00037689933931034467,
+   "kind": "pressure",
+   "label": "syz at probe 'zmax'",
+   "location": [
+    0.05976376822070087,
+    -0.048574398240123405,
+    33.0
+   ]
+  },
+  "probe.zmax.szx": {
+   "value": -0.0005254022103448273,
+   "kind": "pressure",
+   "label": "szx at probe 'zmax'",
+   "location": [
+    0.05976376822070087,
+    -0.048574398240123405,
+    33.0
+   ]
+  },
+  "probe.zmax.von_mises": {
+   "value": 0.053744237203182416,
+   "kind": "pressure",
+   "label": "von Mises at probe 'zmax'",
+   "location": [
+    0.05976376822070087,
+    -0.048574398240123405,
+    33.0
+   ]
+  }
+ },
+ "hand_calcs": [
+  {
+   "name": "Estimate: Axially loaded prismatic bar (stress)",
+   "calc": "axial.bar",
+   "output": "stress",
+   "formulas": [
+    "sigma = P / A",
+    "delta = P L / (A E)",
+    "k = A E / L"
+   ],
+   "reference": "Shigley's Mechanical Engineering Design, 10th ed., Eq. 4-3",
+   "inputs": {
+    "P": "16.26 N",
+    "L": "20 mm",
+    "A": "78.54 mm^2",
+    "E": "3500 MPa"
+   },
+   "notes": [],
+   "all_outputs": {
+    "stress": "0.207 MPa",
+    "elongation": "0.001183 mm",
+    "strain": "5.915e-05",
+    "stiffness": "13744 N/mm"
+   },
+   "expected": 0.20702826585179526,
+   "kind": "pressure",
+   "metric": "max_von_mises",
+   "fea": 0.11438996577478316,
+   "bound": "order",
+   "ratio": 0.5525330819158345,
+   "status": "PASS"
+  }
+ ],
+ "checks": [
+  {
+   "id": "solver",
+   "name": "Solver finished without errors",
+   "status": "PASS",
+   "detail": "CalculiX 2.21, 1.5 s, no warnings"
+  },
+  {
+   "id": "units",
+   "name": "Unit set and material values",
+   "status": "PASS",
+   "detail": "deck written in mm, tonne, s, N, MPa, mJ, mW, degC; inputs read as metric"
+  },
+  {
+   "id": "mesh",
+   "name": "Mesh quality",
+   "status": "PASS",
+   "detail": "8,558 nodes, 5,132 C3D10, size 1.667 mm, min quality (SICN) 0.19"
+  },
+  {
+   "id": "equilibrium",
+   "name": "Reactions balance the applied load",
+   "status": "WARN",
+   "detail": "applied (0, 0, -11.4) N, reactions (0, 0, 11.47) N, imbalance 0.641 %"
+  },
+  {
+   "id": "hand_calc",
+   "name": "Agreement with hand calculation (simplified estimate)",
+   "status": "PASS",
+   "detail": "Estimate: Axially loaded prismatic bar (stress) is a simplified estimate (expected: FEA of the same order as it): FEA = 0.553 x estimate, consistent"
+  },
+  {
+   "id": "convergence",
+   "name": "Mesh convergence (size x0.5, change < 5 %)",
+   "status": "PASS",
+   "detail": "max_displacement: 0.54 %; max_von_mises: 4.18 % (for information, not required: peak_von_mises 14.6 %; probe.zmax.von_mises 24.8 %)"
+  },
+  {
+   "id": "singularity",
+   "name": "Stress singularities identified and excluded",
+   "status": "PASS",
+   "detail": "peak 0.1876 MPa lies within 3.334 mm of a support/contact (sets: cyl_5) and is mesh-dependent, so it is not a design value; design stress 0.1144 MPa is taken outside that zone; peak changed 14.6 % on refinement"
+  },
+  {
+   "id": "linearity",
+   "name": "Linear analysis is valid",
+   "status": "PASS",
+   "detail": "small displacement and stress below yield"
+  },
+  {
+   "id": "sanity",
+   "name": "Displacement follows the load direction",
+   "status": "PASS",
+   "detail": "cosine between peak displacement and net load = 1.00"
+  },
+  {
+   "id": "criteria",
+   "name": "Safety factor on yield >= 1.5",
+   "status": "PASS",
+   "detail": "achieved 437"
+  }
+ ],
+ "convergence": {
+  "ratio": 0.5,
+  "tol": 0.05,
+  "rows": [
+   {
+    "metric": "max_displacement",
+    "coarse": 0.00024310173534518794,
+    "fine": 0.00024442711913485527,
+    "kind": "length",
+    "change": 0.005422408914192898,
+    "required": true
+   },
+   {
+    "metric": "max_von_mises",
+    "coarse": 0.11438996577478316,
+    "fine": 0.10980124473337007,
+    "kind": "pressure",
+    "change": 0.041791156853967115,
+    "required": true
+   },
+   {
+    "metric": "peak_von_mises",
+    "coarse": 0.18760149243329596,
+    "fine": 0.16374286282824665,
+    "kind": "pressure",
+    "change": 0.14570790563296263,
+    "required": false
+   },
+   {
+    "metric": "probe.zmax.displacement",
+    "coarse": 0.00016084018592225528,
+    "fine": 0.00016299935581257481,
+    "kind": "length",
+    "change": 0.013246493395975518,
+    "required": false
+   },
+   {
+    "metric": "probe.zmax.von_mises",
+    "coarse": 0.053744237203182416,
+    "fine": 0.04306803039826696,
+    "kind": "pressure",
+    "change": 0.2478916891761333,
+    "required": false
+   }
+  ],
+  "coarse": {
+   "size": 1.6670932787339765,
+   "nodes": 8558,
+   "elements": 5132
+  },
+  "fine": {
+   "size": 0.8335466393669883,
+   "nodes": 55172,
+   "elements": 36939
+  }
+ },
+ "fatigue": null,
+ "history": null,
+ "frequencies": [],
+ "buckling_factors": [],
+ "exclusion": {
+  "distance": 3.334186557467953,
+  "sets": [
+   "cyl_5"
+  ]
+ },
+ "criteria": {
+  "yield_sf": 1.5
+ },
+ "gdt": null,
+ "runtime_s": 63.1,
+ "job": {
+  "name": "47-10mm-push-connect-stopper-i20",
+  "units": "metric",
+  "analysis": "static",
+  "title": "static analysis of part",
+  "geometry": {
+   "script": "geometry.py"
+  },
+  "material": "pla",
+  "sets": {
+   "cyl_5": {
+    "cylinder": {
+     "radius": 5.0
+    }
+   },
+   "zmax": "zmax"
+  },
+  "constraints": [
+   {
+    "type": "fixed",
+    "on": "cyl_5"
+   }
+  ],
+  "loads": [
+   {
+    "type": "pressure",
+    "on": "zmax",
+    "value": 0.207
+   }
+  ],
+  "probes": {
+   "zmax": {
+    "set": "zmax"
+   }
+  },
+  "criteria": {
+   "yield_sf": 1.5
+  },
+  "hand_calcs": [
+   {
+    "name": "Estimate: Axially loaded prismatic bar (stress)",
+    "calc": "axial.bar",
+    "inputs": {
+     "P": 16.26,
+     "L": 20,
+     "A": 78.54,
+     "E": "3.5GPa"
+    },
+    "output": "stress",
+    "tol": 0.05,
+    "bound": "order",
+    "metric": "max_von_mises"
+   }
+  ],
+  "print": {
+   "process": "fdm",
+   "material": "pla"
+  }
+ }
+}
