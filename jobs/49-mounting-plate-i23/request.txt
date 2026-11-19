@@ -1,0 +1,36 @@
+Drawing material: ALUMINIUM 6061-T6
+Main dimensions read: 120 mm x 60 mm x 8 mm plate, four Ø6.6 mm through holes spaced 10 mm from edges (100 mm x 40 mm pattern, cutting full 8 mm thickness), 0.5 mm chamfer on sharp edges.
+Cantilever FEA: fix left face (xmin), apply 300 N downward (0, 0, -300 N) on right face (xmax), verified against cantilever beam stress bound.
+
+```python
+from build123d import *
+from engagent.cad import params, save
+
+P = params(
+    length=120.0,
+    width=60.0,
+    thickness=8.0,
+    hole_dia=6.6,
+    edge_x=10.0,
+    edge_y=10.0,
+    chamfer_size=0.5,
+)
+
+part = Box(P.length, P.width, P.thickness, align=(Align.MIN, Align.MIN, Align.MIN))
+
+# 4x Ø6.6 through holes centered at mid-thickness and oversized to cut completely through
+for x in (P.edge_x, P.length - P.edge_x):
+    for y in (P.edge_y, P.width - P.edge_y):
+        cutter = Pos(x, y, P.thickness / 2) * Cylinder(P.hole_dia / 2, P.thickness * 3)
+        part -= cutter
+
+if P.chamfer_size > 0:
+    part = chamfer(part.edges(), P.chamfer_size)
+
+save(part)
+```
+
+```bash
+ea make geometry.py --name "mounting plate"
+ea analyze last -m al_6061_t6 --fix xmin --force xmax 0,0,-300 --bound "beam.cantilever_end_load P=300 L=120 E=69GPa b=60 h=8 -> stress@max_von_mises"
+```

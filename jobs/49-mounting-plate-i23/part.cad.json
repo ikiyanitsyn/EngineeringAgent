@@ -1,0 +1,69 @@
+{
+ "valid": true,
+ "solids": 1,
+ "faces": 38,
+ "edges": 76,
+ "volume": 56390.102749678816,
+ "area": 17402.818483370014,
+ "bbox_min": [
+  -1.5543122344752192e-15,
+  -7.382983113757291e-15,
+  -4.773959005888173e-15
+ ],
+ "bbox_max": [
+  120.0,
+  60.0,
+  8.000000000000004
+ ],
+ "bbox_size": [
+  120.0,
+  60.00000000000001,
+  8.000000000000009
+ ],
+ "center_of_mass": [
+  60.00000000000002,
+  29.999999999999996,
+  3.999999999999998
+ ],
+ "inertia_unit_density": [
+  [
+   17064598.888720796,
+   2.9802322387695312e-08,
+   7.450580596923828e-09
+  ],
+  [
+   2.9802322387695312e-08,
+   66433849.66304606,
+   -3.725290298461914e-09
+  ],
+  [
+   7.450580596923828e-09,
+   -3.725290298461914e-09,
+   82899038.08715153
+  ]
+ ],
+ "face_types": {
+  "plane": 26,
+  "cone": 8,
+  "cylinder": 4
+ },
+ "cylinder_diameters": [
+  {
+   "diameter": 6.6,
+   "faces": 4
+  }
+ ],
+ "files": [
+  "/home/runner/work/EngineeringAgent/EngineeringAgent/jobs/49-mounting-plate-i23/part.step",
+  "/home/runner/work/EngineeringAgent/EngineeringAgent/jobs/49-mounting-plate-i23/part.stl",
+  "/home/runner/work/EngineeringAgent/EngineeringAgent/jobs/49-mounting-plate-i23/part.3mf"
+ ],
+ "holes": [
+  {
+   "diameter": 6.6,
+   "count": 4,
+   "depth": 7.0,
+   "through": true
+  }
+ ]
+}
