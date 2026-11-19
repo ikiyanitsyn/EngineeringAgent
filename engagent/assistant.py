@@ -178,6 +178,8 @@ def complete(messages: list[dict], *, model: str | None = None, timeout: float =
     rounds = 4 if os.environ.get("ENGAGENT_DEADLINE") else 1      # the bot waits out outages; the CLI does not
     for rnd in range(rounds):                          # whole rounds: a provider-wide 'high demand' (503)
         if rnd:                                       # usually clears within minutes - wait it out
+            if all("[DAILY QUOTA]" in e for e in errors[-len(targets):]):
+                break                                 # every model's free daily quota is used up: say so now
             busy = all(re.search(r"HTTP (5\d\d|429|408)|Timeout|timed out", e) for e in errors[-len(targets):])
             if not busy or time_left() < 300:
                 break
@@ -206,8 +208,12 @@ def _try_targets(targets, s, messages, timeout, errors):
                 LAST_USED.update(model=m, host=urllib.parse.urlparse(url).hostname or "")
                 return text
             except urllib.error.HTTPError as e:
-                detail = e.read().decode("utf-8", "replace")[:300]
-                errors.append(f"{m} at {url}: HTTP {e.code} {detail}")
+                full = e.read().decode("utf-8", "replace")
+                detail = full[:300]
+                daily = e.code == 429 and re.search(r"PerDay|per[_ ]day|daily", full, re.I)
+                errors.append(f"{m} at {url}: HTTP {e.code} {detail}" + (" [DAILY QUOTA]" if daily else ""))
+                if daily:
+                    break                             # waiting minutes cannot help: next model
                 if (e.code >= 500 or e.code in (408, 429)) and attempt < RETRIES - 1:
                     time.sleep(wait)                  # busy / rate limited: wait and retry the same model
                     continue
@@ -236,6 +242,12 @@ def _raise_llm(errors, github):
             "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions and "
             "ENGAGENT_LLM_MODEL=gemini-2.5-flash. In GitHub: Settings > Secrets and variables > Actions "
             "(secret ENGAGENT_LLM_KEY, variables ENGAGENT_LLM_URL and ENGAGENT_LLM_MODEL).")
+    if errors and all("[DAILY QUOTA]" in e for e in errors[-3:]):
+        raise LLMError(
+            "the free daily quota of the AI model (Gemini) is used up; it resets at midnight Pacific time. "
+            "Meanwhile requests the built-in rules understand still work, and for anything else you can paste "
+            "docs/CHATBOT-PROMPT.md and your request into any chatbot (Claude, ChatGPT, Gemini app) and post "
+            "its reply here - it runs without the model.")
     raise LLMError("the language model could not be used. " + " | ".join(errors[:3]))
 
 

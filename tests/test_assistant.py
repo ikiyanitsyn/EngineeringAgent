@@ -324,11 +324,16 @@ def test_geometry_script_time_limit(monkeypatch, tmp_path):
 class Busy(BaseHTTPRequestHandler):
     calls = 0
     fail_first = 0
+    daily = False
 
     def do_POST(self):
         self.rfile.read(int(self.headers["Content-Length"]))
         Busy.calls += 1
-        if Busy.calls <= Busy.fail_first:
+        if Busy.daily:
+            body = (b'{"error": {"code": 429, "message": "You exceeded your current quota", "details": '
+                    b'[{"quotaId": "GenerateRequestsPerDayPerProjectPerModel-FreeTier"}]}}')
+            self.send_response(429)
+        elif Busy.calls <= Busy.fail_first:
             body = b'{"error": {"code": 503, "message": "high demand"}}'
             self.send_response(503)
         else:
@@ -411,3 +416,25 @@ def test_drawing_pages_go_to_the_model_and_its_title_block_material_is_accepted(
     content = llm.seen[0]["messages"][-1]["content"]
     assert isinstance(content, list) and content[1]["image_url"]["url"].startswith("data:image/png;base64,")
     assert "engineering drawing" in content[0]["text"]
+
+
+def test_a_used_up_daily_quota_is_reported_at_once(monkeypatch):
+    """Overnight bench: 429 'per day' was retried for ~15 minutes per request; waiting cannot help."""
+    import time as _t
+    srv = HTTPServer(("127.0.0.1", 0), Busy)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    try:
+        Busy.calls, Busy.fail_first, Busy.daily = 0, 0, True
+        monkeypatch.setenv("ENGAGENT_LLM_URL", f"http://127.0.0.1:{srv.server_port}/v1/chat/completions")
+        monkeypatch.setenv("ENGAGENT_LLM_MODEL", "m1")
+        monkeypatch.setenv("ENGAGENT_LLM_KEY", "k")
+        monkeypatch.setenv("ENGAGENT_LLM_FALLBACK_MODELS", "m2")
+        monkeypatch.setenv("ENGAGENT_DEADLINE", str(_t.time() + 3600))
+        slept = []
+        monkeypatch.setattr(assistant.time, "sleep", lambda s: slept.append(s))
+        with pytest.raises(assistant.LLMError, match="daily quota"):
+            assistant.complete([{"role": "user", "content": "hi"}])
+        assert Busy.calls == 2 and not slept                   # one try per model, no waiting rounds
+    finally:
+        Busy.daily = False
+        srv.shutdown()
