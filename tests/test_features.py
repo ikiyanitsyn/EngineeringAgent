@@ -148,3 +148,17 @@ def test_plain_english_fea_of_an_uploaded_part(tmp_path):
     except ValueError as e:
         q = str(e)
     assert q and "F9" in q
+
+
+def test_hole_summary_tells_blind_from_through():
+    from build123d import Align, Box, Cylinder, Pos, Rot
+    from engagent.cad.features import hole_summary
+    a = (Align.MIN,) * 3
+    part = Box(120, 60, 8, align=a)
+    part -= Pos(10, 10, 4) * Cylinder(3.3, 24)           # through
+    part -= Pos(110, 10, -8) * Cylinder(3.3, 24)         # cutter centred too low: only 4 mm deep
+    got = {(h["depth"], h["through"]) for h in hole_summary(part)}
+    assert got == {(8.0, True), (4.0, False)}
+    bracket = Box(40, 40, 5, align=a) + Box(5, 40, 40, align=a)
+    bracket -= Pos(2.5, 20, 25) * Rot(0, 90, 0) * Cylinder(2, 20)   # through the upright flange only
+    assert hole_summary(bracket)[0]["through"]

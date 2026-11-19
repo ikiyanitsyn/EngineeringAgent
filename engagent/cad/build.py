@@ -71,6 +71,11 @@ def save(part, name: str | None = None, *, stl: bool = False, threemf: bool = Fa
     files = export(part, step, stl=stl or os.environ.get("ENGAGENT_STL") == "1",
                    threemf=threemf or os.environ.get("ENGAGENT_3MF") == "1")
     info["files"] = [str(f) for f in files]
+    try:                                          # round holes with their depth: a blind hole meant to be through shows
+        from .features import hole_summary
+        info["holes"] = hole_summary(part)
+    except Exception:
+        pass
     step.with_suffix(".cad.json").write_text(json.dumps(info, indent=1), encoding="utf-8")
     if not quiet:
         s = os.environ.get("ENGAGENT_PARAM_UNITS") or None

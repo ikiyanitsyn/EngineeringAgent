@@ -222,6 +222,11 @@ def _cad_lines(info: dict) -> list[str]:
     s = U.normalize_system(None)
     out = [f"Size {U.fmt_vec(info['bbox_size'], 'length', s)}, volume {U.fmt(info['volume'], 'volume', s)}",
            f"Valid solid: {'yes' if info.get('valid') else 'NO'}"]
+    if info.get("holes"):
+        out.append("Holes: " + ", ".join(
+            f"{h['count']}x Ø{U.fmt(h['diameter'], 'length', s)} "
+            + ("through" if h["through"] else f"blind, {U.fmt(h['depth'], 'length', s)} deep")
+            for h in info["holes"]))
     return out
 
 

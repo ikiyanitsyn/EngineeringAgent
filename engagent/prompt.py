@@ -87,6 +87,8 @@ save(part)                                                    # must be the last
   Sketch shapes: Rectangle(w,h) Circle(r) Polygon((x,y),...) SlotOverall(w,h) RegularPolygon(r,n)
   Then use it:  ea make geometry.py --print petg   (and/or)   ea analyze last -m ... --fix ...
   Keep the part in the +X/+Y/+Z region starting at the origin so faces are easy to select.
+  Shapes are CENTRED on their Pos unless align= is given: a cutter for a through hole must span the
+  whole thickness (centre it at mid-thickness and make it longer than the part is thick).
 
 ASSEMBLIES (several parts, different materials) - a ```json job instead of `ea` lines:
   "parts": [{{"name": "a", "material": KEY, "geometry": {{"template": "beam", "params": {{...}}}}}},

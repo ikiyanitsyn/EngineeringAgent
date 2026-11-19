@@ -132,4 +132,4 @@ HINT = ("\n\n(An engineering drawing of the part is attached as image(s). Read i
         "tolerances, title block and notes. Model the part exactly from the drawn dimensions in a ```python "
         "block (millimetres; convert inch drawings), and list the main dimensions you read in the plan so I can "
         "check them. If a dimension needed for the shape is illegible or missing, ask for it instead of "
-        "guessing. If the title block names the material, write one plan line `Drawing material: <name>`.)")
+        "guessing. If the title block names the material, write one plan line `Drawing material: <name>` and use that material in the request. THRU holes must cut the full thickness.)")

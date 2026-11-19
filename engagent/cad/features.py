@@ -61,10 +61,8 @@ def _pattern(pts: np.ndarray) -> str:
     return f"4 holes in a {rect}" if rect else f"{n} holes"
 
 
-def mount_features(step: str | Path, max_faces: int = 8) -> dict:
-    """{'faces': [{id, area, centre, normal, size, holes, pattern, screws}], 'bbox', 'holes'}."""
-    from .inspect import load_shape
-    shape = load_shape(step)
+def _holes(shape) -> list[dict]:
+    """Every round hole: {'point', 'dir', 'diameter', 'span'} (half-cylinders merged)."""
     holes = []                                   # one entry per hole (half-cylinders merged)
     for f in shape.faces():
         if "CYLINDER" not in str(f.geom_type):
@@ -90,6 +88,42 @@ def mount_features(step: str | Path, max_faces: int = 8) -> dict:
                 break
         else:
             holes.append({"point": p, "dir": d, "diameter": dia, "span": span})
+    return holes
+
+
+def hole_summary(shape) -> list[dict]:
+    """[{'diameter', 'count', 'depth', 'through'}] grouped by size and depth - shows blind vs through holes."""
+    bb = shape.bounding_box()
+    lo, hi = np.array(tuple(bb.min), float), np.array(tuple(bb.max), float)
+    corners = np.array([[x, y, z] for x in (lo[0], hi[0]) for y in (lo[1], hi[1]) for z in (lo[2], hi[2])])
+    groups: dict[tuple, int] = {}
+    for h in _holes(shape):
+        depth = h["span"][1] - h["span"][0]
+        extent = float((corners @ h["dir"]).max() - (corners @ h["dir"]).min())
+        through = depth >= extent - 1e-3 or _open_both_ends(shape, h)
+        k = (round(h["diameter"], 2), round(depth, 2), through)
+        groups[k] = groups.get(k, 0) + 1
+    return [{"diameter": d, "count": n, "depth": dep, "through": t} for (d, dep, t), n in sorted(groups.items())]
+
+
+def _open_both_ends(shape, h) -> bool:
+    """A hole through a flange of a larger part: the solid is absent just beyond both ends of the bore."""
+    from build123d import Vector
+    out = []
+    for z, sgn in ((h["span"][0], -1), (h["span"][1], 1)):
+        q = h["point"] + h["dir"] * (z - h["point"] @ h["dir"] + sgn * 0.05)   # span is absolute
+        try:
+            out.append(not shape.is_inside(Vector(*q)))
+        except Exception:
+            return False
+    return all(out)
+
+
+def mount_features(step: str | Path, max_faces: int = 8) -> dict:
+    """{'faces': [{id, area, centre, normal, size, holes, pattern, screws}], 'bbox', 'holes'}."""
+    from .inspect import load_shape
+    shape = load_shape(step)
+    holes = _holes(shape)
     planes = []
     for f in shape.faces():
         if "PLANE" not in str(f.geom_type):
