@@ -279,7 +279,10 @@ def _cad_parts(latest: str, issue, comment_id, convo: list[dict] | None = None):
     picking = latest
     if not (found["urls"] or found["paths"]) and convo:     # answer to "which part?": reuse the earlier link
         bots = [m["content"] for m in convo if m["role"] == "assistant"]
-        if any(cadinput.PICK_MARK in b for b in bots[-3:]):   # asked recently (an error reply may follow)
+        asked = [i for i, b in enumerate(bots) if cadinput.PICK_MARK in b]
+        measured = [i for i, b in enumerate(bots) if "Your parts, measured" in b]
+        if asked and asked[-1] >= len(bots) - 3 and not (measured and measured[-1] > asked[-1]) \
+                and not re.search(r"\bF\d+\b", latest or ""):   # the answer to "which part?", not a load case
             earlier = [m["content"] for m in convo if m["role"] == "user" and m["content"] != latest]
             for e in reversed(earlier):
                 f = cadinput.find_inputs(e, ROOT)
