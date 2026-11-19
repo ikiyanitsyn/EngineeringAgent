@@ -37,6 +37,8 @@ toolkit absorbing the slips any AI makes, not a different answer.
    WARN with the fix. The restrained-bar rule and the instruction-sheet example now hold all six motions.
 8. Parts route: STEP from cloud share links, a many-part zip asks which part (real NIST link, issue #24),
    part measurement no longer crashes on radius-less cylinder patches.
+9. Hole recognition knows inch (UNC) screws when no metric one fits (the NIST part is an inch design:
+   its 9.78 mm holes are 3/8-16 close-fit clearance holes).
 
 ### Waiting for the owner (major change)
 - Make "supports leave the part free to move" a hard stop instead of a WARN. Today the run still
