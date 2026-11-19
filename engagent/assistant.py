@@ -432,12 +432,9 @@ def ask(conversation: list[dict] | str, *, max_fixes: int = 2, run: bool = True,
     if local and os.environ.get("ENGAGENT_FREEFORM") != "1":
         return _ask_structured(conversation, say, run)
     messages = [{"role": "system", "content": chatbot_prompt(compact=local)}] + conversation
-    from .rules import template_of as _tpl
-    _ut = " ".join(m["content"] for m in conversation if m.get("role") == "user").lower()
-    if not _tpl(" " + _ut + " "):                      # a custom shape: needs a strong model
-        os.environ["ENGAGENT_STRONG_ONLY"] = "1"
-    else:
-        os.environ.pop("ENGAGENT_STRONG_ONLY", None)
+    # whatever reaches the model is already beyond the built-in rules: use strong models, keeping a
+    # 'lite' one as the last resort (issue #20: a 'tube' stopper matched a template word, went to lite)
+    os.environ["ENGAGENT_STRONG_ONLY"] = "1"
     from .guard import material_from_words as _mfw
     _mat = _mfw("\n".join(m["content"] for m in conversation if m.get("role") == "user"))
     if _mat:                                          # say which library material the user's words mean, so the
