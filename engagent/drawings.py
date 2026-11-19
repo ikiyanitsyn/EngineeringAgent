@@ -75,8 +75,11 @@ def _pdftoppm() -> str | None:
     exe = shutil.which("pdftoppm")
     if exe or not os.environ.get("GITHUB_ACTIONS"):
         return exe
-    subprocess.run(["sudo", "timeout", "180", "apt-get", "install", "-y", "-qq", "poppler-utils"],
-                   capture_output=True)           # on the runner, only when a PDF actually arrives
+    inst = ["sudo", "timeout", "180", "apt-get", "install", "-y", "-qq", "poppler-utils"]
+    subprocess.run(inst, capture_output=True)      # on the runner, only when a PDF actually arrives
+    if not shutil.which("pdftoppm"):               # stale package lists: refresh once
+        subprocess.run(["sudo", "timeout", "240", "apt-get", "update", "-qq"], capture_output=True)
+        subprocess.run(inst, capture_output=True)
     return shutil.which("pdftoppm")
 
 
