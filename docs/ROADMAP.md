@@ -142,3 +142,17 @@ Run everything: `.venv/bin/python -m pytest -q` then `.venv/bin/python -m pytest
 - Every new feature gets a test; solver tests carry `@pytest.mark.solver`.
 - `docs/CHATBOT-PROMPT.md` is generated; never edit it by hand.
 - Commit messages end with the attribution lines the session provides.
+
+## Status 2026-11-19 (handover notes)
+
+- Done: drawing-to-part (`engagent/drawings.py`; PDF/PNG/JPEG via attachment or repo path, rendered with
+  poppler, sent to the hosted model as images). Pressure equilibrium on curved quadratic faces fixed.
+  Issue #20 (push-connect stopper) delivered.
+- Next, in order:
+  1. Live-test drawing route with `examples/23-drawing-to-part` after the Gemini quota resets (scheduled).
+  2. Confirm whether the bot can download private-repo attachments (`.step.txt`, `.pdf`); if not, the
+     reply already points users to `inbox/` uploads - consider a workflow that turns attachments into
+     inbox commits via the user's browser upload only.
+  3. A STEP part plus its PDF drawing in the same request: today the STEP route wins and the PDF is
+     ignored. Pass the drawing pages to the model for loads/material/tolerances of the measured part.
+  4. Nightly improvement loop (benchmarks/README.md) - runs only after the owner's "yes" at 8 pm.
