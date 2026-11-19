@@ -62,3 +62,11 @@ toolkit absorbing the slips any AI makes, not a different answer.
 ### Still open
 - Case 017 in round 1 (supports let the bar spin) is solved in round 2 by the sheet's new support rule.
 - Gemini after-score (quota).
+
+### Morning report (6 am PT)
+- Final Gemini position on the latest code: every case Gemini answered passed; 019 (D-shaft knob) never
+  got an answer from a strong model (lite model / daily quota). Original 10 cases: 9 -> 10.
+- Claude chat stand-in (Sonnet, sheet only): 14 -> 19 / 19 (+36 %).
+- Per domain, chat round 2: structures 10/10, thermal 4/4, 3D-print 5/5.
+- Average time per case: Gemini 306 s (median 43 s; waits on a busy free tier dominate), chat replies 22 s.
+- Run ended at 6 am PT.
