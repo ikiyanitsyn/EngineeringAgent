@@ -18,21 +18,36 @@ SCREWS = {
     "M8": (6.8, 8.0, (8.4, 9.0, 10.0)), "M10": (8.5, 10.0, (10.5, 11.0, 12.0)),
     "M12": (10.2, 12.0, (13.0, 13.5, 14.5)),
 }
+IN = 25.4
+UNC = {   # inch screws: tap drill, nominal, clearance close / normal / loose (ASME B18.2.8-style), in inches
+    "#4-40": (0.089, 0.112, (0.116, 0.128, 0.140)), "#6-32": (0.1065, 0.138, (0.144, 0.149, 0.170)),
+    "#8-32": (0.136, 0.164, (0.170, 0.177, 0.194)), "#10-24": (0.1495, 0.190, (0.196, 0.201, 0.221)),
+    "1/4-20": (0.201, 0.250, (0.257, 0.266, 0.281)), "5/16-18": (0.257, 0.3125, (0.323, 0.332, 0.344)),
+    "3/8-16": (0.3125, 0.375, (0.386, 0.397, 0.406)), "1/2-13": (0.4219, 0.500, (0.516, 0.531, 0.5625)),
+}
+
+
+def _screw_hits(d: float, table: dict, fits: tuple) -> list:
+    hits = []
+    for name, (tap, nom, clear) in table.items():
+        for kind, v in [("tapped", tap), ("at nominal size", nom)] + \
+                       [(f"clearance, {w}", c) for w, c in zip(fits, clear)]:
+            if abs(d - v) <= 0.15:
+                hits.append((abs(d - v), f"{name} {kind}"))
+    return hits
 
 
 def screw_for(d: float) -> str:
     """ISO metric screw(s) a hole of diameter d (mm) fits. Ambiguous sizes (a 5.0 mm hole is an M6 tap
     drill AND an M5 at nominal size) list both, so the user confirms instead of the tool guessing."""
-    if d > 14:
+    if d > 14.5:
         return f"bore {d:.4g} mm"
-    hits = []
-    for name, (tap, nom, clear) in SCREWS.items():
-        for kind, v in [("tapped", tap), ("at nominal size", nom)] + \
-                       [(f"clearance, {w}", c) for w, c in zip(("fine", "medium", "coarse"), clear)]:
-            if abs(d - v) <= 0.15:
-                hits.append((abs(d - v), f"{name} {kind}"))
+    hits = _screw_hits(d, SCREWS, ("fine", "medium", "coarse"))
+    if not hits:                                  # an inch part: UNC screws (only when no metric one fits)
+        hits = _screw_hits(d, {n: (t * IN, m * IN, tuple(c * IN for c in cl)) for n, (t, m, cl) in UNC.items()},
+                           ("close", "normal", "loose"))
     if not hits:
-        return "no standard metric screw matches"
+        return "no standard metric or inch screw matches"
     hits.sort()
     close = [h for e, h in hits if e <= hits[0][0] + 0.05]
     return " or ".join(dict.fromkeys(close[:3]))

@@ -16,7 +16,8 @@ def test_screw_sizes_are_never_guessed_when_ambiguous():
     assert screw_for(6.6) == "M6 clearance, medium"
     assert "M6 tapped" in screw_for(5.0) and "M5 at nominal size" in screw_for(5.0)
     assert screw_for(31.5) == "bore 31.5 mm"
-    assert screw_for(7.7) == "no standard metric screw matches"
+    assert screw_for(7.7) == "no standard metric or inch screw matches"
+    assert screw_for(9.8) == "3/8-16 clearance, close"                 # an inch part
 
 
 def test_robot_flange_and_camera_patterns():
