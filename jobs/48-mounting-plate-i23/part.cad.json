@@ -1,0 +1,61 @@
+{
+ "valid": true,
+ "solids": 1,
+ "faces": 42,
+ "edges": 76,
+ "volume": 56958.228365154,
+ "area": 17342.159270562526,
+ "bbox_min": [
+  -1.5543122344752192e-15,
+  -7.382983113757291e-15,
+  -4.773959005888173e-15
+ ],
+ "bbox_max": [
+  120.0,
+  60.0,
+  8.000000000000004
+ ],
+ "bbox_size": [
+  120.0,
+  60.00000000000001,
+  8.000000000000009
+ ],
+ "center_of_mass": [
+  60.000000000000014,
+  29.999999999999982,
+  4.019924950383957
+ ],
+ "inertia_unit_density": [
+  [
+   17296511.180114336,
+   -2.9802322387695312e-08,
+   0.0
+  ],
+  [
+   -2.9802322387695312e-08,
+   67858825.74693766,
+   -3.725290298461914e-09
+  ],
+  [
+   0.0,
+   -3.725290298461914e-09,
+   84549811.30723497
+  ]
+ ],
+ "face_types": {
+  "plane": 30,
+  "cone": 8,
+  "cylinder": 4
+ },
+ "cylinder_diameters": [
+  {
+   "diameter": 6.6,
+   "faces": 4
+  }
+ ],
+ "files": [
+  "/home/runner/work/EngineeringAgent/EngineeringAgent/jobs/48-mounting-plate-i23/part.step",
+  "/home/runner/work/EngineeringAgent/EngineeringAgent/jobs/48-mounting-plate-i23/part.stl",
+  "/home/runner/work/EngineeringAgent/EngineeringAgent/jobs/48-mounting-plate-i23/part.3mf"
+ ]
+}

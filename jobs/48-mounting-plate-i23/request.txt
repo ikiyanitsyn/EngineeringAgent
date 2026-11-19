@@ -1,0 +1,38 @@
+Drawing material: ALUMINIUM 6061-T6
+Main dimensions read: 120 mm x 60 mm x 8 mm plate, four Ø6.6 mm through holes spaced 10 mm from edges (100 mm x 40 mm hole pattern), 0.5 mm chamfer on sharp edges.
+Analyzing with PLA as requested, fixed at xmin with a 300 N downward load at xmax, using a cantilever beam stress bound.
+
+```python
+from build123d import *
+from engagent.cad import params, save
+
+P = params(
+    length=120.0,
+    width=60.0,
+    thickness=8.0,
+    hole_d=6.6,
+    edge_dist=10.0,
+    chamfer_val=0.5
+)
+
+part = Box(P.length, P.width, P.thickness, align=(Align.MIN, Align.MIN, Align.MIN))
+
+holes = [
+    (P.edge_dist, P.edge_dist),
+    (P.length - P.edge_dist, P.edge_dist),
+    (P.edge_dist, P.width - P.edge_dist),
+    (P.length - P.edge_dist, P.width - P.edge_dist)
+]
+
+for x, y in holes:
+    part -= Pos(x, y, -P.thickness) * Cylinder(P.hole_d / 2, P.thickness * 3)
+
+part = chamfer(part.edges(), P.chamfer_val)
+
+save(part)
+```
+
+```bash
+ea make geometry.py --name "mounting plate"
+ea analyze last -m al_6061_t6 --fix xmin --force xmax 0,0,-300 --bound 'beam.cantilever_end_load P="300 N" L=120 E="68900 MPa" b=60 h=8 -> stress@max_von_mises'
+```

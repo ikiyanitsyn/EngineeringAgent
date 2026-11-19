@@ -1,0 +1,56 @@
+{
+ "name": "48-mounting-plate-i23",
+ "units": "metric",
+ "analysis": "static",
+ "title": "static analysis of part",
+ "geometry": {
+  "script": "geometry.py"
+ },
+ "material": "al_6061_t6",
+ "sets": {
+  "xmin": "xmin",
+  "xmax": "xmax"
+ },
+ "constraints": [
+  {
+   "type": "fixed",
+   "on": "xmin"
+  }
+ ],
+ "loads": [
+  {
+   "type": "force",
+   "on": "xmax",
+   "value": [
+    0.0,
+    0.0,
+    -300.0
+   ]
+  }
+ ],
+ "probes": {
+  "xmax": {
+   "set": "xmax"
+  }
+ },
+ "criteria": {
+  "yield_sf": 1.5
+ },
+ "hand_calcs": [
+  {
+   "name": "Estimate: Cantilever, point load P at the free end (stress)",
+   "calc": "beam.cantilever_end_load",
+   "inputs": {
+    "P": "300 N",
+    "L": 120,
+    "E": "68900 MPa",
+    "b": 60,
+    "h": 8
+   },
+   "output": "stress",
+   "tol": 0.05,
+   "bound": "lower",
+   "metric": "max_von_mises"
+  }
+ ]
+}
