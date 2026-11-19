@@ -521,6 +521,14 @@ def ask(conversation: list[dict] | str, *, max_fixes: int = 2, run: bool = True,
                 "the geometry came out as separate solids (" + split[0].split(" - ")[-1] + "): make every "
                 "feature overlap or touch the main body so the part is ONE solid, then send the whole request again"])
             out["result"] = res
+        hand_fail = [x for j in res.get("jobs", []) for x in j.get("attention", [])
+                     if x.startswith("FAIL") and "hand calculation" in x]
+        if hand_fail and not res["errors"] and attempt < max_fixes and time_left() >= 240:
+            res = dict(res, errors=[                   # an exact textbook check disagrees: let the model look again
+                "the FEA does not match your own hand check (" + hand_fail[0].split(" - ", 1)[-1][:300] + "). "
+                "Usually one input is off: units (bare numbers are N, N*m, MPa, mm), the load size or direction, "
+                "the supports, or a hand-check input. Find which is wrong and send the whole corrected request"])
+            out["result"] = res
         if not res["errors"] or attempt == max_fixes or time_left() < 240:   # no time for another try
             out["kind"] = "results" if not res["errors"] else "error"
             return out

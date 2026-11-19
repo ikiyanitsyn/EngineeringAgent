@@ -69,6 +69,9 @@ def run_case(case: Path, work: Path, reply: str | None = None, solver: str | Non
     expected = json.loads((case / "expected.json").read_text())
     os.environ["ENGAGENT_ROOT"] = str(work)
     t0 = time.time()
+    # each case gets its own time budget, as each issue does in the bot; one shared budget let the late
+    # cases fall to the 'lite' model only because earlier cases had used the time (018 / 019)
+    os.environ["ENGAGENT_DEADLINE"] = str(t0 + float(os.environ.get("ENGAGENT_BENCH_CASE_S", 900)))
     row = {"case": case.name, "source": expected.get("source", "")}
     assistant.LAST_USED.clear()
     try:

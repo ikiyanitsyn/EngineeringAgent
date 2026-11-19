@@ -48,6 +48,8 @@ FACTORS = {   # user number x factor = value written in the request (per kind of
     "force": (1, G, 1000, 4.4482216, 0.45359237 * G, 1000 * G, 4448.2216),       # N, kg, kN, lbf, lb, t, kip
     "pressure": (1, 1e-3, 0.1, 1000, 0.0068947573, 6.8947573, 0.101325),       # MPa, kPa, bar, GPa, psi, ksi, atm
     "moment": (1, 1000, 1e-3, 0.11298483, 1.3558179, 112.98483, 1355.8179),     # N*m <-> N*mm, lbf*in, lbf*ft
+    # a BARE moment is read as N*m: 100 N*m written as 100000 (N*mm) would be a 1000x load (benchmark 011)
+    "moment_bare": (1, 0.11298483, 1.3558179),
     "heat": (1, 1e-3, 1000, 0.29307107),                                        # W, mW, kW, BTU/hr
     "temperature": (1,),
     "convection": (1, 1e-3, 5.6782633),                                          # W/m2K, BTU/hr/ft2/F
@@ -121,8 +123,11 @@ def check_request(request_text: str, user_text: str) -> list[str]:
                 elif a == "--dT":
                     vals = argv[i + 1:i + 2]
                 for v in vals:
+                    kind = LOAD_FLAGS[a]
+                    if kind == "moment" and not re.search(r"[A-Za-z]", v):
+                        kind = "moment_bare"
                     for n in _numbers(re.sub(r"[A-Za-z]+", " ", v)):
-                        if not _supported_number(n, nums, LOAD_FLAGS[a]):
+                        if not _supported_number(n, nums, kind):
                             what = LOAD_FLAGS[a]
                             missing.append(f"the {what} (the request assumed {v})")
                             break

@@ -22,7 +22,7 @@ concurrency:
 jobs:
   bench:
     runs-on: ubuntu-24.04
-    timeout-minutes: 120
+    timeout-minutes: 340
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -46,7 +46,7 @@ jobs:
           ENGAGENT_LLM_MODEL: ${{ vars.ENGAGENT_LLM_MODEL }}
           ENGAGENT_NO_LOCAL_LLM: "1"
         run: |
-          export ENGAGENT_DEADLINE=$(python -c "import time; print(time.time() + 6000)")
+          export ENGAGENT_BENCH_CASE_S=900   # per case, like one issue in the bot
           if [ -n "${{ inputs.only }}" ]; then python -m engagent.cli bench --only "${{ inputs.only }}"; else python -m engagent.cli bench; fi
           cat benchmarks/SCOREBOARD.md >> "$GITHUB_STEP_SUMMARY" || true
       - name: Commit the scoreboard

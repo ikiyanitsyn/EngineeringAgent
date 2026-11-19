@@ -249,3 +249,11 @@ def test_column_and_restrained_bar_rules():
     r = form_from_words(open("benchmarks/006-restrained-bar-heating/prompt.md").read())
     assert r["action"] == "raw" and "--t0 20 --dT 70" in r["request"] and "--slide xmin x" in r["request"]
     assert "dT=50" in r["request"]
+
+
+def test_a_bare_moment_is_newton_metres_not_millimetres():
+    from engagent.guard import check_request
+    u = "Steel shaft 20 mm diameter, 200 mm long, clamped at one end, 100 N m of torque at the other end"
+    assert check_request("ea analyze last -m steel_generic --fix zmin --moment zmax 0,0,100000", u)   # 1000x
+    assert not check_request("ea analyze last -m steel_generic --fix zmin --moment zmax 0,0,100", u)
+    assert not check_request("ea analyze last -m steel_generic --fix zmin --moment zmax 0,0,100000N*mm", u)
