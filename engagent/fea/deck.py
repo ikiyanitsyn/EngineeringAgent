@@ -295,12 +295,12 @@ def write_deck(job: Job, mesh: Mesh, path: Path) -> dict:
         if mech and job.analysis in ("static", "nonlinear", "thermal_stress", "buckling") and \
                 not any(c["type"] == "minimal" for c in job.constraints):
             free = free_rigid_motions(mesh.nodes, held)
-            if free:                              # reported as a WARN (owner to decide on making it a hard stop)
-                info["free_motion"] = (
+            if free:                              # a hard stop (owner approved): the AI fixes its supports first
+                raise ValueError(
                     "the supports leave the part free to " + " and ".join(free) + " (a rigid-body motion: the "
                     "result may be meaningless). Hold it more: e.g. add `--slide FACE AXIS` on another face, "
                     "or `--slide point:x,y,z AXIS` at a second point away from the first (as in a 3-2-1 support), "
-                    "keeping the part free to expand where it should")
+                    "keeping the part free to expand where it should, then run it again")
         on_supports = np.zeros(3)
         sup_nodes = np.nonzero(held.any(axis=1))[0] + 1
         if mech:
