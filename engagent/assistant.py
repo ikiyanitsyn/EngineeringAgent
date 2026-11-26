@@ -389,7 +389,7 @@ def _run_form(form: dict, user_text: str, say, run: bool, out: dict) -> dict:
         if form.get("plan"):
             out["plan"] = (out.get("plan", "") + "\n\n" + form["plan"]).strip()
         req = form["request"]
-        out.update(request="```bash\n" + req + "\n```", reply=req)
+        out.update(request=req if req.lstrip().startswith("```") else "```bash\n" + req + "\n```", reply=req)
         if not run:
             out["kind"] = "request"
             return out

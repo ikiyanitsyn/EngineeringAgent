@@ -263,6 +263,40 @@ def _hollow_cantilever(t: str, forces) -> dict | None:
                     "formula with the tube's own section (Roark Table 8.1 case 1a, Table A.1)._"}
 
 
+def _round_plate(t: str) -> dict | None:
+    """A flat round plate (disc, cover, diaphragm) under uniform pressure, its edge clamped or simply supported:
+    Roark Table 11.2 cases 10a / 10b. None (-> the model) when anything is unclear."""
+    pr = re.findall(PRESSURE_RX, t)
+    d = re.search(NUM + r"\s*mm\s*(?:in\s*)?(?:diameter|dia\b|across)|(?:diameter|dia)\s*(?:of\s*)?" + NUM + r"\s*mm", t)
+    th = re.search(NUM + r"\s*mm\s*thick|thickness\s*(?:of\s*)?" + NUM + r"\s*mm", t)
+    mat = material_from_words(t)
+    if len(pr) != 1 or not (d and th and mat):
+        return None
+    if re.search(r"\b(clamped|fixed|welded|bolted|built[- ]in)\b", t):
+        edges = "clamped"
+    elif re.search(r"simply supported|rests? on|resting on|sits? on|free to rotate|on a ledge", t):
+        edges = "simply_supported"
+    else:
+        return None
+    from .structured import TO_MPA
+    mag, unit = pr[0]
+    q = float(mag) * TO_MPA[{"mpa": "MPa", "kpa": "kPa", "bar": "bar", "psi": "psi"}[unit]]
+    D, tk = float(d.group(1) or d.group(2)), float(th.group(1) or th.group(2))
+    R = D / 2
+    from . import materials
+    nu = materials.get(mat).props.get("nu", 0.3)
+    hold = (f"--fix cyl:{R:g}" if edges == "clamped" else
+            f"--slide cyl:{R:g} z --slide point:0,0,0 x --slide point:0,0,0 y --slide point:{R:g},0,0 y")
+    req = ("```python\nfrom build123d import *\nfrom engagent.cad import save\n"
+           f"save(Cylinder({R:g}, {tk:g}, align=(Align.CENTER, Align.CENTER, Align.MIN)))\n```\n"
+           f"```bash\nea make geometry.py --name \"round plate\"\n"
+           f"ea analyze last -m {mat} {hold} --pressure zmax {q:.6g} "
+           f"--check \"plate.circular_uniform q={q:.6g} r={R:g} t={tk:g} E={_E(mat)} nu={nu:g} edges={edges} -> deflection\"\n```")
+    return {"action": "raw", "request": req, "derived": [q],
+            "plan": f"_A {D:g} mm round plate, {tk:g} mm thick, {edges.replace('_', ' ')} at its edge, with "
+                    f"{q:g} MPa on one face; checked against Roark Table 11.2 (case 10{'b' if edges == 'clamped' else 'a'})._"}
+
+
 SPREAD_RX = r"\b(spread|evenly|uniform(?:ly)?|distributed|along (?:its|the) (?:whole |full )?(?:top|length))\b"
 
 
@@ -467,6 +501,9 @@ def form_from_words(user_text: str, first: str | None = None) -> dict | None:
         joined = _joined_bars(user_text, t)
         if joined:
             return joined
+    if analysis_intent(user_text) and re.findall(PRESSURE_RX, t) and re.search(
+            r"\b(disc|disk|round plate|circular plate|round cover|circular cover|round lid|diaphragm)\b", t):
+        return _round_plate(t)                           # a flat round plate under pressure (Roark 11.2)
     tmpl = template_of(" " + first.lower().replace("×", "x") + " ") if first else template_of(t)
     if not tmpl:
         return None
