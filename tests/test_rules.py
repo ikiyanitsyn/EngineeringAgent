@@ -289,3 +289,16 @@ def test_pinned_columns_are_held_at_points_not_faces():
     rod = form_from_words("An aluminium 6061 rod, 10 mm diameter and 400 mm long, is pinned at both ends and carries "
                           "1 kN of axial compression. What is its buckling safety factor?")["request"]
     assert "section=round width=10" in rod and "D=10 ends=pinned_pinned" in rod
+
+
+def test_frequency_questions_are_answered_by_rules():
+    c = form_from_words("An aluminium 6061 cantilever 300 x 20 x 5 mm is clamped at one end. What is its first natural "
+                        "frequency?")["request"]
+    assert "-a modal" in c and "--fix xmin" in c and "support=cantilever" in c
+    ss = form_from_words("A steel bar 500 mm long, 20 mm wide and 10 mm thick rests on simple supports at both ends. "
+                         "What is its first natural frequency?")["request"]
+    assert "length=250" in ss and "--slide xmax x" in ss and "support=simply_supported" in ss
+    assert "--pin point" not in ss                    # no point holds in the bending direction (false modes)
+    ff = form_from_words("A steel bar 400 mm long, 30 mm wide and 6 mm thick is welded solid at both ends. "
+                         "What is its first natural frequency?")["request"]
+    assert "--fix xmin --slide xmax x" in ff and "support=fixed_fixed" in ff

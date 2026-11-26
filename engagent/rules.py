@@ -493,7 +493,7 @@ def form_from_words(user_text: str, first: str | None = None) -> dict | None:
         return None                                    # the model (or the code) will ask
     form.update(action="analyze", material_words="")
     if tmpl == "beam":
-        special = _restrained_heating(t, form) or _column(t, form)
+        special = _restrained_heating(t, form) or _column(t, form) or _frequency(t, form)
         if special:
             return special
     thermal = re.search(r"\b(how hot|temperature|heat|cool|cooled|thermal|warm)\b", t)
@@ -531,6 +531,51 @@ def _restrained_heating(t: str, form: dict) -> dict | None:
     return {"action": "raw", "request": req,
             "plan": f"_Held at both ends and heated from {t0:g} to {t1:g} degC: the bar cannot grow, so it is "
                     f"squeezed; checked against sigma = E alpha dT._"}
+
+
+def _frequency(t: str, form: dict) -> dict | None:
+    """First bending frequency of a bar: clamped at one end (cantilever), on simple supports at both ends,
+    or fixed at both ends. Two-support cases are HALF models with a symmetry plane at mid-span (the first mode
+    is symmetric); faces are held, never single points in the bending direction (a point hold adds a false,
+    mesh-dependent low mode - found in the 2026-11-26 toolkit check)."""
+    if not re.search(r"\b(natural frequenc\w*|frequenc\w*|vibrat\w*|resonan\w*)\b", t):
+        return None
+    if re.findall(FORCE_RX, t) or re.findall(PRESSURE_RX, t):
+        return None                                      # a load as well: not a plain frequency question
+    sec = _section(form)
+    from .guard import material_from_words
+    mat = material_from_words(t)
+    if not sec or not mat:
+        return None
+    L, b, h = sec
+    both = re.search(r"\bboth ends\b|\beach end\b|\btwo supports\b|simply supported", t)
+    fixed_words = re.search(r"\b(clamped|fixed|welded|built[- ]in|bolted|rigidly)\b", t)
+    if both:
+        kind = "fixed_fixed" if fixed_words and not re.search(r"simpl[ey]|rests?|resting|pinned", t) else \
+            "simply_supported"
+    elif re.search(r"\b(one end|cantilever|to a wall|clamped at|fixed at)\b", t):
+        kind = "cantilever"
+    else:
+        return None
+    from . import materials
+    props = materials.get(mat).props
+    rho = props["density"] * 1e12                         # t/mm^3 -> kg/m^3
+    nu = props.get("nu", 0.3)
+    weak_b, weak_h = max(b, h), min(b, h)                 # the first mode bends the thin way
+    check = (f'--check "beam.natural_frequency L={L:g} E={_E(mat)} b={weak_b:g} h={weak_h:g} '
+             f'density={rho:.6g} support={kind}"')
+    if kind == "cantilever":
+        req = (f'ea make beam length={L:g} width={b:g} height={h:g} --name "cantilever"\n'
+               f'ea analyze last -a modal -m {mat} --fix xmin {check}')
+        plan = "_Clamped at one end, first bending mode checked against Euler-Bernoulli beam theory._"
+    else:
+        end = "--fix xmin" if kind == "fixed_fixed" else "--slide xmin z --slide point:0,0,0 y"
+        req = (f'ea make beam length={L / 2:g} width={b:g} height={h:g} --name "{kind.replace("_", " ")} bar (half)"\n'
+               f'ea analyze last -a modal -m {mat} {end} --slide xmax x {check}')
+        plan = ("_Half the bar by symmetry: the mid-span face cannot move along the bar; "
+                + ("the end is held fully" if kind == "fixed_fixed" else "the end face is held vertically only, "
+                   "free to rotate") + ". First bending mode checked against Euler-Bernoulli beam theory._")
+    return {"action": "raw", "request": req, "plan": plan}
 
 
 def _column(t: str, form: dict) -> dict | None:
