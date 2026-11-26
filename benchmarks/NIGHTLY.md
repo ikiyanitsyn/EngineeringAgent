@@ -77,3 +77,29 @@ toolkit absorbing the slips any AI makes, not a different answer.
 - Repository made public by the owner: GitHub Actions minutes are now free; attachments no longer need a login.
 - Case 019 (D-shaft knob) with a strong Gemini model: PASS in 76 s. Every one of the 19 cases has now passed
   with Gemini at least once (017 in the first run, 019 here, the rest after the fixes).
+
+## 2026-11-25 -> 26 (owner: "begin overnight training", 6 am report)
+
+### Cases
+- 10 new cases (020-029): shelf with a spread load (Roark 2a), square tube cantilever, clamped disc under
+  pressure (Roark 11.2 10b), pinned rod buckling (Euler K = 1), simply supported frequency, PETG wall with
+  convection (Incropera 3.1), heated plate in air (energy balance), printed box with M3 bosses, M3 hex
+  standoff, printed L-bracket. 29 cases in all.
+- Toolkit check (answers known): all 7 new analysis cases reach the textbook value (worst 1.0 %).
+
+### Scores
+| Solver | Before | After |
+|---|---|---|
+| Gemini, 19 earlier cases (baseline at midnight) | 14 / 19 (4 daily-quota errors, 1 crash) | crash fixed |
+| Claude chat stand-in (Sonnet, sheet only), 10 new cases | - | **10 / 10** |
+| Rules only (no AI model), new cases | shelf case: CAD only (wrong) | shelf case PASS (1.0 % off) |
+
+### Improvements merged
+1. Hand check without an output name no longer crashes the run (Gemini case 013); the smooth peak stress
+   (Lame bore, Kt hole) is picked by default, and any slip in an optional check is reported, never fatal.
+2. Beam frequency and column buckling accept each other's support words; `D=` alone means a solid rod.
+3. Print cases match their size in any orientation and bound the volume (a missing feature fails).
+4. Instruction sheet: in modal analysis, hold faces / use symmetry, not single points (a point hold gave a
+   false mode at half the real frequency in the toolkit check).
+5. Rules: a load spread along a cantilever is a pressure on the top face, not a tip load (2.7x error
+   avoided); "how far ... drop" is an analysis; a hex part is a custom shape, not the round standoff.
