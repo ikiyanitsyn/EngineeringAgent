@@ -59,7 +59,7 @@ FACES (selectors)
   a+b                               several, e.g. xmin+xmax
 
 TEMPLATES (dimensions in mm; defaults shown)
-  beam: Prismatic beam along +X. section: rect | tube | rect_tube | i
+  beam: Prismatic beam along +X. section: rect | round (solid, diameter = width) | tube | rect_tube | i
       length=100 width=10 height=10 section=rect wall=2 flange=2 web=2
   plate: Flat plate in XY with an optional rectangular hole pattern and corner radius
       length=100 width=60 thickness=5 hole_diameter=0 holes_x=2 holes_y=2 edge_distance=10 corner_radius=0 center_hole=0
