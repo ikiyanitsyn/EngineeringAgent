@@ -156,7 +156,10 @@ Request: "aluminium rod 250 x 20 x 20 mm, held rigidly at both ends, cooled even
 (held at both ends = held ALONG the bar: --slide the end faces in x, pin a corner node at each end, and
  stop the bar spinning about its axis with a third point (--slide point:0,20,0 z); --fix on the end faces
  would also stop the ends expanding sideways and overstate the stress. Supports must always stop all six
- rigid-body motions - 3 moves and 3 turns - or the result is meaningless.)
+ rigid-body motions - 3 moves and 3 turns - or the result is meaningless. For -a modal, hold faces
+ (--slide FACE AXIS, symmetry planes), not single points, in the direction the part bends: a point hold
+ adds a false low "mode" that changes with the mesh. A beam on two supports: model half of it, with
+ --slide xmax x on the mid-span face.)
 ```bash
 ea make beam length=250 width=20 height=20 --name "restrained rod"
 ea analyze last -m al_6061_t6 -a thermal_stress --slide xmin x --slide xmax x --fix point:0,0,0 --fix point:250,0,0 --slide point:0,20,0 z --t0 90 --dT 15 --check "thermal.restrained_bar E=69GPa cte=23.6 dT=-75 -> stress@max_von_mises"
