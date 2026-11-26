@@ -278,6 +278,45 @@ def _hollow_cantilever(t: str, forces) -> dict | None:
                     "formula with the tube's own section (Roark Table 8.1 case 1a, Table A.1)._"}
 
 
+def _wall_convection(t: str) -> dict | None:
+    """A flat wall / panel / plate: one face held at a temperature, the other cooled (or heated) by air with a
+    film coefficient h. Steady 1-D conduction in series with convection (Incropera 3.1): a small patch of the
+    wall is enough, since nothing varies along it."""
+    if not re.search(r"\b(wall|panel|plate|sheet|slab|skin|lid)\b", t) or not re.search(r"\bfaces?\b|\bsides?\b", t):
+        return None
+    th = re.search(NUM + r"\s*mm\s*thick", t)
+    temps = re.findall(TEMP_RX, t)
+    h = re.search(r"\bh\s*(?:=|of|is)?\s*" + NUM, t)
+    mat = material_from_words(t)
+    if not (th and h and mat) or len(temps) != 2 or not re.search(r"\b(air|fluid|water|ambient|convect\w*|cooled|cooling)\b", t):
+        return None
+    if not re.search(r"\b(surface|face|outside|outer|cool|hot|temperature)\b", t):
+        return None
+    c = lambda v, u: (float(v) - 32) * 5 / 9 if u == "f" else float(v)          # noqa: E731
+    # the face temperature comes first ("inside face at 60 C"), the air second ("air at 20 C")
+    order = [(m.start(), m) for m in re.finditer(TEMP_RX, t)]
+    air_at = re.search(r"\b(air|fluid|water|ambient)\b", t).start()
+    face = min((m for _, m in order if m.start() < air_at), key=lambda m: air_at - m.start(), default=None)
+    amb = next((m for _, m in order if m.start() > air_at), None)
+    if not face or not amb:
+        return None
+    Tf, Ta = c(face.group(1), face.group(2)), c(amb.group(1), amb.group(2))
+    T = float(th.group(1))
+    hv = float(h.group(1))
+    from . import materials
+    k = materials.get(mat).props.get("k")
+    if not k:
+        return None
+    side = max(10 * T, 20.0)                             # a patch; the answer does not depend on it
+    req = (f'ea make plate length={side:g} width={side:g} thickness={T:g} --name "wall (patch)"\n'
+           f'ea analyze last -a thermal -m {mat} --temp zmin {Tf:g} --convect zmax {hv:g} {Ta:g} '
+           f'--check "thermal.wall_conduction_convection k={k:g} L={T:g} h={hv:g} T_fixed={Tf:g} T_ambient={Ta:g}"')
+    return {"action": "raw", "request": req,
+            "plan": f"_A {T:g} mm wall: one face at {Tf:g} C, the other cooled by air at {Ta:g} C (h = {hv:g}). "
+                    "Heat flows straight through, so a small patch of the wall gives the answer; checked against "
+                    "a plane wall with convection (Incropera 3.1)._"}
+
+
 def _round_plate(t: str) -> dict | None:
     """A flat round plate (disc, cover, diaphragm) under uniform pressure, its edge clamped or simply supported:
     Roark Table 11.2 cases 10a / 10b. None (-> the model) when anything is unclear."""
@@ -516,6 +555,10 @@ def form_from_words(user_text: str, first: str | None = None) -> dict | None:
         joined = _joined_bars(user_text, t)
         if joined:
             return joined
+    if analysis_intent(user_text):
+        wall = _wall_convection(t)
+        if wall:
+            return wall
     if analysis_intent(user_text) and re.findall(PRESSURE_RX, t) and re.search(
             r"\b(disc|disk|round plate|circular plate|round cover|circular cover|round lid|diaphragm)\b", t):
         return _round_plate(t)                           # a flat round plate under pressure (Roark 11.2)

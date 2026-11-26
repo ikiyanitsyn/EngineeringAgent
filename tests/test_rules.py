@@ -318,3 +318,9 @@ def test_round_plates_under_pressure_are_roark_cases():
     s = form_from_words("An aluminium 6061 round cover 150 mm diameter and 4 mm thick rests on a ledge (simply "
                         "supported) round its edge, with 50 kPa on top. How much does it deflect?")["request"]
     assert "--slide cyl:75 z" in s and "edges=simply_supported" in s and "q=0.05" in s
+
+
+def test_a_wall_with_one_face_held_and_air_on_the_other():
+    f = form_from_words("A 3D-printed PETG enclosure wall is 5 mm thick. The inside face is at 60 C and the outside face "
+                        "is cooled by still air at 20 C with h = 10 W/m2K. What temperature is the outside surface?")
+    assert "--temp zmin 60 --convect zmax 10 20" in f["request"] and "k=0.21 L=5 h=10" in f["request"]
