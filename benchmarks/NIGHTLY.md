@@ -92,6 +92,7 @@ toolkit absorbing the slips any AI makes, not a different answer.
 |---|---|---|
 | Gemini, 19 earlier cases (baseline at midnight) | 14 / 19 (4 daily-quota errors, 1 crash) | crash fixed |
 | Claude chat stand-in (Sonnet, sheet only), 10 new cases | - | **10 / 10** |
+| Claude chat stand-in, fresh blind round on all 29 cases (final sheet) | - | **29 / 29** |
 | Rules only (no AI model), all 29 cases | about 10 (shelf: CAD only; hex: round part; L-bracket: wrong size) | **20 / 29**, no FAIL or wrong answer (the other 9 need a model) |
 
 ### Improvements merged
