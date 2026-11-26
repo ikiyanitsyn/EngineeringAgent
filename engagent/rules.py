@@ -136,6 +136,21 @@ def dimensions(t: str, tmpl: str) -> dict:
                 out["center_hole"] = d
             else:
                 out["hole_diameter"] = d
+    if tmpl == "l_bracket":                               # "two legs 40 mm long, 20 mm wide and 4 mm thick"
+        leg = re.search(r"\blegs?\s*(?:of\s*|are\s*|each\s*)?" + NUM + LEN_UNIT, t) or \
+            re.search(NUM + LEN_UNIT + r"\s*legs?\b", t)
+        L = _mm(float(leg.group(1)), leg.group(2)) if leg else out.get("length")
+        if L:
+            out.setdefault("leg_x", L)
+            out.setdefault("leg_z", L)
+        out.pop("length", None)
+        out.pop("height", None)
+        hole = re.search(NUM + LEN_UNIT + r"\s*(?:mounting |screw |bolt |through[- ])?holes?\b", t)
+        metric = re.search(r"\bm(\d+)\s*(?:screws?|bolts?|holes?)\b", t)
+        if hole or metric:
+            out["hole_diameter"] = clearance(int(metric.group(1))) if metric else _mm(float(hole.group(1)), hole.group(2))
+            if re.search(r"\b(?:a|one)\s+(?:\d+(?:\.\d+)?\s*mm\s+)?holes?\b.*\beach leg\b", t):
+                out["holes_per_leg"] = 1
     m = re.search(NUM + LEN_UNIT + r"\s*(?:thick\s+)?walls?\b", t) or re.search(r"\bwalls?\s*(?:of|=)?\s*" + NUM + LEN_UNIT, t)
     if m and tmpl in ("enclosure", "lid"):
         out["wall"] = _mm(float(m.group(1)), m.group(2))

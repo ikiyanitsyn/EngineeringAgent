@@ -302,3 +302,19 @@ def test_frequency_questions_are_answered_by_rules():
     ff = form_from_words("A steel bar 400 mm long, 30 mm wide and 6 mm thick is welded solid at both ends. "
                          "What is its first natural frequency?")["request"]
     assert "--fix xmin --slide xmax x" in ff and "support=fixed_fixed" in ff
+
+
+def test_l_bracket_sizes_come_from_the_words():
+    f = form_from_words("3D print an L-bracket: two legs 40 mm long, 20 mm wide and 4 mm thick at a right angle, with a "
+                        "5 mm hole in the middle of each leg.")
+    assert f["params"] == {"width": 20.0, "thickness": 4.0, "leg_x": 40.0, "leg_z": 40.0, "hole_diameter": 5.0,
+                           "holes_per_leg": 1}
+
+
+def test_round_plates_under_pressure_are_roark_cases():
+    c = form_from_words("A steel disc 200 mm in diameter and 5 mm thick is clamped all the way round its edge. 1 bar "
+                        "of pressure acts on one face. How much does the centre deflect?")["request"]
+    assert "Cylinder(100, 5" in c and "--fix cyl:100 --pressure zmax 0.1" in c and "edges=clamped" in c
+    s = form_from_words("An aluminium 6061 round cover 150 mm diameter and 4 mm thick rests on a ledge (simply "
+                        "supported) round its edge, with 50 kPa on top. How much does it deflect?")["request"]
+    assert "--slide cyl:75 z" in s and "edges=simply_supported" in s and "q=0.05" in s
