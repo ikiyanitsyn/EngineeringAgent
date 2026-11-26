@@ -279,3 +279,13 @@ def test_tube_cantilevers_are_hollow_beams():
                          "end, 200 N down at the free end. How much does it bend?")
     assert "section=tube width=30" in rd["request"] and "D=30 t=2" in rd["request"]
     assert form_from_words("print a tube 20 mm diameter 30 mm long")["template"] == "standoff"   # CAD: unchanged
+
+
+def test_pinned_columns_are_held_at_points_not_faces():
+    """A face hold clamps a solid end: the old rule modelled fixed-pinned (FEA 2x Euler) under a pinned check."""
+    sq = form_from_words("A steel column 1000 mm long with a 20 x 20 mm square section is pinned at both ends and "
+                         "carries 5 kN. What is its buckling safety factor?")["request"]
+    assert "--pin point:0,0,0 --slide point:1000,0,0 y --slide point:1000,0,0 z" in sq and "--pin xmin" not in sq
+    rod = form_from_words("An aluminium 6061 rod, 10 mm diameter and 400 mm long, is pinned at both ends and carries "
+                          "1 kN of axial compression. What is its buckling safety factor?")["request"]
+    assert "section=round width=10" in rod and "D=10 ends=pinned_pinned" in rod

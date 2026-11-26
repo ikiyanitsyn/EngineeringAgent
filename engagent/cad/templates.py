@@ -22,13 +22,15 @@ def template(name: str, doc: str, **defaults):
     return deco
 
 
-@template("beam", "Prismatic beam along +X. section: rect | tube | rect_tube | i",
+@template("beam", "Prismatic beam along +X. section: rect | round (solid, diameter = width) | tube | rect_tube | i",
           length=100.0, width=10.0, height=10.0, section="rect", wall=2.0, flange=2.0, web=2.0)
 def beam(length, width, height, section, wall, flange, web):
     from build123d import Align, Circle, Plane, Rectangle, extrude
     yz = Plane.YZ
     if section == "rect":
         prof = yz * Rectangle(width, height)
+    elif section == "round":
+        prof = yz * Circle(width / 2)
     elif section == "tube":
         prof = yz * (Circle(width / 2) - Circle(width / 2 - wall))
     elif section == "rect_tube":
@@ -40,7 +42,7 @@ def beam(length, width, height, section, wall, flange, web):
                      - Rectangle((width - web) / 2, height - 2 * flange,
                                  align=(Align.MAX, Align.CENTER)).move(_loc(-web / 2, 0)))
     else:
-        raise ValueError("section must be rect, tube, rect_tube or i")
+        raise ValueError("section must be rect, round, tube, rect_tube or i")
     return extrude(prof, length)
 
 

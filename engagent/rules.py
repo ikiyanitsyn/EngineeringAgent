@@ -541,7 +541,7 @@ def _column(t: str, form: dict) -> dict | None:
     if re.search(r"fixed at the bottom and free at the top|fixed at one end and free|free at the top|cantilever(ed)? column", t):
         ends, sup = "fixed_free", "--fix xmin"
     elif re.search(r"pinned at both ends|pin-?ended|hinged at both ends", t):
-        ends, sup = "pinned_pinned", "--pin xmin --slide xmax y --slide xmax z"
+        ends, sup = "pinned_pinned", None      # set below: true pins at the end centres (see there)
     forces = re.findall(FORCE_RX, t)
     sec = _section(form) or (None if "length" not in form["params"] else None)
     p = form["params"]
@@ -553,6 +553,12 @@ def _column(t: str, form: dict) -> dict | None:
     sec = _section(form)
     from .guard import material_from_words
     mat = material_from_words(t)
+    dia = re.search(NUM + r"\s*mm\s*(?:in\s*)?(?:diameter|dia\b)|(?:diameter|dia)\s*(?:of\s*)?" + NUM + r"\s*mm", t)
+    Lm = re.search(NUM + r"\s*mm\s*long", t)
+    if not sec and dia and Lm and re.search(r"\b(rod|bar|pin|shaft|round)\b", t) and not re.search(HOLLOW_RX, t):
+        D = float(dia.group(1) or dia.group(2))       # a solid round rod
+        sec = (float(Lm.group(1)), D, D)
+        form["params"]["section_round"] = D
     if not sec or not mat:
         return None
     mag, unit = forces[0]
@@ -561,11 +567,19 @@ def _column(t: str, form: dict) -> dict | None:
             "pound": "lb", "pounds": "lb"}.get(unit, "kg")
     P = float(mag) * TO_N[unit]
     L, b, h = sec
+    if sup is None:
+        # holding a whole end face clamps it (a solid model has no rotation dofs): fixed-pinned, not pinned-pinned.
+        # True pins: the end-face centres, plus one off-axis point so the column cannot spin about its axis.
+        sup = (f"--pin point:0,0,0 --slide point:{L:g},0,0 y --slide point:{L:g},0,0 z "
+               f"--slide point:0,{b / 2:g},0 z")
     from . import materials
     E = materials.get(mat, "metric").get("E")
-    req = (f'ea make beam length={L:g} width={b:g} height={h:g} --name "column"\n'
+    round_d = form["params"].get("section_round")
+    shape = f"section=round width={b:g} height={b:g}" if round_d else f"width={b:g} height={h:g}"
+    secin = f"D={b:g}" if round_d else f"b={b:g} h={h:g}"
+    req = (f'ea make beam length={L:g} {shape} --name "column"\n'
            f'ea analyze last -m {mat} -a buckling {sup} --force xmax {-P:g},0,0 '
-           f'--check "column.euler_buckling L={L:g} E={E:g}MPa b={b:g} h={h:g} ends={ends}"')
+           f'--check "column.euler_buckling L={L:g} E={E:g}MPa {secin} ends={ends}"')
     return {"action": "raw", "request": req,
             "plan": f"_Column modelled along X ({ends.replace('_', '-')} ends), {P:g} N along its axis; the buckling "
                     f"factor is checked against Euler's formula._"}
