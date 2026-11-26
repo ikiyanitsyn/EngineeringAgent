@@ -269,3 +269,13 @@ def test_a_load_spread_along_a_cantilever_is_a_pressure_not_a_tip_load():
 
 def test_a_hex_part_is_not_the_round_standoff_template():
     assert form_from_words("Make a printable M3 hex standoff, 5.5 mm across flats and 20 mm long") is None
+
+
+def test_tube_cantilevers_are_hollow_beams():
+    sq = form_from_words("Aluminium 6061 square tube, 40 x 40 mm with a 3 mm wall, 600 mm long, clamped at one end. "
+                         "A 500 N load hangs from the free end. Tip deflection?")
+    assert "section=rect_tube width=40 height=40 wall=3" in sq["request"] and "b=40 h=40 t=3" in sq["request"]
+    rd = form_from_words("Steel round tube 30 mm outside diameter with a 2 mm wall, 500 mm long, clamped at one "
+                         "end, 200 N down at the free end. How much does it bend?")
+    assert "section=tube width=30" in rd["request"] and "D=30 t=2" in rd["request"]
+    assert form_from_words("print a tube 20 mm diameter 30 mm long")["template"] == "standoff"   # CAD: unchanged

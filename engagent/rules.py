@@ -210,6 +210,59 @@ def _mechanical(t: str, tmpl: str, form: dict) -> dict | None:
     return form
 
 
+HOLLOW_RX = (r"\b(?:(square|rectangular|rect|box)[- ]?(?:tube|tubing|section|hollow section)|(round|circular)?[- ]?"
+             r"(?:tube|tubing|pipe))\b")
+WALL_RX = r"(\d+(?:\.\d+)?)\s*mm\s*(?:thick\s*)?wall|wall(?:\s*thickness)?(?:\s*of)?\s*(\d+(?:\.\d+)?)\s*mm"
+
+
+def _hollow_cantilever(t: str, forces) -> dict | None:
+    """A square / rectangular / round tube clamped at one end with a load at the free end, as a hollow beam
+    with the tube's own section in the hand check (the round standoff template is not a tube beam)."""
+    h = re.search(HOLLOW_RX, t)
+    w = re.search(WALL_RX, t)
+    L = re.search(NUM + r"\s*mm\s*long", t)
+    if not (h and w and L and len(forces) == 1):
+        return None
+    if not re.search(r"\b(one end|clamped at|fixed at|to a wall|cantilever|bolted at|welded at)\b", t) or \
+            not re.search(r"\b(free end|the end|other end|its end|the tip|end of)\b", t) or \
+            re.search(r"\bboth ends\b|\beach end\b", t) or re.search(SPREAD_RX, t):
+        return None
+    wall, L = float(w.group(1) or w.group(2)), float(L.group(1))
+    mag, unit = forces[0]
+    from .structured import TO_N
+    unit = {"n": "N", "newton": "N", "newtons": "N", "kn": "kN", "lbf": "lbf", "lb": "lb", "lbs": "lb",
+            "pound": "lb", "pounds": "lb"}.get(unit, "kg")
+    if (_direction(t) or ("-z" if unit in ("kg", "lb") else None)) != "-z":
+        return None
+    P = float(mag) * TO_N[unit]
+    mat = material_from_words(t)
+    if not mat:
+        return None
+    from . import materials
+    nu = materials.get(mat).props.get("nu", 0.3)
+    if h.group(1):                                    # square / rectangular: "40 x 40 mm" (or "40 mm square")
+        two = re.search(NUM + r"\s*(?:mm)?\s*[x×*]\s*" + NUM + r"\s*mm", t)
+        if not two:
+            return None
+        b, hh = float(two.group(1)), float(two.group(2))
+        make = f"section=rect_tube width={b:g} height={hh:g} wall={wall:g}"
+        sec = f"b={b:g} h={hh:g} t={wall:g}"
+    else:
+        d = re.search(NUM + r"\s*mm\s*(?:outside|outer|o\.?d\.?|diameter|dia)", t) or \
+            re.search(r"(?:diameter|o\.?d\.?)\s*(?:of\s*)?" + NUM + r"\s*mm", t)
+        if not d:
+            return None
+        D = float(d.group(1))
+        make = f"section=tube width={D:g} height={D:g} wall={wall:g}"
+        sec = f"D={D:g} t={wall:g}"
+    req = (f'ea make beam length={L:g} {make} --name "tube cantilever"\n'
+           f'ea analyze last -m {mat} --fix xmin --force xmax 0,0,{-P:g} '
+           f'--check "beam.cantilever_end_load P={P:g} L={L:g} E={_E(mat)} nu={nu:g} {sec}"')
+    return {"action": "raw", "request": req,
+            "plan": "_A tube clamped at one end with the load at the free end, checked against the cantilever "
+                    "formula with the tube's own section (Roark Table 8.1 case 1a, Table A.1)._"}
+
+
 SPREAD_RX = r"\b(spread|evenly|uniform(?:ly)?|distributed|along (?:its|the) (?:whole |full )?(?:top|length))\b"
 
 
@@ -425,6 +478,11 @@ def form_from_words(user_text: str, first: str | None = None) -> dict | None:
     loaded = re.search(FORCE_RX, t) or re.search(PRESSURE_RX, t)
     wants_fea = analysis_intent(user_text) or bool(loaded and material_from_words(user_text) and re.search(
         r"\b(run|loaded|load|simulat\w*|check|calculate|what happens)\b", t))
+    if wants_fea and tmpl in ("standoff", "beam") and re.search(HOLLOW_RX, t) and re.search(WALL_RX, t):
+        tube = _hollow_cantilever(t, re.findall(FORCE_RX, t))
+        if tube:
+            return tube
+        return None                                      # a tube we cannot set up surely: the model does it
     if not wants_fea:
         form["action"] = "make"
         pm = next((m for m in PRINT_MATERIALS if re.search(rf"\b{m}\b", t)), None)
