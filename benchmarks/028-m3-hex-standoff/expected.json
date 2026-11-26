@@ -1,0 +1,29 @@
+{
+ "source": "dimensions as asked; hexagon (not a cylinder) with an M3 clearance hole",
+ "expect": [
+  {
+   "metric": "cad.size",
+   "expected": [
+    6.3508529610858835,
+    5.5,
+    20
+   ],
+   "unit": "mm",
+   "tol": 0.01,
+   "any_order": true
+  },
+  {
+   "metric": "cad.valid",
+   "expected": true,
+   "unit": "",
+   "tol": 0
+  },
+  {
+   "metric": "cad.volume",
+   "min": 300,
+   "max": 420,
+   "unit": "mm3",
+   "note": "hex minus hole ~342 mm3; a cylinder or a missing hole falls outside"
+  }
+ ]
+}

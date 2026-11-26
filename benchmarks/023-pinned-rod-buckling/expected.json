@@ -1,0 +1,11 @@
+{
+ "source": "Euler buckling, pinned-pinned (K = 1): P_cr = pi^2 E I / L^2",
+ "expect": [
+  {
+   "metric": "buckling_factor_1",
+   "expected": 2.0862621711647042,
+   "unit": "",
+   "tol": 0.06
+  }
+ ]
+}

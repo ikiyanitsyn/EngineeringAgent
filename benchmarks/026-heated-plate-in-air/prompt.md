@@ -1,0 +1,1 @@
+A 5 W electronics module sits on an aluminium 6061 plate 100 x 100 x 3 mm, spreading its heat over one face. The plate hangs in still air at 20 C, with h = 10 W/m2K on every surface. How hot does the plate get?

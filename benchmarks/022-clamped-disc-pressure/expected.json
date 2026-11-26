@@ -1,0 +1,11 @@
+{
+ "source": "Roark, Table 11.2 case 10b (circular plate, fixed edge, uniform pressure)",
+ "expect": [
+  {
+   "metric": "max_displacement",
+   "expected": 0.065,
+   "unit": "mm",
+   "tol": 0.07
+  }
+ ]
+}

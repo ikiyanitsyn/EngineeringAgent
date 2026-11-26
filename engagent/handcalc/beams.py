@@ -19,6 +19,8 @@ _REF = "Roark's Formulas for Stress and Strain, 8th ed., Table 8.1; Shigley's Me
 
 def _section(I, c, A, kw):
     shape = {k: v for k, v in kw.items() if v is not None}
+    if set(shape) == {"D"}:                           # 'D=10' with no wall: a solid rod, as people write it
+        shape = {"d": shape["D"]}
     if I is not None:
         return {"Ix": I, "cx": c, "A": A, "kappa": 5 / 6}
     s = section_from(shape)
@@ -123,6 +125,9 @@ _LAMBDA = {"cantilever": [1.875104, 4.694091, 7.854757],
            "fixed_pinned": [3.926602, 7.068583, 10.210176]}
 
 
+_SUPPORT_ALIASES = {"pinned_pinned": "simply_supported", "pinned": "simply_supported", "fixed_free": "cantilever",
+                    "clamped_free": "cantilever", "clamped_clamped": "fixed_fixed", "clamped": "fixed_fixed"}
+
 @calc("beam.natural_frequency", "Bending natural frequencies of a uniform beam",
       {"L": "length", "E": "pressure", "density": "density", "support": "text", **_SEC_IN},
       {"f1": "frequency", "f2": "frequency", "f3": "frequency"},
@@ -134,6 +139,7 @@ def natural_frequency(L, E, density, support="cantilever", I=None, c=None, A=Non
                       d=None, D=None, t=None, tf=None, tw=None):
     s = _section(I, c, A, dict(b=b, h=h, d=d, D=D, t=t, tf=tf, tw=tw))
     key = str(support).lower().replace("-", "_").replace(" ", "_")
+    key = _SUPPORT_ALIASES.get(key, key)            # the same words as a column's 'ends'
     if key not in _LAMBDA:
         raise ValueError(f"support must be one of {', '.join(_LAMBDA)}")
     base = math.sqrt(E * s["Ix"] / (density * s["A"] * L**4)) / (2 * math.pi)
@@ -141,6 +147,8 @@ def natural_frequency(L, E, density, support="cantilever", I=None, c=None, A=Non
 
 
 _K = {"fixed_free": 2.0, "pinned_pinned": 1.0, "fixed_pinned": 0.699, "fixed_fixed": 0.5}
+_ENDS_ALIASES = {"simply_supported": "pinned_pinned", "pinned": "pinned_pinned", "cantilever": "fixed_free",
+                 "clamped_free": "fixed_free", "clamped_clamped": "fixed_fixed", "clamped_pinned": "fixed_pinned"}
 
 
 @calc("column.euler_buckling", "Elastic column buckling (Euler) with Johnson short-column check",
@@ -158,6 +166,7 @@ def euler_buckling(L, E, ends="pinned_pinned", yield_strength=None, I=None, c=No
     s = _section(I, c, A, dict(b=b, h=h, d=d, D=D, t=t, tf=tf, tw=tw))
     Imin = min(s["Ix"], s.get("Iy", s["Ix"]))
     key = str(ends).lower().replace("-", "_").replace(" ", "_")
+    key = _ENDS_ALIASES.get(key, key)
     if key not in _K:
         raise ValueError(f"ends must be one of {', '.join(_K)}")
     K = _K[key]

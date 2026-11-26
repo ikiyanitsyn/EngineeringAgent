@@ -54,6 +54,8 @@ def _judge(exp: dict, got) -> tuple[bool, str]:
     if isinstance(want, bool):
         return bool(got) == want, f"{got}"
     if isinstance(want, list):
+        if exp.get("any_order"):                  # a printed part may lie in any orientation
+            got, want = sorted(got), sorted(want)
         ok = len(got) == len(want) and all(abs(abs(g) - abs(w)) <= tol * max(abs(w), 1) for g, w in zip(got, want))
         return ok, "x".join(f"{g:.4g}" for g in got)
     diff = abs(abs(got) - abs(want)) / max(abs(want), 1e-30)

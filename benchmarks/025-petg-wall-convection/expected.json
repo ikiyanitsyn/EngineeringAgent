@@ -1,0 +1,11 @@
+{
+ "source": "Incropera 3.1, plane wall with fixed temperature and convection (series resistances)",
+ "expect": [
+  {
+   "metric": "min_temperature",
+   "expected": 52.30769230769231,
+   "unit": "degC",
+   "tol": 0.015
+  }
+ ]
+}

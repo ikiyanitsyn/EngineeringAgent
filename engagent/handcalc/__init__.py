@@ -81,7 +81,8 @@ def calc(name: str, title: str, inputs: dict[str, str], outputs: dict[str, str],
 
 
 SYNONYMS = {"alpha": "cte", "length": "L", "load": "P", "force": "P", "torque": "T", "thickness": "t",
-            "width": "b", "diameter": "D", "pressure": "p"}
+            "width": "b", "diameter": "D", "pressure": "p", "ends": "support", "support": "ends",
+            "boundary": "support", "edge": "edges"}
 
 
 def _aliases(inputs: dict[str, Any], params: list[str]) -> dict[str, Any]:

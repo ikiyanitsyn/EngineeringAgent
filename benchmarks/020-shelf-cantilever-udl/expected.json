@@ -1,0 +1,11 @@
+{
+ "source": "Roark, Table 8.1 case 2a (cantilever, uniform load), plus shear",
+ "expect": [
+  {
+   "metric": "max_displacement",
+   "expected": 3.8616,
+   "unit": "mm",
+   "tol": 0.05
+  }
+ ]
+}

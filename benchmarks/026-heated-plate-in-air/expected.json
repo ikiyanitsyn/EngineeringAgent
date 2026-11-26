@@ -1,0 +1,11 @@
+{
+ "source": "Energy balance, Q = h A_total (T - T_inf); nearly uniform plate (Bi << 1)",
+ "expect": [
+  {
+   "metric": "max_temperature",
+   "expected": 43.58490566037736,
+   "unit": "degC",
+   "tol": 0.02
+  }
+ ]
+}

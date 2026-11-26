@@ -1,0 +1,28 @@
+{
+ "source": "dimensions as asked; bosses add material inside a 24832 mm3 shell",
+ "expect": [
+  {
+   "metric": "cad.size",
+   "expected": [
+    80,
+    60,
+    30
+   ],
+   "unit": "mm",
+   "tol": 0.001
+  },
+  {
+   "metric": "cad.valid",
+   "expected": true,
+   "unit": "",
+   "tol": 0
+  },
+  {
+   "metric": "cad.volume",
+   "min": 25200,
+   "max": 40000,
+   "unit": "mm3",
+   "note": "shell alone is 24832 mm3: bosses must add material"
+  }
+ ]
+}

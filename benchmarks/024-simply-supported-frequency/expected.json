@@ -1,0 +1,11 @@
+{
+ "source": "Euler-Bernoulli beam, simply supported, first mode: f = (pi / 2 L^2) sqrt(EI / rho A)",
+ "expect": [
+  {
+   "metric": "frequency_1",
+   "expected": 93.81322466470552,
+   "unit": "Hz",
+   "tol": 0.05
+  }
+ ]
+}

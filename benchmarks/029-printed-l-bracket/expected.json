@@ -1,0 +1,29 @@
+{
+ "source": "dimensions as asked; two 4 mm legs with a hole each",
+ "expect": [
+  {
+   "metric": "cad.size",
+   "expected": [
+    40,
+    20,
+    40
+   ],
+   "unit": "mm",
+   "tol": 0.01,
+   "any_order": true
+  },
+  {
+   "metric": "cad.valid",
+   "expected": true,
+   "unit": "",
+   "tol": 0
+  },
+  {
+   "metric": "cad.volume",
+   "min": 5000,
+   "max": 6050,
+   "unit": "mm3",
+   "note": "legs 6080 mm3 minus the corner overlap and two holes"
+  }
+ ]
+}

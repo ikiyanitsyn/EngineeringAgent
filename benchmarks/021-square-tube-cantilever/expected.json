@@ -1,0 +1,11 @@
+{
+ "source": "Roark, Table 8.1 case 1a with the hollow-section inertia (Table A.1), plus thin-wall shear",
+ "expect": [
+  {
+   "metric": "max_displacement",
+   "expected": 5.183205449519769,
+   "unit": "mm",
+   "tol": 0.05
+  }
+ ]
+}
