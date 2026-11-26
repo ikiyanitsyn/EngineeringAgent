@@ -1,0 +1,229 @@
+[
+ {
+  "case": "020-shelf-cantilever-udl",
+  "source": "Roark, Table 8.1 case 2a (cantilever, uniform load), plus shear",
+  "seconds": 34.30051398277283,
+  "request": "Plan: a 300 x 30 x 10 mm bar (30 wide, 10 thick, lying flat), mild steel (steel_s235), fixed at the wall end (xmin). The 600 N of books is applied as a total force of 600 N down (-Z) over the top face. Hand check: a cantilever with uniform load deflects the same as an end load of 3/8 of the total, so I check against P = 225 N at the tip (exact textbook equivalent). Self-weight is ignored.\n\n```bash\nea make beam length=300 width=30 height=10 --name \"shelf bar\"\nea analyze last -m steel_s235 --fix xmin --force zmax 0,0,-600 --check \"beam.cantilever_end_load P=225 L=300 E=210GPa b=30 h=10 nu=0.3\"\n```\n",
+  "answered_by": "Claude chat round 3",
+  "checks": [
+   {
+    "metric": "max_displacement",
+    "expected": 3.8616,
+    "ok": true,
+    "detail": "3.822 (1.0 % off, tol 5 %)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "max_displacement: 3.822 (1.0 % off, tol 5 %)"
+ },
+ {
+  "case": "021-square-tube-cantilever",
+  "source": "Roark, Table 8.1 case 1a with the hollow-section inertia (Table A.1), plus thin-wall shear",
+  "seconds": 129.24390363693237,
+  "request": "Plan: square tube 40 x 40 mm, 3 mm wall, 600 mm long (beam template, rect_tube), Al 6061-T6, clamped at xmin, 500 N down (-Z) at the free end face. Hand check: the tube's second moment of area (about 101,970 mm^4) equals that of a 40 wide x 31.3 deep solid rectangle, so the cantilever formula is used with that equivalent section.\n\n```bash\nea make beam length=600 width=40 height=40 section=rect_tube wall=3 --name \"square tube\"\nea analyze last -m al_6061_t6 --fix xmin --force xmax 0,0,-500 --check \"beam.cantilever_end_load P=500 L=600 E=69GPa b=40 h=31.3 nu=0.33\"\n```\n",
+  "answered_by": "Claude chat round 3",
+  "checks": [
+   {
+    "metric": "max_displacement",
+    "expected": 5.183205449519769,
+    "ok": true,
+    "detail": "5.187 (0.1 % off, tol 5 %)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "max_displacement: 5.187 (0.1 % off, tol 5 %)"
+ },
+ {
+  "case": "022-clamped-disc-pressure",
+  "source": "Roark, Table 11.2 case 10b (circular plate, fixed edge, uniform pressure)",
+  "seconds": 629.5679180622101,
+  "request": "Plan: no template makes a round disc, so a short custom shape: 200 mm diameter, 5 mm thick, steel (steel_generic), outer rim clamped, 1 bar = 0.1 MPa pushing on the top face. Hand check: clamped circular plate under uniform pressure (plate.circular_uniform); the plate is thin relative to its diameter so the textbook result should be close.\n\n```python\nfrom build123d import *\nfrom engagent.cad import params, save\nP = params(diameter=200.0, thickness=5.0)\npart = Pos(P.diameter / 2, P.diameter / 2, P.thickness / 2) * Cylinder(P.diameter / 2, P.thickness)\nsave(part)\n```\n```bash\nea make geometry.py --name \"clamped disc\"\nea analyze last -m steel_generic --fix cyl:100 --pressure zmax 0.1 --check \"plate.circular_uniform p=0.1 a=100 t=5 E=210GPa nu=0.3 edge=clamped\"\n```\n",
+  "answered_by": "Claude chat round 3",
+  "checks": [
+   {
+    "metric": "max_displacement",
+    "expected": 0.065,
+    "ok": true,
+    "detail": "0.06544 (0.7 % off, tol 7 %)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "max_displacement: 0.06544 (0.7 % off, tol 7 %)"
+ },
+ {
+  "case": "023-pinned-rod-buckling",
+  "source": "Euler buckling, pinned-pinned (K = 1): P_cr = pi^2 E I / L^2",
+  "seconds": 21.189488410949707,
+  "request": "Plan: round rod, 10 mm diameter, 400 mm long, Al 6061-T6, axis along Z (custom shape). Pinned both ends: the bottom centre point is fixed, the top centre point is only free to move along Z, and one extra point stops spin about the axis; 1000 N compression is applied on the top face. Buckling analysis, so the first load factor is the safety factor. Hand check: Euler pinned-pinned column, using the square section with the same second moment of area as the 10 mm circle (8.76 x 8.76 mm).\n\n```python\nfrom build123d import *\nfrom engagent.cad import params, save\nP = params(diameter=10.0, length=400.0)\npart = Pos(P.diameter / 2, P.diameter / 2, P.length / 2) * Cylinder(P.diameter / 2, P.length)\nsave(part)\n```\n```bash\nea make geometry.py --name \"pinned rod\"\nea analyze last -m al_6061_t6 -a buckling --fix point:5,5,0 --slide point:5,5,400 x --slide point:5,5,400 y --slide point:10,5,0 y --force zmax 0,0,-1000 --check \"column.euler_buckling L=400 E=69GPa b=8.76 h=8.76 ends=pinned_pinned\"\n```\n",
+  "answered_by": "Claude chat round 3",
+  "checks": [
+   {
+    "metric": "buckling_factor_1",
+    "expected": 2.0862621711647042,
+    "ok": true,
+    "detail": "2.083 (0.2 % off, tol 6 %)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "buckling_factor_1: 2.083 (0.2 % off, tol 6 %)"
+ },
+ {
+  "case": "024-simply-supported-frequency",
+  "source": "Euler-Bernoulli beam, simply supported, first mode: f = (pi / 2 L^2) sqrt(EI / rho A)",
+  "seconds": 41.779335498809814,
+  "request": "Plan: steel bar 500 x 20 x 10 mm (20 wide, 10 thick, lying flat), steel_generic, simply supported at both ends: end faces held vertically (Z) only so they can rotate, plus point constraints for axial and sideways motion. Modal analysis, first bending mode is vertical. Hand check: simply supported beam natural frequency.\n\n```bash\nea make beam length=500 width=20 height=10 --name \"supported bar\"\nea analyze last -m steel_generic -a modal --slide xmin z --slide xmax z --slide point:0,0,0 x --slide point:0,0,0 y --slide point:500,0,0 y --check \"beam.natural_frequency L=500 E=210GPa b=20 h=10 density=7850 ends=simply_supported\"\n```\n",
+  "answered_by": "Claude chat round 3",
+  "checks": [
+   {
+    "metric": "frequency_1",
+    "expected": 93.81322466470552,
+    "ok": true,
+    "detail": "93.76 (0.1 % off, tol 5 %)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "frequency_1: 93.76 (0.1 % off, tol 5 %)"
+ },
+ {
+  "case": "025-petg-wall-convection",
+  "source": "Incropera 3.1, plane wall with fixed temperature and convection (series resistances)",
+  "seconds": 14.67128324508667,
+  "request": "Plan: model the wall as a 5 mm thick PETG slab (50 x 50 mm patch), inside face (zmin) held at 60 C, outside face (zmax) cooled by air at 20 C with h = 10. Steady thermal analysis. Hand check: wall conduction plus convection, using k = 0.2 W/mK, a typical PETG value that I assumed (not supplied by you); the tool uses its own library value in the FEA.\n\n```bash\nea make plate length=50 width=50 thickness=5 --name \"petg wall\"\nea analyze last -m petg -a thermal --temp zmin 60 --convect zmax 10 20 --check \"thermal.wall_conduction_convection k=0.2 L=5 h=10 T_fixed=60 T_ambient=20\"\n```\n",
+  "answered_by": "Claude chat round 3",
+  "checks": [
+   {
+    "metric": "min_temperature",
+    "expected": 52.30769230769231,
+    "ok": true,
+    "detail": "52.31 (0.0 % off, tol 1.5 %)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "min_temperature: 52.31 (0.0 % off, tol 1.5 %)"
+ },
+ {
+  "case": "026-heated-plate-in-air",
+  "source": "Energy balance, Q = h A_total (T - T_inf); nearly uniform plate (Bi << 1)",
+  "seconds": 192.81200504302979,
+  "request": "Plan: Al 6061 plate 100 x 100 x 3 mm, 5 W applied over the top face (zmax), convection h = 10 to 20 C air on all six faces, steady thermal. No exact textbook case, so I add a bound: a lumped steady-state estimate (5 W through h x total area 0.0212 m^2, about 23.6 K rise) which the FEA hot spot should meet or slightly exceed. It only checks FEA is on the expected side.\n\n```bash\nea make plate length=100 width=100 thickness=3 --name \"heated plate\"\nea analyze last -m al_6061_t6 -a thermal --heat zmax 5 --convect xmin+xmax+ymin+ymax+zmin+zmax 10 20 --bound \"thermal.lumped_transient h=10 A=0.0212 mass=0.081 cp=896 Q=5 T_ambient=20 t=100000 -> T\"\n```\n",
+  "answered_by": "Claude chat round 3",
+  "checks": [
+   {
+    "metric": "max_temperature",
+    "expected": 43.58490566037736,
+    "ok": true,
+    "detail": "43.61 (0.1 % off, tol 2 %)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "max_temperature: 43.61 (0.1 % off, tol 2 %)"
+ },
+ {
+  "case": "027-box-with-bosses",
+  "source": "dimensions as asked; bosses add material inside a 24832 mm3 shell",
+  "seconds": 1.1681506633758545,
+  "request": "Plan: enclosure template 80 x 60 x 30 mm outside, 2 mm walls and floor, open top, four screw bosses in the corners. Defaults I chose: PETG, 4 mm corner radius, 7 mm bosses with 2.8 mm holes (M3 self-tapping pilot). Print check included.\n\n```bash\nea make enclosure length=80 width=60 height=30 wall=2 floor=2 corner_radius=4 boss_diameter=7 boss_hole=2.8 --print petg --name \"screw boss box\"\n```\n",
+  "answered_by": "Claude chat round 3",
+  "checks": [
+   {
+    "metric": "cad.size",
+    "expected": [
+     80,
+     60,
+     30
+    ],
+    "ok": true,
+    "detail": "80x60x30"
+   },
+   {
+    "metric": "cad.valid",
+    "expected": true,
+    "ok": true,
+    "detail": "True"
+   },
+   {
+    "metric": "cad.volume",
+    "expected": {
+     "min": 25200,
+     "max": 40000
+    },
+    "ok": true,
+    "detail": "2.819e+04 (allowed 25200 .. 40000)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "cad.size: 80x60x30; cad.valid: True; cad.volume: 2.819e+04 (allowed 25200 .. 40000)"
+ },
+ {
+  "case": "028-m3-hex-standoff",
+  "source": "dimensions as asked; hexagon (not a cylinder) with an M3 clearance hole",
+  "seconds": 3.26888370513916,
+  "request": "Plan: custom hex standoff (no template makes a hex): 5.5 mm across flats, 20 mm long, 3.4 mm M3 clearance hole through. Defaults: PETG, FDM. Note the wall is only about 1 mm at the flats, so it is thin for printing; the print check will say how it fares.\n\n```python\nfrom build123d import *\nfrom engagent.cad import params, save\nP = params(across_flats=5.5, length=20.0, hole=3.4)\nR = P.across_flats / 1.7320508          # corner radius of the hexagon\npart = extrude(Plane.XY * RegularPolygon(R, 6), P.length)\npart -= Cylinder(P.hole / 2, P.length * 3)\npart = Pos(R, P.across_flats / 2, 0) * part\nsave(part)\n```\n```bash\nea make geometry.py --print petg --name \"M3 hex standoff\"\n```\n",
+  "answered_by": "Claude chat round 3",
+  "checks": [
+   {
+    "metric": "cad.size",
+    "expected": [
+     6.3508529610858835,
+     5.5,
+     20
+    ],
+    "ok": true,
+    "detail": "5.5x6.351x20"
+   },
+   {
+    "metric": "cad.valid",
+    "expected": true,
+    "ok": true,
+    "detail": "True"
+   },
+   {
+    "metric": "cad.volume",
+    "expected": {
+     "min": 300,
+     "max": 420
+    },
+    "ok": true,
+    "detail": "342.4 (allowed 300 .. 420)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "cad.size: 5.5x6.351x20; cad.valid: True; cad.volume: 342.4 (allowed 300 .. 420)"
+ },
+ {
+  "case": "029-printed-l-bracket",
+  "source": "dimensions as asked; two 4 mm legs with a hole each",
+  "seconds": 0.32899904251098633,
+  "request": "Plan: l_bracket template with two 40 mm legs, 20 mm wide, 4 mm thick, one 5 mm hole per leg (centred across the width). Defaults I chose: PETG, 2 mm inside radius (small, but easier to print than a sharp corner). Print check included.\n\n```bash\nea make l_bracket leg_x=40 leg_z=40 width=20 thickness=4 inside_radius=2 hole_diameter=5 holes_per_leg=1 --print petg --name \"printed L-bracket\"\n```\n",
+  "answered_by": "Claude chat round 3",
+  "checks": [
+   {
+    "metric": "cad.size",
+    "expected": [
+     40,
+     20,
+     40
+    ],
+    "ok": true,
+    "detail": "20x40x40"
+   },
+   {
+    "metric": "cad.valid",
+    "expected": true,
+    "ok": true,
+    "detail": "True"
+   },
+   {
+    "metric": "cad.volume",
+    "expected": {
+     "min": 5000,
+     "max": 6050
+    },
+    "ok": true,
+    "detail": "5940 (allowed 5000 .. 6050)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "cad.size: 20x40x40; cad.valid: True; cad.volume: 5940 (allowed 5000 .. 6050)"
+ }
+]

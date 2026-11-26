@@ -337,8 +337,8 @@ def _safe_link(spec: str, job: dict, system: str | None) -> dict:
     as NOT DONE (verdict REVIEW) with the reason, and the FEA still runs."""
     try:
         return link_check(spec, job, system)
-    except (ValueError, KeyError) as e:
-        msg = str(e).strip("'\"")
+    except Exception as e:                         # any slip in an optional check: report it, run the FEA
+        msg = str(e).strip("'\"") or type(e).__name__
         print(f"WARNING: hand check not set up - {msg}", file=sys.stderr)
         return {"name": f"Hand check: {spec.split()[0] if spec.split() else spec}", "setup_error": msg}
 
@@ -466,11 +466,11 @@ def link_check(spec: str, job: dict, system: str | None = None) -> dict:
     outs = res.outputs
     if out_name is None:
         for cand in ("deflection", "f1", "P_cr", "heat_flow", "T_surface", "T_at_x", "T_tip", "elongation",
-                     "growth", "stress"):
+                     "growth", "stress", "von_mises_inner", "peak_stress", "von_mises"):
             if cand in outs:
                 out_name = cand
                 break
-    if out_name not in outs and metric is None and re.search(
+    if out_name and out_name not in outs and metric is None and re.search(
             r"displacement|von_mises|stress|principal|temperature|frequency|^probe\.|^heat_flow", out_name):
         metric = out_name                          # "-> max_displacement": a result named, not an output
         prefer = (("deflection", "growth", "elongation", "twist_displacement") if "displacement" in metric else
@@ -484,6 +484,9 @@ def link_check(spec: str, job: dict, system: str | None = None) -> dict:
             near = [o for o in near if "mises" in o] or near
         if len(near) == 1 or (near and metric):
             out_name = near[0]
+    if out_name is None:
+        raise ValueError(f"{name} has several outputs - name one with '-> OUTPUT@metric' "
+                         f"(outputs: {', '.join(outs)})")
     if out_name not in outs:
         raise ValueError(f"{name} has no output {out_name!r}; outputs: {', '.join(outs)}")
     tol = 0.05
@@ -521,6 +524,9 @@ def link_check(spec: str, job: dict, system: str | None = None) -> dict:
         elif out_name == "stress":
             metric = "max_von_mises"
             tol = 0.15
+        elif out_name in ("von_mises_inner", "peak_stress", "von_mises"):   # a smooth peak (Lame bore, Kt hole)
+            metric = "max_von_mises"
+            tol = 0.06
     if target.strip():
         entry["name"] += f" ({out_name.replace('_', ' ')})"
     entry.update(output=out_name, tol=float(tol_m.group(1)) if tol_m else tol)

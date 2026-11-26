@@ -44,3 +44,13 @@ def test_no_benchmark_answer_leaks_into_the_chatbot_prompt():
 def test_judge_bounds_catch_a_missing_feature():
     assert not bench._judge({"metric": "cad.volume", "max": 5900}, 6000.0)[0]   # plain plate, no slots
     assert bench._judge({"metric": "cad.volume", "max": 5900}, 5600.0)[0]
+
+
+def test_a_check_without_an_output_name_never_crashes_the_run():
+    """Gemini baseline 2026-11-26, case 013: '--check pressure.thick_cylinder ...' with no '->' crashed (TypeError)."""
+    from engagent.quick import _safe_link
+    job = {"loads": [{"on": "cyl", "type": "pressure"}], "constraints": [], "analysis": "static"}
+    out = _safe_link("pressure.thick_cylinder p=100 ri=30 ro=50", job, None)
+    assert out.get("metric") == "max_von_mises" and out.get("output") == "von_mises_inner"   # picked, not crashed
+    bad = _safe_link("column.euler_buckling", job, None)                                       # a broken check
+    assert "setup_error" in bad
