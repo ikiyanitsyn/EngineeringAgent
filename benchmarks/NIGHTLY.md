@@ -92,7 +92,7 @@ toolkit absorbing the slips any AI makes, not a different answer.
 |---|---|---|
 | Gemini, 19 earlier cases (baseline at midnight) | 14 / 19 (4 daily-quota errors, 1 crash) | crash fixed |
 | Claude chat stand-in (Sonnet, sheet only), 10 new cases | - | **10 / 10** |
-| Rules only (no AI model), new cases | shelf case: CAD only (wrong) | shelf case PASS (1.0 % off) |
+| Rules only (no AI model), all 29 cases | about 10 (shelf: CAD only; hex: round part; L-bracket: wrong size) | **20 / 29**, no FAIL or wrong answer (the other 9 need a model) |
 
 ### Improvements merged
 1. Hand check without an output name no longer crashes the run (Gemini case 013); the smooth peak stress
@@ -103,3 +103,12 @@ toolkit absorbing the slips any AI makes, not a different answer.
    false mode at half the real frequency in the toolkit check).
 5. Rules: a load spread along a cantilever is a pressure on the top face, not a tip load (2.7x error
    avoided); "how far ... drop" is an analysis; a hex part is a custom shape, not the round standoff.
+6. Rules (no AI model needed, so they work when the free Gemini quota is gone - it ran out after ~6 calls
+   tonight): square / rectangular / round tube cantilevers; pinned-pinned columns held at true pins (the old
+   rule modelled fixed-pinned: 2x Euler; the hand check caught it) and solid round rods (new round beam
+   section); first natural frequency of cantilever / simply supported / fixed-fixed bars (half models, faces
+   held); flat round plates under pressure (Roark 11.2, clamped or simply supported); a wall with one face held
+   and air on the other; a heated plate cooled by air; L-bracket sizes read from the words.
+7. A deflection hand check under a spread load compares the peak, not the average over the loaded face (a
+   simply supported round plate showed a false 55 % FAIL while the FEA was 0.25 % off Roark).
+8. thermal.convection also gives the surface temperature from a heat input.
