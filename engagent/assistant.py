@@ -381,7 +381,8 @@ def _run_form(form: dict, user_text: str, say, run: bool, out: dict) -> dict:
         return out
     if form.get("action") == "raw":                      # ready `ea` lines from the rules (e.g. symmetry)
         from .guard import check_request, question
-        invented = check_request(form["request"], user_text)
+        derived = " ".join(f"{v:.6g}" for v in form.get("derived", []))   # computed by the rules from
+        invented = check_request(form["request"], user_text + (" " + derived if derived else ""))  # the user's numbers
         if invented:
             out.update(kind="question", reply=question(invented))
             return out

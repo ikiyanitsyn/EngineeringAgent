@@ -35,7 +35,8 @@ PRINT_WORDS = r"3d[- ]?print|printable|\bprint\b|\bstl\b|\b3mf\b|filament|\bfdm\
 # plain template that only matches its size (benchmark 018: a "cable comb ... plate" came out with no slots)
 CUSTOM_RX = (r"\b(slots?|slotted|notch(?:es|ed)?|grooves?|cut-?outs?|pockets?|ribs?|tabs?|d-?shaped|d-?shaft|"
              r"knobs?|combs?|handles?|hinges?|latch(?:es)?|snap[- ]?fits?|gears?|pulleys?|engrav\w*|emboss\w*|"
-             r"logos?|text|letters?|countersunk|counterbor\w*|chamfered|teeth|fingers?|dovetails?|keyways?)\b")
+             r"logos?|text|letters?|countersunk|counterbor\w*|chamfered|teeth|fingers?|dovetails?|keyways?|"
+             r"hex|hexagon(?:al)?)\b")
 PRINT_MATERIALS = ["petg", "pla", "abs", "asa", "pc", "nylon", "tpu", "pa12"]
 FORCE_RX = NUM + r"\s*(kn|n|newtons?|kg|kgs|kilos?|kilograms?|lbf|lbs?|pounds?)(?![a-z])"
 # an alloy number is not a pressure: "aluminium 6061 bar" is a bar of 6061, not 6061 bar
@@ -143,7 +144,7 @@ def dimensions(t: str, tmpl: str) -> dict:
 
 def _direction(t: str) -> str | None:
     if re.search(r"\b(hang|hangs|hanging|weight|down|downward|downwards|sits?|resting|pushing|pushes|presses|"
-                 r"standing|stands|load(?:ed)? on top|on top)\b", t):
+                 r"standing|stands|load(?:ed)? on top|on top|on its top|along its top|drops?|droops?|sags?)\b", t):
         return "-z"
     if re.search(r"\b(up|upward|upwards|lifts?)\b", t):
         return "+z"
@@ -157,6 +158,8 @@ def _mechanical(t: str, tmpl: str, form: dict) -> dict | None:
         return None
     if tmpl == "beam":
         if re.search(r"\bboth ends\b|\beach end\b|simply supported|\btwo supports\b|\bat each end\b", t):
+            if re.search(SPREAD_RX, t):
+                return None                              # a spread load on two supports: the model handles it
             return _simply_supported(t, form, forces)
         if not re.search(r"\b(one end|an end|cantilever|to a wall|into a wall|wall at|clamped at|fixed at|"
                          r"bolted at|welded at|built[- ]in)\b", t):
@@ -164,6 +167,8 @@ def _mechanical(t: str, tmpl: str, form: dict) -> dict | None:
         if not re.search(r"\b(free end|the end|other end|its end|the tip|at the tip|end of)\b", t) and \
                 not re.search(r"\bcantilever\b", t):         # a cantilever "loaded at one end" = at the tip
             return None
+        if re.search(SPREAD_RX, t):                     # spread along the bar, not at the tip
+            return _cantilever_udl(t, form, forces)
         fixed, face = ["xmin"], "xmax"
     elif tmpl == "plate":
         if re.search(r"\b(all|four|4) (edges|sides)\b|\ball round\b|\baround the edge", t):
@@ -203,6 +208,38 @@ def _mechanical(t: str, tmpl: str, form: dict) -> dict | None:
                 "unit": {"mpa": "MPa", "kpa": "kPa", "bar": "bar", "psi": "psi"}[unit]}
     form.update(fixed_faces=fixed, loads=[load], analysis="static")
     return form
+
+
+SPREAD_RX = r"\b(spread|evenly|uniform(?:ly)?|distributed|along (?:its|the) (?:whole |full )?(?:top|length))\b"
+
+
+def _cantilever_udl(t: str, form: dict, forces) -> dict | None:
+    """A cantilever with its load spread evenly along the top (a shelf of books): pressure on the top face,
+    checked against Roark's uniformly loaded cantilever. A tip load here would overstate the drop 2.7x."""
+    if len(forces) != 1:
+        return None
+    p = form["params"]
+    if not {"length", "width", "height"} <= set(p):
+        return {"action": "question", "question": "To run this analysis I still need: the bar's length and "
+                "cross-section (width x thickness in mm). Reply in a comment and I will run it."}
+    mag, unit = forces[0]
+    from .structured import TO_N
+    unit = {"n": "N", "newton": "N", "newtons": "N", "kn": "kN", "lbf": "lbf", "lb": "lb", "lbs": "lb",
+            "pound": "lb", "pounds": "lb"}.get(unit, "kg")
+    if (_direction(t) or ("-z" if unit in ("kg", "lb") else None)) != "-z":
+        return None
+    P = float(mag) * TO_N[unit]
+    L, b, h = p["length"], p["width"], p["height"]
+    mat = material_from_words(t)
+    from . import materials
+    nu = materials.get(mat).props.get("nu", 0.3)
+    req = (f'ea make beam length={L:g} width={b:g} height={h:g} --name "cantilever, spread load"\n'
+           f'ea analyze last -m {mat} --fix xmin --pressure zmax {P / (L * b):.6g} '
+           f'--check "beam.cantilever_udl w={P / L:.6g} L={L:g} E={_E(mat)} nu={nu:g} b={b:g} h={h:g}"')
+    return {"action": "raw", "request": req, "derived": [P / (L * b), P / L],
+            "plan": f"_The {P:g} N is spread evenly along the top, so it is applied as a pressure "
+                    f"({P / (L * b):.4g} MPa) on the top face, not at the tip; checked against the uniformly "
+                    "loaded cantilever (Roark)._"}
 
 
 def _simply_supported(t: str, form: dict, forces) -> dict | None:

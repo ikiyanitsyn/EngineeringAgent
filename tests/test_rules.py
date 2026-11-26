@@ -257,3 +257,15 @@ def test_a_bare_moment_is_newton_metres_not_millimetres():
     assert check_request("ea analyze last -m steel_generic --fix zmin --moment zmax 0,0,100000", u)   # 1000x
     assert not check_request("ea analyze last -m steel_generic --fix zmin --moment zmax 0,0,100", u)
     assert not check_request("ea analyze last -m steel_generic --fix zmin --moment zmax 0,0,100000N*mm", u)
+
+
+def test_a_load_spread_along_a_cantilever_is_a_pressure_not_a_tip_load():
+    t = ("A mild steel shelf bar, 300 mm long, 30 mm wide and 10 mm thick (lying flat), is fixed to a wall at one "
+         "end. 600 N of books are spread evenly along its top. How far does the free end drop?")
+    f = form_from_words(t)
+    assert f["action"] == "raw" and "--pressure zmax 0.0666667" in f["request"]
+    assert "--force" not in f["request"] and "cantilever_udl w=2 L=300" in f["request"]
+
+
+def test_a_hex_part_is_not_the_round_standoff_template():
+    assert form_from_words("Make a printable M3 hex standoff, 5.5 mm across flats and 20 mm long") is None

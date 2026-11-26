@@ -168,7 +168,8 @@ INTENT = ("bend", "deflect", "sag", "stress", "strength", "strong", "will it hol
           "hold the weight", "hold the load", "break", "fail", "safety factor",
           "safe", "carry", "support the", "vibrat", "frequency", "resonan", "buckl", "temperature", "how hot",
           "heat", "cool", "thermal", "fatigue", "analy", "fea", "stiff", "deform", "crack", "stretch", "elongat",
-          "compress", "twist", "torsion", "displace", "move under", "yield", "load capacity")
+          "compress", "twist", "torsion", "displace", "move under", "yield", "load capacity",
+          "how far", " drop", "droop", " sink")
 LOAD_UNITS = r"(n|kn|kg|g|lb|lbs|lbf|kip|psi|ksi|mpa|kpa|bar|pa|w|kw|nm|n\.?m|n\*m|°c|°f|degc|degf|c|f|k|newtons?|kilos?|pounds?)\b"
 SUPPORT_WORDS = ("fix", "bolt", "clamp", "held", "hold", "mount", "support", "wall", "weld", "screw", "rest",
                  "sits", "attached", "cantilever", "pinned", "both ends", "one end")
