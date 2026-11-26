@@ -21,12 +21,17 @@ def conduction_slab(k, A, L, T_hot, T_cold, x=None):
     return out
 
 
-@calc("thermal.convection", "Convective heat flow from a surface",
-      {"h": "film", "A": "area", "T_surface": "temperature", "T_ambient": "temperature"},
-      {"heat_flow": "power"}, ["q = h A (T_s - T_inf)"],
+@calc("thermal.convection", "Convective heat flow from a surface (or, given the heat, the surface temperature)",
+      {"h": "film", "A": "area", "T_surface": "temperature", "T_ambient": "temperature", "heat_flow": "power"},
+      {"heat_flow": "power", "T_surface": "temperature"},
+      ["q = h A (T_s - T_inf)", "T_s = T_inf + q / (h A)   (a body losing heat q from area A)"],
       "Incropera, Fundamentals of Heat and Mass Transfer, 7th ed., Eq. 1.3a")
-def convection(h, A, T_surface, T_ambient):
-    return {"heat_flow": h * A * (T_surface - T_ambient)}
+def convection(h, A, T_ambient, T_surface=None, heat_flow=None):
+    if T_surface is not None:
+        return {"heat_flow": h * A * (T_surface - T_ambient), "T_surface": T_surface}
+    if heat_flow is None:
+        raise ValueError("give T_surface (to get the heat flow) or heat_flow (to get the surface temperature)")
+    return {"T_surface": T_ambient + heat_flow / (h * A), "heat_flow": heat_flow}
 
 
 @calc("thermal.wall_conduction_convection", "Slab with fixed temperature on one face, convection on the other",

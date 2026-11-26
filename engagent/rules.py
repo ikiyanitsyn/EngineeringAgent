@@ -317,6 +317,36 @@ def _wall_convection(t: str) -> dict | None:
                     "a plane wall with convection (Incropera 3.1)._"}
 
 
+def _heated_plate(t: str) -> dict | None:
+    """A plate carrying a heat load (an electronics module, a heater) cooled by air on every surface:
+    steady energy balance T = T_air + Q / (h A_total), good when the plate conducts well (Bi << 1)."""
+    q = re.search(NUM + r"\s*(?:w|watts?)\b", t)
+    h = re.search(r"\bh\s*(?:=|of|is)?\s*" + NUM, t)
+    tri = re.search(NUM + r"\s*(?:mm)?\s*[x×*]\s*" + NUM + r"\s*(?:mm)?\s*[x×*]\s*" + NUM + r"\s*mm", t)
+    amb = re.search(r"\b(?:air|ambient)\b[^.]*?" + TEMP_RX, t) or re.search(TEMP_RX + r"[^.]*?\b(?:air|ambient)\b", t)
+    mat = material_from_words(t)
+    if not (q and h and tri and amb and mat) or not re.search(r"\b(plate|panel|sheet|block|heat ?spreader)\b", t):
+        return None
+    if not re.search(r"\b(every|all|each)\s+(surface|face|side)s?\b|\ball (?:round|over)\b", t):
+        return None                                      # only some faces cooled: the model sets it up
+    from . import materials
+    k = materials.get(mat).props.get("k") or 0
+    a, b, c = (float(tri.group(i)) for i in (1, 2, 3))
+    T = min(a, b, c)
+    if k < 10:                                           # a poor conductor is not uniform: not this simple case
+        return None
+    Q, hv = float(q.group(1)), float(h.group(1))
+    Ta = float(amb.group(1)) if amb.group(2) != "f" else (float(amb.group(1)) - 32) * 5 / 9
+    area = 2 * (a * b + b * c + a * c)
+    req = (f'ea make plate length={a:g} width={b:g} thickness={c:g} --name "heated plate"\n'
+           f'ea analyze last -a thermal -m {mat} --heat zmin {Q:g} --convect xmin+xmax+ymin+ymax+zmin+zmax {hv:g} {Ta:g} '
+           f'--check "thermal.convection h={hv:g} A={area:g} T_ambient={Ta:g} heat_flow={Q:g} -> T_surface"')
+    return {"action": "raw", "request": req, "derived": [area],
+            "plan": f"_{Q:g} W into the plate, lost to air at {Ta:g} C (h = {hv:g}) from all {area:g} mm2 of its "
+                    "surface; checked against the steady energy balance T = T_air + Q / (h A) (Incropera Eq. 1.3a), "
+                    "which holds when the plate conducts well._"}
+
+
 def _round_plate(t: str) -> dict | None:
     """A flat round plate (disc, cover, diaphragm) under uniform pressure, its edge clamped or simply supported:
     Roark Table 11.2 cases 10a / 10b. None (-> the model) when anything is unclear."""
@@ -345,7 +375,7 @@ def _round_plate(t: str) -> dict | None:
            f"save(Cylinder({R:g}, {tk:g}, align=(Align.CENTER, Align.CENTER, Align.MIN)))\n```\n"
            f"```bash\nea make geometry.py --name \"round plate\"\n"
            f"ea analyze last -m {mat} {hold} --pressure zmax {q:.6g} "
-           f"--check \"plate.circular_uniform q={q:.6g} r={R:g} t={tk:g} E={_E(mat)} nu={nu:g} edges={edges} -> deflection\"\n```")
+           f"--check \"plate.circular_uniform q={q:.6g} r={R:g} t={tk:g} E={_E(mat)} nu={nu:g} edges={edges} -> deflection@max_displacement\"\n```")
     return {"action": "raw", "request": req, "derived": [q],
             "plan": f"_A {D:g} mm round plate, {tk:g} mm thick, {edges.replace('_', ' ')} at its edge, with "
                     f"{q:g} MPa on one face; checked against Roark Table 11.2 (case 10{'b' if edges == 'clamped' else 'a'})._"}
@@ -556,7 +586,7 @@ def form_from_words(user_text: str, first: str | None = None) -> dict | None:
         if joined:
             return joined
     if analysis_intent(user_text):
-        wall = _wall_convection(t)
+        wall = _wall_convection(t) or _heated_plate(t)
         if wall:
             return wall
     if analysis_intent(user_text) and re.findall(PRESSURE_RX, t) and re.search(

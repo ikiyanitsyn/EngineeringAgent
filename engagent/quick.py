@@ -491,7 +491,10 @@ def link_check(spec: str, job: dict, system: str | None = None) -> dict:
         raise ValueError(f"{name} has no output {out_name!r}; outputs: {', '.join(outs)}")
     tol = 0.05
     if metric is None:
-        if out_name in ("deflection", "elongation", "growth") and load_sets:
+        if out_name == "deflection" and any(l.get("type") == "pressure" for l in job["loads"]):
+            metric = "max_displacement"         # a spread load: the textbook gives the peak (tip / centre), not
+                                                # the average over the loaded face (a plate's is ~1/3 to 1/2 of it)
+        elif out_name in ("deflection", "elongation", "growth") and load_sets:
             metric = f"probe.{load_sets[0]}.displacement"
         elif out_name == "f1":
             metric = "frequency_1"
