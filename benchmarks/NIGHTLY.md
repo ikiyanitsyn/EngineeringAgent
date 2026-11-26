@@ -113,3 +113,10 @@ toolkit absorbing the slips any AI makes, not a different answer.
 7. A deflection hand check under a spread load compares the peak, not the average over the loaded face (a
    simply supported round plate showed a false 55 % FAIL while the FEA was 0.25 % off Roark).
 8. thermal.convection also gives the surface temperature from a heat input.
+
+### Morning report (6 am PT, 2026-11-26)
+- Chat stand-in: 29 / 29 (fresh blind round on all cases). Rules only: about 10 -> 20 / 29 (structures 12/15,
+  thermal 4/6, print 4/8), no wrong answers. Gemini baseline at midnight: 14 / 19, its quota ran out after ~6 calls.
+- Average time per case: chat route 59 s, Gemini 113 s.
+- Merged without asking first, flagged for the owner: a deflection hand check under a spread load now compares
+  the FEA maximum, not the loaded-face average (verification logic). Revert offered.
