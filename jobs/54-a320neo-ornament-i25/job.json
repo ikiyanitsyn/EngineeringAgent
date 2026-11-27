@@ -1,0 +1,56 @@
+{
+ "name": "54-a320neo-ornament-i25",
+ "units": "metric",
+ "analysis": "static",
+ "title": "static analysis of part",
+ "geometry": {
+  "script": "geometry.py"
+ },
+ "material": "pla",
+ "sets": {
+  "hole_4_5": {
+   "cylinder": {
+    "diameter": 4.5
+   }
+  }
+ },
+ "constraints": [
+  {
+   "type": "fixed",
+   "on": "hole_4_5"
+  }
+ ],
+ "loads": [
+  {
+   "type": "gravity",
+   "g": [
+    0.0,
+    0.0,
+    -19.62
+   ]
+  }
+ ],
+ "probes": {},
+ "criteria": {
+  "yield_sf": 1.5
+ },
+ "hand_calcs": [
+  {
+   "name": "Estimate: Axially loaded prismatic bar",
+   "calc": "axial.bar",
+   "inputs": {
+    "P": 0.177,
+    "L": 10,
+    "A": 13.5,
+    "E": "2.3GPa"
+   },
+   "output": "elongation",
+   "tol": 0.05,
+   "bound": "lower"
+  }
+ ],
+ "print": {
+  "process": "fdm",
+  "material": "pla"
+ }
+}

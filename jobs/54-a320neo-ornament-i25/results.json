@@ -1,0 +1,422 @@
+{
+ "engagent_version": "0.1.0",
+ "name": "54-a320neo-ornament-i25",
+ "title": "static analysis of part",
+ "description": "",
+ "analysis": "static",
+ "units": "metric",
+ "standard": "iso",
+ "status": "ok",
+ "verdict": "FAIL",
+ "solver": {
+  "version": "2.21",
+  "seconds": 10.98,
+  "errors": [],
+  "warnings": [],
+  "command": "ccx -i job",
+  "tail": ""
+ },
+ "mesh": {
+  "nodes": 50630,
+  "elements": 29984,
+  "element_type": "C3D10",
+  "size_mm": 1.4999994999999997,
+  "parts": [
+   "part"
+  ],
+  "bbox_min": [
+   -20.0,
+   -44.0,
+   -8.0
+  ],
+  "bbox_max": [
+   95.0,
+   44.0,
+   22.0
+  ],
+  "volume_mm3": 13924.53857101631,
+  "quality_min": 0.2772052467385974,
+  "quality_mean": 0.7932627087361336,
+  "quality_below_0p1": 0
+ },
+ "parts": [
+  {
+   "name": "part",
+   "geometry": "part.step",
+   "material": {
+    "key": "pla",
+    "name": "PLA (FDM printed, XY)",
+    "family": "print_polymer",
+    "orthotropic": false,
+    "properties": {
+     "E": "3.3 GPa",
+     "nu": "0.36",
+     "density": "1240 kg/m^3",
+     "cte": "68 um/m/K",
+     "k": "0.13 W/m/K",
+     "cp": "1800 J/kg/K",
+     "yield": "50 MPa",
+     "uts": "55 MPa",
+     "elongation": "0.04",
+     "Tg": "60 degC",
+     "T_max_service": "50 degC"
+    },
+    "meta": {
+     "process": "FDM",
+     "note": "Z (layer) strength is typically 40-60 % of XY."
+    }
+   },
+   "orientation": null
+  }
+ ],
+ "sets": {
+  "hole_4_5": {
+   "area": 42.10618452697459,
+   "faces": [
+    30
+   ],
+   "nodes": 184,
+   "centroid": [
+    35.003986039157695,
+    -8.417321310925946e-06,
+    8.50007988620635
+   ]
+  }
+ },
+ "constraints": [
+  "Fixed (all translations) on 'hole_4_5'"
+ ],
+ "loads": [
+  "Gravity 19.62 g along (0, 0, -1)"
+ ],
+ "interactions": [],
+ "notes": [],
+ "initial_temperature": null,
+ "metrics": {
+  "max_displacement": {
+   "value": 1923245035.7354364,
+   "kind": "length",
+   "label": "Maximum displacement",
+   "location": [
+    -10.0,
+    4.937903195361936,
+    3.408388480386938
+   ],
+   "vector": [
+    1693760000.0,
+    -659200000.0,
+    -628891000.0
+   ]
+  },
+  "max_ux": {
+   "value": 1693760000.0,
+   "kind": "length",
+   "label": "Largest ux",
+   "location": [
+    -10.0,
+    4.937903195361936,
+    3.408388480386938
+   ]
+  },
+  "max_uy": {
+   "value": 735448000.0,
+   "kind": "length",
+   "label": "Largest uy",
+   "location": [
+    -20.0,
+    -1.9371691043679142e-15,
+    -0.4999999999999978
+   ]
+  },
+  "max_uz": {
+   "value": -628983000.0,
+   "kind": "length",
+   "label": "Largest uz",
+   "location": [
+    -10.0,
+    -6.0,
+    -4.373474626483863e-14
+   ]
+  },
+  "peak_von_mises": {
+   "value": 0.9857938084130575,
+   "kind": "pressure",
+   "label": "Peak von Mises stress (anywhere)",
+   "location": [
+    36.94855715851499,
+    -1.5000000000000002,
+    7.374999999999999
+   ],
+   "in_exclusion": true
+  },
+  "max_von_mises": {
+   "value": 0.6340208814146661,
+   "kind": "pressure",
+   "label": "Design von Mises stress (away from supports/contacts)",
+   "location": [
+    39.09661544789133,
+    0.10564754588890456,
+    5.228153060016295
+   ]
+  },
+  "max_principal": {
+   "value": 0.7866346365363523,
+   "kind": "pressure",
+   "label": "Maximum principal stress (design zone)",
+   "location": [
+    39.09661544789133,
+    0.10564754588890456,
+    5.228153060016295
+   ]
+  },
+  "min_principal": {
+   "value": -0.5121993455415415,
+   "kind": "pressure",
+   "label": "Minimum principal stress (design zone)",
+   "location": [
+    37.17349587171796,
+    -6.185633281847512,
+    -2.0
+   ]
+  },
+  "safety_factor_yield": {
+   "value": 78.8617559226708,
+   "kind": "ratio",
+   "label": "Safety factor on yield (design stress)",
+   "part": "part",
+   "yield_strength": 50.0
+  },
+  "reaction.hole_4_5": {
+   "value": 3.240537,
+   "kind": "force",
+   "label": "Reaction force on 'hole_4_5'",
+   "vector": [
+    1.752765e-12,
+    -1.68779e-12,
+    3.240537
+   ]
+  },
+  "reaction_total": {
+   "value": 3.240537,
+   "kind": "force",
+   "label": "Total reaction force",
+   "vector": [
+    1.752765e-12,
+    -1.68779e-12,
+    3.240537
+   ]
+  },
+  "applied_force": {
+   "value": 3.3221724797061185,
+   "kind": "force",
+   "label": "Total applied force",
+   "vector": [
+    0.0,
+    0.0,
+    -3.3221724797061185
+   ]
+  }
+ },
+ "hand_calcs": [
+  {
+   "name": "Estimate: Axially loaded prismatic bar",
+   "calc": "axial.bar",
+   "output": "elongation",
+   "formulas": [
+    "sigma = P / A",
+    "delta = P L / (A E)",
+    "k = A E / L"
+   ],
+   "reference": "Shigley's Mechanical Engineering Design, 10th ed., Eq. 4-3",
+   "inputs": {
+    "P": "0.177 N",
+    "L": "10 mm",
+    "A": "13.5 mm^2",
+    "E": "2300 MPa"
+   },
+   "notes": [],
+   "all_outputs": {
+    "stress": "0.01311 MPa",
+    "elongation": "5.700e-05 mm",
+    "strain": "5.700e-06",
+    "stiffness": "3105 N/mm"
+   },
+   "expected": 5.7004830917874394e-05,
+   "kind": "length",
+   "status": "INFO"
+  }
+ ],
+ "checks": [
+  {
+   "id": "solver",
+   "name": "Solver finished without errors",
+   "status": "PASS",
+   "detail": "CalculiX 2.21, 11.0 s, no warnings"
+  },
+  {
+   "id": "units",
+   "name": "Unit set and material values",
+   "status": "PASS",
+   "detail": "deck written in mm, tonne, s, N, MPa, mJ, mW, degC; inputs read as metric"
+  },
+  {
+   "id": "mesh",
+   "name": "Mesh quality",
+   "status": "PASS",
+   "detail": "50,630 nodes, 29,984 C3D10, size 1.5 mm, min quality (SICN) 0.28"
+  },
+  {
+   "id": "equilibrium",
+   "name": "Reactions balance the applied load",
+   "status": "FAIL",
+   "detail": "applied (0, 0, -3.322) N, reactions (0, 0, 3.241) N, imbalance 2.39 % (0.00214 N of the load acts directly on supported nodes and is not part of the reactions)"
+  },
+  {
+   "id": "hand_calc",
+   "name": "Agreement with hand calculation",
+   "status": "NOT DONE",
+   "detail": "hand calculations are listed but none is linked to an FEA metric"
+  },
+  {
+   "id": "convergence",
+   "name": "Mesh convergence (size x0.5, change < 5 %)",
+   "status": "FAIL",
+   "detail": "max_displacement: 73.63 %; max_von_mises: 4.05 % (for information, not required: peak_von_mises 25.1 %)"
+  },
+  {
+   "id": "singularity",
+   "name": "Stress singularities identified and excluded",
+   "status": "PASS",
+   "detail": "peak 0.9858 MPa lies within 3 mm of a support/contact (sets: hole_4_5) and is mesh-dependent, so it is not a design value; design stress 0.634 MPa is taken outside that zone; peak changed 25.1 % on refinement"
+  },
+  {
+   "id": "linearity",
+   "name": "Linear analysis is valid",
+   "status": "WARN",
+   "detail": "displacement 1.923e+09 mm exceeds 2.3 mm (2 % of the span 115 mm or half the thickness 30 mm): large-deflection effects may matter - check with analysis 'nonlinear'"
+  },
+  {
+   "id": "sanity",
+   "name": "Displacement follows the load direction",
+   "status": "PASS",
+   "detail": "cosine between peak displacement and net load = 0.33"
+  },
+  {
+   "id": "criteria",
+   "name": "Safety factor on yield >= 1.5",
+   "status": "PASS",
+   "detail": "achieved 78.9"
+  }
+ ],
+ "convergence": {
+  "ratio": 0.5,
+  "tol": 0.05,
+  "rows": [
+   {
+    "metric": "max_displacement",
+    "coarse": 1923245035.7354364,
+    "fine": 7292269796.587069,
+    "kind": "length",
+    "change": 0.7362624958506672,
+    "required": true
+   },
+   {
+    "metric": "max_von_mises",
+    "coarse": 0.6340208814146661,
+    "fine": 0.6093366029176567,
+    "kind": "pressure",
+    "change": 0.04051008650853216,
+    "required": true
+   },
+   {
+    "metric": "peak_von_mises",
+    "coarse": 0.9857938084130575,
+    "fine": 1.316538365551217,
+    "kind": "pressure",
+    "change": 0.25122287795971765,
+    "required": false
+   }
+  ],
+  "coarse": {
+   "size": 1.4999994999999997,
+   "nodes": 50630,
+   "elements": 29984
+  },
+  "fine": {
+   "size": 0.7499997499999999,
+   "nodes": 271335,
+   "elements": 178318
+  }
+ },
+ "fatigue": null,
+ "history": null,
+ "frequencies": [],
+ "buckling_factors": [],
+ "exclusion": {
+  "distance": 2.9999989999999994,
+  "sets": [
+   "hole_4_5"
+  ]
+ },
+ "criteria": {
+  "yield_sf": 1.5
+ },
+ "gdt": null,
+ "runtime_s": 400.7,
+ "job": {
+  "name": "54-a320neo-ornament-i25",
+  "units": "metric",
+  "analysis": "static",
+  "title": "static analysis of part",
+  "geometry": {
+   "script": "geometry.py"
+  },
+  "material": "pla",
+  "sets": {
+   "hole_4_5": {
+    "cylinder": {
+     "diameter": 4.5
+    }
+   }
+  },
+  "constraints": [
+   {
+    "type": "fixed",
+    "on": "hole_4_5"
+   }
+  ],
+  "loads": [
+   {
+    "type": "gravity",
+    "g": [
+     0.0,
+     0.0,
+     -19.62
+    ]
+   }
+  ],
+  "probes": {},
+  "criteria": {
+   "yield_sf": 1.5
+  },
+  "hand_calcs": [
+   {
+    "name": "Estimate: Axially loaded prismatic bar",
+    "calc": "axial.bar",
+    "inputs": {
+     "P": 0.177,
+     "L": 10,
+     "A": 13.5,
+     "E": "2.3GPa"
+    },
+    "output": "elongation",
+    "tol": 0.05,
+    "bound": "lower"
+   }
+  ],
+  "print": {
+   "process": "fdm",
+   "material": "pla"
+  }
+ }
+}

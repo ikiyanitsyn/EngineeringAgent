@@ -1,0 +1,77 @@
+{
+ "valid": true,
+ "solids": 2,
+ "faces": 53,
+ "edges": 125,
+ "volume": 14002.132957426793,
+ "area": 7259.641425080754,
+ "bbox_min": [
+  -20.0,
+  -44.0,
+  -8.000000000000002
+ ],
+ "bbox_max": [
+  95.0,
+  44.0,
+  22.0
+ ],
+ "bbox_size": [
+  115.0,
+  88.0,
+  30.0
+ ],
+ "center_of_mass": [
+  40.61583793522636,
+  -0.18792834976906228,
+  -0.17898261511018215
+ ],
+ "inertia_unit_density": [
+  [
+   2044338.1054442553,
+   3197.9453578326793,
+   -195910.64874878706
+  ],
+  [
+   3197.9453578326793,
+   8376777.337905057,
+   78509.95240949304
+  ],
+  [
+   -195910.64874878706,
+   78509.95240949304,
+   10011615.538318425
+  ]
+ ],
+ "face_types": {
+  "cylinder": 5,
+  "plane": 46,
+  "cone": 2
+ },
+ "cylinder_diameters": [
+  {
+   "diameter": 4.5,
+   "faces": 1
+  },
+  {
+   "diameter": 7.0,
+   "faces": 2
+  },
+  {
+   "diameter": 12.0,
+   "faces": 1
+  }
+ ],
+ "files": [
+  "/home/runner/work/EngineeringAgent/EngineeringAgent/jobs/54-a320neo-ornament-i25/part.step",
+  "/home/runner/work/EngineeringAgent/EngineeringAgent/jobs/54-a320neo-ornament-i25/part.stl",
+  "/home/runner/work/EngineeringAgent/EngineeringAgent/jobs/54-a320neo-ornament-i25/part.3mf"
+ ],
+ "holes": [
+  {
+   "diameter": 4.5,
+   "count": 1,
+   "depth": 3.0,
+   "through": true
+  }
+ ]
+}
