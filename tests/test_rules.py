@@ -361,3 +361,14 @@ def test_the_form_ignores_a_numeric_section_and_double_booked_faces():
          "convection": [{"face": "xmax", "h": 25, "ambient": 20, "unit": "C"}]}
     req, _ = structured.build_request(g, "Steel bar 100 mm, one end at 100 C, other end cooled by air at 20 C, h = 25")
     assert "--temp xmax" not in req and "--temp xmin 100" in req and "--convect xmax 25 20" in req
+
+
+def test_the_air_temperature_is_not_a_held_face():
+    from engagent import structured
+    g = {"action": "analyze", "analysis": "thermal", "template": "beam", "section": "round",
+         "params": {"length": 50, "diameter": 5}, "material_words": "aluminium 6061",
+         "temperatures": [{"face": "xmin", "value": 80, "unit": "C"}, {"face": "xmax", "value": 20, "unit": "C"}],
+         "convection": [{"face": "sides", "h": 50, "ambient": 20, "unit": "C"}]}
+    req, _ = structured.build_request(g, "Aluminium 6061 pin, 5 mm diameter and 50 mm long, sticking out of a wall at "
+                                         "80 C. The air is at 20 C with h = 50 W/m2K. Tip temperature?")
+    assert "--temp xmax" not in req and "--temp xmin 80" in req

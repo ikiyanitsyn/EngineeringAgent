@@ -145,6 +145,7 @@ def build_request(form: dict, user_text: str) -> tuple[str | None, str | None]:
         missing.append("the material")
     fixed = [f for f in form.get("fixed_faces") or [] if f in FACES]
     analysis = form.get("analysis")
+    form["_user_text"] = user_text
     if analysis == "thermal":
         return _thermal_request(form, tmpl, pstr, name, mat, missing)
     if analysis == "thermal_stress":
@@ -223,6 +224,13 @@ def _thermal_request(form, tmpl, pstr, name, mat, missing):
     temps = [t for t in form.get("temperatures") or [] if isinstance(t, dict) and t.get("face") in FACES]
     conv = [c for c in form.get("convection") or [] if isinstance(c, dict) and c.get("face") in FACES]
     heat = [h for h in form.get("heat") or [] if isinstance(h, dict) and h.get("face") in FACES]
+    ambients = {round(_degc(c["ambient"], c.get("unit")), 3) for c in conv if "ambient" in c}
+    said = [float(x) for x in re.findall(r"(?<![\w.])-?\d+(?:\.\d+)?", form.get("_user_text", ""))]
+    air_only = [t for t in temps if round(_degc(t["value"], t.get("unit")), 3) in ambients
+                and said.count(float(t["value"])) <= 1]  # the user gave this number once: as the AIR temperature
+    if air_only and len(temps) > len(air_only):
+        temps = [t for t in temps if t not in air_only]
+        form.setdefault("_notes", []).append("no face is held at the air temperature (the AI had set one)")
     cooled = {c["face"] for c in conv}
     dropped = [t for t in temps if t["face"] in cooled]
     if dropped:                              # a face cannot be held at a temperature AND cooled by air: small
