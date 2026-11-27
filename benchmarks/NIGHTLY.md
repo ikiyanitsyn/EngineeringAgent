@@ -154,3 +154,7 @@ toolkit absorbing the slips any AI makes, not a different answer.
   instead of 30 (its grip detail), though it passed 15 minutes earlier - model variation, not an agent gap.
 - Before tonight Gemini's last full run was 14 / 19 (quota); with the rules carrying most cases, the free daily
   quota now covers a full benchmark run.
+- Owner approved (2026-11-27): (1) deflection checks under a spread load compare the FEA maximum - kept;
+  (2) the load-balance check now judges the imbalance against the gross load (the total of all loads however
+  directed), not the net: the pressurised tube's false FAIL ('imbalance 4.9e13 %') is gone; one-way loads
+  (tip loads, gravity) are judged exactly as before (gross = net).

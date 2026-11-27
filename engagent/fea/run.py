@@ -237,9 +237,12 @@ def _checks(job: Job, mesh: Mesh, log: RunLog, metrics: dict, info: dict, hand: 
     if job.analysis in ("static", "nonlinear", "thermal_stress") and "reaction_total" in metrics:
         app = np.array(info.get("applied_force", [0, 0, 0]))
         rt = np.array(metrics["reaction_total"]["vector"])
-        scale = max(np.linalg.norm(app), 1e-9)
+        # judge the imbalance against the gross load, not the net: a self-balanced load (internal pressure)
+        # has ~zero net force, and dividing by it turned round-off into a false FAIL (owner approved)
+        gross = float(info.get("applied_gross", 0.0))
+        scale = max(np.linalg.norm(app), gross, 1e-9)       # = |net| for one-way loads (tip load, gravity)
         direct = np.array(info.get("applied_on_supports", [0, 0, 0]))
-        if np.linalg.norm(app) > 0 and not info.get("partial_reactions") and not info.get("unsummed_load"):
+        if (np.linalg.norm(app) > 0 or gross > 0) and not info.get("partial_reactions") and not info.get("unsummed_load"):
             err = np.linalg.norm(rt + app - direct) / scale
             add("equilibrium", "Reactions balance the applied load",
                 PASS if err <= 1e-3 else (WARN if err <= 1e-2 else FAIL),

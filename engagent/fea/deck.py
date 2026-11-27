@@ -384,6 +384,7 @@ def write_deck(job: Job, mesh: Mesh, path: Path) -> dict:
             for nid, v in forces.items():
                 cload[nid] = cload.get(nid, np.zeros(3)) + v
         applied = np.zeros(3)
+        gross = 0.0                                  # total size of the loads, however they are directed
         dload, film, dflux, radiate, temp_lines = [], [], [], [], []
         for l in job.loads:
             t = l["type"]
@@ -393,6 +394,7 @@ def write_deck(job: Job, mesh: Mesh, path: Path) -> dict:
                 wsum = sum(fs.weights.values())
                 add_nodal({n: F * w / wsum for n, w in fs.weights.items()})
                 applied += F
+                gross += float(np.linalg.norm(F))
                 info["load_summary"].append(f"Force {U.fmt_vec(F, 'force', sysname)} on '{l['on']}' "
                                             f"(area {U.fmt(fs.area, 'area', sysname)})")
             elif t in ("moment", "torque"):
@@ -414,6 +416,7 @@ def write_deck(job: Job, mesh: Mesh, path: Path) -> dict:
                     flip = np.einsum("ij,ij->i", nA, pc.mean(axis=1) - cen) < 0
                     nA[flip] *= -1
                 applied += -p * nA.sum(axis=0)
+                gross += abs(p) * float(np.linalg.norm(nA, axis=1).sum())
                 ld = fs.tris[:, 3:] if mesh.order == 2 else fs.tris       # consistent nodal loads
                 share = -p * nA / 3.0
                 for col in range(ld.shape[1]):
@@ -429,6 +432,7 @@ def write_deck(job: Job, mesh: Mesh, path: Path) -> dict:
                     mass = sum((p.material.get("density") or 0.0) * _part_volume(mesh, p.name)
                                for p in job.parts)
                     applied += mass * G0 * g
+                    gross += float(np.linalg.norm(mass * G0 * g))
                     wts = np.array([-0.05] * 4 + [0.2] * 6) if mesh.order == 2 else np.full(4, 0.25)
                     pe = mesh.nodes[mesh.elems[:, :4] - 1]
                     ev = np.abs(np.einsum("ij,ij->i", pe[:, 1] - pe[:, 0],
@@ -508,6 +512,7 @@ def write_deck(job: Job, mesh: Mesh, path: Path) -> dict:
         for nid, v in cload.items():                       # point forces on held dofs
             on_supports += v * held[nid - 1]
         info["applied_force"] = applied.tolist()
+        info["applied_gross"] = gross
         info["applied_on_supports"] = on_supports.tolist()
 
         # ---- output requests
