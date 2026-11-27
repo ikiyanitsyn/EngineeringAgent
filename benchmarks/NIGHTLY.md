@@ -120,3 +120,17 @@ toolkit absorbing the slips any AI makes, not a different answer.
 - Average time per case: chat route 59 s, Gemini 113 s.
 - Merged without asking first, flagged for the owner: a deflection hand check under a spread load now compares
   the FEA maximum, not the loaded-face average (verification logic). Revert offered.
+
+## 2026-11-26 -> 27 (owner: "Start it. Test my local qwen model ... or set up a way for it to talk to the repo")
+
+### Local AI (Qwen in Ollama)
+- The owner's PC was not reachable from the cloud session (no Remote Control folder), so the same route was
+  tested here: Ollama installed by the toolkit's own installer, qwen2.5-coder:7b, NO settings - the agent found
+  the installed model itself. 4 CPUs, ~40 s per case.
+- New: `ea bench --model-only --quick` (START-HERE.cmd option T) tests YOUR model on six mixed cases with the
+  built-in rules off; `--model-only` alone runs all cases. Several case filters separated by commas.
+- Qwen quick set, rules off: 4 / 6 -> **6 / 6** after fixing the JSON form a small local model fills:
+  torque loads (N*m, lbf*in, lbf*ft), round / tube sections with a 'diameter', a 'sides' face (curved side of a
+  pin, long faces of a bar), a hole as wide as the part becomes a solid rod, a numeric 'section' is ignored,
+  an air-cooled face is not also held at a temperature, and no face is held at the air temperature.
+- MCP route (LM Studio etc.): server checked, 28 tools listed (guide corrected from 24).
