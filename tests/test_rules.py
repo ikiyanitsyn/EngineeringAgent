@@ -346,3 +346,18 @@ def test_the_local_model_form_has_torque_round_sections_and_side_faces():
          "convection": [{"face": "sides", "h": 50, "ambient": 20, "unit": "C"}]}
     req, q = structured.build_request(g, "aluminium 6061 pin 5 mm diameter, wall at 80 C, air at 20 C, h = 50")
     assert "hole=0" in req and "--convect cyl:2.5 50 20" in req
+
+
+def test_the_form_ignores_a_numeric_section_and_double_booked_faces():
+    from engagent import structured
+    f = {"action": "analyze", "template": "beam", "params": {"length": 200, "width": 10, "height": 20, "section": 1},
+         "material_words": "mild steel", "fixed_faces": ["xmin"],
+         "loads": [{"face": "xmax", "kind": "force", "direction": "-z", "magnitude": 50, "unit": "kg"}]}
+    req, _ = structured.build_request(f, "Mild steel bar 200 x 10 x 20 mm bolted at one end, 50 kg at the free end")
+    assert "section" not in req
+    g = {"action": "analyze", "analysis": "thermal", "template": "beam", "params": {"length": 100},
+         "material_words": "steel", "temperatures": [{"face": "xmin", "value": 100, "unit": "C"},
+                                                     {"face": "xmax", "value": 20, "unit": "C"}],
+         "convection": [{"face": "xmax", "h": 25, "ambient": 20, "unit": "C"}]}
+    req, _ = structured.build_request(g, "Steel bar 100 mm, one end at 100 C, other end cooled by air at 20 C, h = 25")
+    assert "--temp xmax" not in req and "--temp xmin 100" in req and "--convect xmax 25 20" in req

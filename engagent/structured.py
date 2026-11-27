@@ -116,7 +116,8 @@ def build_request(form: dict, user_text: str) -> tuple[str | None, str | None]:
                       + ". (For other shapes, add a Gemini key or use Claude.)")
     defaults = templates.TEMPLATES[tmpl][1]
     raw = form.get("params") or {}
-    params = {k: v for k, v in raw.items() if k in defaults and isinstance(v, (int, float))}
+    params = {k: v for k, v in raw.items() if k in defaults and isinstance(v, (int, float))
+              and not isinstance(defaults[k], str)}          # text options (a beam's section) only by name
     if tmpl == "beam":
         d = raw.get("diameter") if isinstance(raw.get("diameter"), (int, float)) else None
         section = form.get("section") if form.get("section") in ("rect", "round", "tube", "rect_tube", "i") else None
@@ -222,6 +223,12 @@ def _thermal_request(form, tmpl, pstr, name, mat, missing):
     temps = [t for t in form.get("temperatures") or [] if isinstance(t, dict) and t.get("face") in FACES]
     conv = [c for c in form.get("convection") or [] if isinstance(c, dict) and c.get("face") in FACES]
     heat = [h for h in form.get("heat") or [] if isinstance(h, dict) and h.get("face") in FACES]
+    cooled = {c["face"] for c in conv}
+    dropped = [t for t in temps if t["face"] in cooled]
+    if dropped:                              # a face cannot be held at a temperature AND cooled by air: small
+        temps = [t for t in temps if t["face"] not in cooled]   # models often also 'hold' it at the air
+        form.setdefault("_notes", []).append(            # temperature - the air cooling is what was described
+            "the air-cooled face is not also held at a fixed temperature (the AI had set both)")
     if not temps and not heat:
         missing.append("what heats the part (a face held at a temperature, or the watts put in)")
     if not temps and not conv:
