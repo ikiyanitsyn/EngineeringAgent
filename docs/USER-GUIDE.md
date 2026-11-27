@@ -426,6 +426,11 @@ Choose the model once with environment variables (the Windows menu sets these fo
 
 `ea ask --dry-run "..."` shows what the model would run without running it.
 
+**How good is my model?** `START-HERE.cmd` option **T** (or `ea bench --model-only --quick`) runs six
+cases with known textbook answers through your model alone (built-in rules off) and prints a scoreboard,
+also saved as `benchmarks/SCOREBOARD-model-<name>.md`. With Ollama and no settings at all, the model you
+already installed is used (a Qwen coder model is preferred). The full set: `ea bench --model-only`.
+
 ### Route 1 - any free chatbot, copy and paste
 
 Route D in section 2: paste `docs/CHATBOT-PROMPT.md` into ChatGPT, Gemini, Copilot or
@@ -470,7 +475,7 @@ card helps).
    > Call the doctor tool, then units_get. For any analysis, call fea_job_help first
    > and start from the starter job it returns. Never invent loads or materials.
 
-The model then has 24 tools (build CAD, check for printing, hand calculations, run
+The model then has 28 tools (build CAD, check for printing, hand calculations, run
 FEA, write the report, tolerances). Give file locations as full paths, for example
 `C:\Users\YOU\projects\EngineeringAgent\jobs\01-test`. More detail: `docs/mcp.md`.
 
