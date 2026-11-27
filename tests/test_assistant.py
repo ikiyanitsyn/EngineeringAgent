@@ -79,6 +79,7 @@ def test_missing_settings_are_explained(monkeypatch):
     monkeypatch.delenv("ENGAGENT_LLM_KEY", raising=False)
     monkeypatch.delenv("GITHUB_TOKEN", raising=False)
     monkeypatch.delenv("GH_TOKEN", raising=False)
+    monkeypatch.setattr(assistant, "ollama_models", lambda *a, **k: [])   # no local Ollama on this machine
     with pytest.raises(assistant.LLMError, match="models: read"):
         assistant.complete([{"role": "user", "content": "hi"}])
 

@@ -331,3 +331,18 @@ def test_a_spread_load_deflection_check_compares_the_peak():
     job = {"loads": [{"on": "zmax", "type": "pressure"}], "constraints": [], "analysis": "static", "probes": {}}
     hc = link_check("beam.cantilever_udl w=2 L=300 E=210000 nu=0.3 b=30 h=10", job, None)
     assert hc["metric"] == "max_displacement"         # not the average over the loaded top face
+
+
+def test_the_local_model_form_has_torque_round_sections_and_side_faces():
+    from engagent import structured
+    f = {"action": "analyze", "template": "beam", "section": "round", "params": {"length": 200, "diameter": 20},
+         "material_words": "steel", "fixed_faces": ["xmin"],
+         "loads": [{"face": "xmax", "kind": "torque", "direction": "+x", "magnitude": 100, "unit": "N*m"}]}
+    req, q = structured.build_request(f, "Steel shaft 20 mm diameter 200 mm long, clamped, 100 N m of torque")
+    assert q is None and "section=round" in req and "--moment xmax 100,0,0" in req
+    g = {"action": "analyze", "analysis": "thermal", "template": "standoff",
+         "params": {"outer_diameter": 5, "hole": 5, "height": 50}, "material_words": "aluminium 6061",
+         "temperatures": [{"face": "zmin", "value": 80, "unit": "C"}],
+         "convection": [{"face": "sides", "h": 50, "ambient": 20, "unit": "C"}]}
+    req, q = structured.build_request(g, "aluminium 6061 pin 5 mm diameter, wall at 80 C, air at 20 C, h = 50")
+    assert "hole=0" in req and "--convect cyl:2.5 50 20" in req

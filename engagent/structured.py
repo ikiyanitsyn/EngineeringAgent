@@ -14,9 +14,10 @@ from . import materials
 from .cad import templates
 from .guard import material_from_words
 
-FACES = ["xmin", "xmax", "ymin", "ymax", "zmin", "zmax"]
+FACES = ["xmin", "xmax", "ymin", "ymax", "zmin", "zmax", "sides"]   # sides = the long / curved side surface
 DIRS = ["+x", "-x", "+y", "-y", "+z", "-z"]
-UNITS = ["N", "kN", "kg", "lbf", "lb", "MPa", "kPa", "bar", "psi"]
+UNITS = ["N", "kN", "kg", "lbf", "lb", "MPa", "kPa", "bar", "psi", "N*m", "lbf*in", "lbf*ft"]
+TO_NM = {"N*m": 1.0, "lbf*in": 0.11298483, "lbf*ft": 1.3558179}
 TO_N = {"N": 1.0, "kN": 1000.0, "kg": 9.80665, "lbf": 4.4482216, "lb": 4.4482216}
 TO_MPA = {"MPa": 1.0, "kPa": 1e-3, "bar": 0.1, "psi": 0.0068947573}
 
@@ -40,7 +41,7 @@ FACE_HELP = {
 
 def schema() -> dict:
     load = {"type": "object", "properties": {
-        "face": {"enum": FACES}, "kind": {"enum": ["force", "pressure"]},
+        "face": {"enum": FACES}, "kind": {"enum": ["force", "pressure", "torque"]},
         "direction": {"enum": DIRS}, "magnitude": {"type": "number"}, "unit": {"enum": UNITS}},
         "required": ["face", "kind", "direction", "magnitude", "unit"]}
     return {"type": "object", "properties": {
@@ -48,6 +49,7 @@ def schema() -> dict:
         "question": {"type": "string"},
         "template": {"enum": list(templates.TEMPLATES)},
         "params": {"type": "object", "additionalProperties": {"type": "number"}},
+        "section": {"enum": ["rect", "round", "tube", "rect_tube", "i"]},
         "name": {"type": "string"},
         "print_material": {"type": "string"},
         "material_words": {"type": "string"},
@@ -84,7 +86,11 @@ def prompt() -> str:
         "unit 'kg'; 2 kN -> 2, 'kN'). A weight hanging down is kind 'force', direction '-z'.\n"
         "- 'material_words': copy the user's own words for the material (e.g. 'mild steel', 'aluminium 6061').\n"
         "- 'params': only dimensions the user gave, in mm (convert inches x 25.4). Leave others out.\n"
-        "- 'fixed_faces': the faces that are bolted/clamped/held. 'loads.face': where the load acts.\n"
+        "- 'fixed_faces': the faces that are bolted/clamped/held. 'loads.face': where the load acts.\n"        "- A beam that is a round rod or shaft: template 'beam', section 'round', params 'diameter' (and length). "
+        "A twisting load (torque, N m) is kind 'torque' with unit 'N*m' and direction = its axis (a shaft along "
+        "the beam is '+x').\n"
+        "- Face 'sides' = the long side surface (all four sides of a bar, or the curved side of a round part); "
+        "use it e.g. for air cooling along a pin or rod.\n"
         "- For 3D printing set 'print_material' (pla, petg, abs, asa, pa12_sls, pc); default petg.\n"
         "- Heat questions (how hot, temperature, cooling): analysis 'thermal'; 'temperatures' = faces held at a "
         "temperature, 'convection' = faces cooled by air/fluid (h in W/m2K and ambient temperature), 'heat' = "
@@ -109,8 +115,21 @@ def build_request(form: dict, user_text: str) -> tuple[str | None, str | None]:
         return None, ("Which kind of part is it? I can build: " + ", ".join(templates.TEMPLATES)
                       + ". (For other shapes, add a Gemini key or use Claude.)")
     defaults = templates.TEMPLATES[tmpl][1]
-    params = {k: v for k, v in (form.get("params") or {}).items() if k in defaults and isinstance(v, (int, float))}
-    pstr = " ".join(f"{k}={v:g}" for k, v in params.items())
+    raw = form.get("params") or {}
+    params = {k: v for k, v in raw.items() if k in defaults and isinstance(v, (int, float))}
+    if tmpl == "beam":
+        d = raw.get("diameter") if isinstance(raw.get("diameter"), (int, float)) else None
+        section = form.get("section") if form.get("section") in ("rect", "round", "tube", "rect_tube", "i") else None
+        if d and not section:
+            section = "round"
+        if section in ("round", "tube") and d:
+            params["width"] = params["height"] = float(d)
+        if section and section != "rect":
+            params["section"] = section
+    if tmpl == "standoff" and params.get("hole", 0) >= params.get("outer_diameter", defaults["outer_diameter"]):
+        params["hole"] = 0                       # a hole as wide as the part leaves nothing: a solid rod was meant
+    form["_sides"] = _sides_selector(tmpl, {**{k: v for k, v in defaults.items()}, **params})
+    pstr = " ".join(f"{k}={v:g}" if isinstance(v, (int, float)) else f"{k}={v}" for k, v in params.items())
     name = re.sub(r'["\\]', "", str(form.get("name") or tmpl))[:40]
     if action == "make":                     # the 3D-print check only when printing was asked for
         pm = str(form.get("print_material") or "").lower()
@@ -150,21 +169,44 @@ def build_request(form: dict, user_text: str) -> tuple[str | None, str | None]:
                     l["face"] = free
     form["_notes"] = notes
     parts = [f"ea make {tmpl} {pstr} --name \"{name}\"".replace("  ", " "),
-             f"ea analyze last -m {mat} " + " ".join(f"--fix {f}" for f in dict.fromkeys(fixed))]
+             f"ea analyze last -m {mat} " + " ".join(f"--fix {_face(form, f)}" for f in dict.fromkeys(fixed))]
     for l in loads:
         unit, mag = l.get("unit"), float(l.get("magnitude") or 0)
         axis, sign = "xyz".index(l["direction"][1]), (-1 if l["direction"][0] == "-" else 1)
-        if l.get("kind") == "pressure" and unit in TO_MPA:
-            parts[-1] += f" --pressure {l['face']} {mag * TO_MPA[unit]:g}"
+        if l.get("kind") == "torque" or unit in TO_NM:
+            if unit not in TO_NM:
+                return None, f"Is the {mag:g} {unit} a torque? Please give it in N m or lbf ft."
+            vec = [0.0, 0.0, 0.0]
+            vec[axis] = sign * mag * TO_NM[unit]
+            parts[-1] += f" --moment {_face(form, l['face'])} " + ",".join(f"{v:g}" for v in vec)
+        elif l.get("kind") == "pressure" and unit in TO_MPA:
+            parts[-1] += f" --pressure {_face(form, l['face'])} {mag * TO_MPA[unit]:g}"
         elif unit in TO_N:
             vec = [0.0, 0.0, 0.0]
             vec[axis] = sign * mag * TO_N[unit]
-            parts[-1] += f" --force {l['face']} " + ",".join(f"{v:g}" for v in vec)
+            parts[-1] += f" --force {_face(form, l['face'])} " + ",".join(f"{v:g}" for v in vec)
         else:
             return None, f"Is the load of {mag:g} {unit} a force or a pressure? Please state it with its unit."
     if analysis in ("modal", "buckling"):
         parts[-1] += f" -a {analysis}"
     return "\n".join(parts), None
+
+
+def _sides_selector(tmpl: str, p: dict) -> str:
+    """The 'sides' face of a template as a selector: the curved side of a round part, the 4 long faces of a bar."""
+    if tmpl == "standoff":
+        return f"cyl:{float(p.get('outer_diameter', 10)) / 2:g}"
+    if tmpl == "beam" and p.get("section") in ("round", "tube"):
+        return f"cyl:{float(p.get('width', 10)) / 2:g}"
+    if tmpl == "beam":
+        return "ymin+ymax+zmin+zmax"
+    if tmpl == "flange":
+        return f"cyl:{float(p.get('outer_diameter', p.get('diameter', 100))) / 2:g}"
+    return "xmin+xmax+ymin+ymax"
+
+
+def _face(form: dict, face: str) -> str:
+    return form.get("_sides", "xmin+xmax+ymin+ymax") if face == "sides" else face
 
 
 def _degc(v, unit) -> float:
@@ -187,9 +229,10 @@ def _thermal_request(form, tmpl, pstr, name, mat, missing):
     if missing:
         return _ask_missing(missing)
     line = f"ea analyze last -m {mat} -a thermal"
-    line += "".join(f" --temp {t['face']} {_degc(t['value'], t.get('unit')):g}" for t in temps)
-    line += "".join(f" --convect {c['face']} {float(c['h']):g} {_degc(c['ambient'], c.get('unit')):g}" for c in conv)
-    line += "".join(f" --heat {h['face']} {float(h['watts']):g}" for h in heat)
+    line += "".join(f" --temp {_face(form, t['face'])} {_degc(t['value'], t.get('unit')):g}" for t in temps)
+    line += "".join(f" --convect {_face(form, c['face'])} {float(c['h']):g} {_degc(c['ambient'], c.get('unit')):g}"
+                    for c in conv)
+    line += "".join(f" --heat {_face(form, h['face'])} {float(h['watts']):g}" for h in heat)
     return f'ea make {tmpl} {pstr} --name "{name}"'.replace("  ", " ") + "\n" + line, None
 
 
