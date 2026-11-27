@@ -145,3 +145,12 @@ toolkit absorbing the slips any AI makes, not a different answer.
 - Hex standoffs: the standoff template gained `hex_af` (size across flats; 0 = round), and the rules use it for
   "hex standoff ... across flats" (case 028: 6.35 x 5.5 x 20, 342 mm3). Rules + local Qwen before this: 28 / 29,
   the only miss being 028.
+
+### Gemini after midnight (2026-11-27)
+- Only 4 of the 29 cases still need a model at all (010 clip, 011 torsion, 018 comb, 019 knob) - the rules answer
+  the other 25. Gemini on those 4: **4 / 4** (75-119 s each).
+- One bot-style run of all 29 (rules first, Gemini for the rest - exactly what an issue gets): **28 / 29**, 25
+  answered by rules and 4 by Gemini, average 46 s per case. The miss: Gemini's knob came out 29.9 mm across
+  instead of 30 (its grip detail), though it passed 15 minutes earlier - model variation, not an agent gap.
+- Before tonight Gemini's last full run was 14 / 19 (quota); with the rules carrying most cases, the free daily
+  quota now covers a full benchmark run.
