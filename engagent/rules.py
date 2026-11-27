@@ -414,6 +414,40 @@ def _pin_fin(t: str) -> dict | None:
                     "tip area is also cooled in the model)._"}
 
 
+def _pressurised_tube(t: str) -> dict | None:
+    """A thick-walled tube (pipe, cylinder) with internal pressure: Lame. Open ends unless the user says the
+    ends are closed / capped (then the end-cap force is added as an axial pressure on the ends)."""
+    if not re.search(r"\b(tube|pipe|cylinder|barrel)\b", t) or not re.search(r"\b(internal|inside|bore)\b", t):
+        return None
+    pr = re.findall(PRESSURE_RX, t)
+    od = re.search(NUM + r"\s*mm\s*(?:outside|outer|o\.?d\.?)(?:\s*diameter)?", t)
+    bore = re.search(NUM + r"\s*mm\s*(?:bore|inside diameter|inner diameter|i\.?d\.?)", t)
+    L = re.search(NUM + r"\s*mm\s*long", t)
+    mat = material_from_words(t)
+    if len(pr) != 1 or not (od and bore and L and mat):
+        return None
+    from .structured import TO_MPA
+    mag, unit = pr[0]
+    p = float(mag) * TO_MPA[{"mpa": "MPa", "kpa": "kPa", "bar": "bar", "psi": "psi"}[unit]]
+    ro, ri, Lv = float(od.group(1)) / 2, float(bore.group(1)) / 2, float(L.group(1))
+    if ri >= ro:
+        return None
+    closed = bool(re.search(r"\b(closed|capped|sealed) ends?\b|\bends? (?:are )?(?:closed|capped|sealed)\b", t))
+    ends = f" --pressure zmin+zmax {-p * ri * ri / (ro * ro - ri * ri):.6g}" if closed else ""
+    req = ("```python\nfrom build123d import *\nfrom engagent.cad import save\na = (Align.CENTER, Align.CENTER, Align.MIN)\n"
+           f"save(Cylinder({ro:g}, {Lv:g}, align=a) - Cylinder({ri:g}, {Lv:g}, align=a))\n```\n"
+           f"```bash\nea make geometry.py --name \"pressurised tube\"\n"
+           f"ea analyze last -m {mat} --slide zmin z --slide point:{ro:g},0,0 y --slide point:{-ro:g},0,0 y "
+           f"--slide point:0,{ro:g},0 x "
+           f"--pressure cyl:{ri:g} {p:.6g}{ends} "
+           f"--check \"pressure.thick_cylinder p={p:.6g} ri={ri:g} ro={ro:g} -> von_mises_inner@max_von_mises\"\n```")
+    return {"action": "raw", "request": req, "derived": [p] + ([p * ri * ri / (ro * ro - ri * ri)] if closed else []),
+            "plan": f"_A tube {2 * ro:g} mm outside, {2 * ri:g} mm bore, {p:g} MPa inside, "
+                    f"{'closed' if closed else 'open'} ends; one end slides on its plane and three points are held only around "
+                    "the tube (so it can still grow), stopping rigid motion. "
+                    "Checked against Lame's thick-cylinder solution (von Mises at the bore)._"}
+
+
 def _free_expansion(t: str) -> dict | None:
     """A bar against a wall, otherwise free, heated evenly: it grows alpha L dT and stays stress free."""
     if not re.search(r"\b(against a wall|free to (?:grow|expand)|free end|freely)\b", t) or \
@@ -677,7 +711,7 @@ def form_from_words(user_text: str, first: str | None = None) -> dict | None:
         if joined:
             return joined
     if analysis_intent(user_text):
-        wall = _wall_convection(t) or _heated_plate(t) or _plate_hole_tension(t) or _pin_fin(t) or _free_expansion(t)
+        wall = _wall_convection(t) or _heated_plate(t) or _plate_hole_tension(t) or _pin_fin(t) or _free_expansion(t) or _pressurised_tube(t)
         if wall:
             return wall
     if analysis_intent(user_text) and re.findall(PRESSURE_RX, t) and re.search(

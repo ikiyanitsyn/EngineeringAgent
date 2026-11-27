@@ -384,3 +384,11 @@ def test_plate_hole_pin_fin_and_free_expansion_rules():
     e = form_from_words("Steel bar 500 x 20 x 20 mm, one end resting against a wall, free to grow otherwise. It is "
                         "heated evenly from 20 C to 100 C. How much does the free end move?")["request"]
     assert "--t0 20 --dT 100" in e and "free_expansion L=500 cte=12 dT=80" in e
+
+
+def test_a_pressurised_tube_is_lame_and_cannot_spin():
+    r = form_from_words("Open-ended steel tube, 100 mm outside diameter, 60 mm bore, 200 mm long, with 100 MPa of "
+                        "internal pressure. What is the highest von Mises stress in the wall?")["request"]
+    # three tangential holds: two alone (x at one point, y at another) leave a spin about where they cross
+    assert "--slide point:50,0,0 y --slide point:-50,0,0 y --slide point:0,50,0 x" in r
+    assert "--pressure cyl:30 100" in r and "pressure.thick_cylinder p=100 ri=30 ro=50" in r

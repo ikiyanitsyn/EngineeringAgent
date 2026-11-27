@@ -134,3 +134,11 @@ toolkit absorbing the slips any AI makes, not a different answer.
   pin, long faces of a bar), a hole as wide as the part becomes a solid rod, a numeric 'section' is ignored,
   an air-cooled face is not also held at a temperature, and no face is held at the air temperature.
 - MCP route (LM Studio etc.): server checked, 28 tools listed (guide corrected from 24).
+- Rules + local Qwen (no internet AI at all), all 29 cases: **24 / 29**. Three of the misses became rules
+  (plate with a hole in tension, pin fin from a hot wall, free expansion) and a fourth (thick tube under
+  internal pressure, Lame 3.5 %) - the approved support hard stop caught my own first tube set-up (two
+  tangential holds still let it spin about their crossing point).
+- Waiting for approval (verification logic): the load-balance check gives a false FAIL for a self-balanced
+  load (internal pressure) touching a supported face - nodal loads on supported nodes are counted per node
+  in one place and per held direction in another. Proposed fix: compare the imbalance with the gross load
+  when the net load is ~0, and count the loads on supported nodes per held direction consistently.
