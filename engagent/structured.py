@@ -181,7 +181,7 @@ def build_request(form: dict, user_text: str) -> tuple[str | None, str | None]:
             vec = [0.0, 0.0, 0.0]
             vec[axis] = sign * mag * TO_NM[unit]
             parts[-1] += f" --moment {_face(form, l['face'])} " + ",".join(f"{v:g}" for v in vec)
-        elif l.get("kind") == "pressure" and unit in TO_MPA:
+        elif unit in TO_MPA:                 # a pressure unit means a pressure, whatever 'kind' the model chose
             parts[-1] += f" --pressure {_face(form, l['face'])} {mag * TO_MPA[unit]:g}"
         elif unit in TO_N:
             vec = [0.0, 0.0, 0.0]

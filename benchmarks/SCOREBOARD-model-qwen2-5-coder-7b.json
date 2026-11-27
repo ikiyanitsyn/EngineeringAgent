@@ -2,7 +2,7 @@
  {
   "case": "001-cantilever-mass",
   "source": "Roark's Formulas, Table 8.1 case 1a (cantilever, end load), with shear",
-  "seconds": 40.29352068901062,
+  "seconds": 38.48031520843506,
   "request": "```bash\nea make beam length=200 width=10 height=20 --name \"beam\"\nea analyze last -m steel_generic --fix xmin --force xmax 0,0,-490.332\n```",
   "answered_by": "model",
   "checks": [
@@ -17,9 +17,52 @@
   "detail": "max_displacement: 0.9388 (0.3 % off, tol 5 %)"
  },
  {
+  "case": "002-simply-supported",
+  "source": "Roark, Table 8.1 case 1e (simply supported, centre load)",
+  "seconds": 38.65552830696106,
+  "request": "```bash\nea make beam length=1000 width=40 height=80 --name \"beam\"\nea analyze last -m steel_generic --fix xmin --fix xmax --force zmax 0,0,-2000\n```",
+  "answered_by": "model",
+  "checks": [
+   {
+    "metric": "max_displacement",
+    "expected": 0.11625744047619048,
+    "ok": false,
+    "detail": "0.01552 (86.6 % off, tol 7 %)"
+   }
+  ],
+  "outcome": "FAIL",
+  "detail": "max_displacement: 0.01552 (86.6 % off, tol 7 %)"
+ },
+ {
+  "case": "003-column-buckling",
+  "source": "Euler buckling, fixed-free (K = 2)",
+  "seconds": 36.13434934616089,
+  "request": "```bash\nea make beam length=1000 width=20 height=20 --name \"beam\"\nea analyze last -m steel_generic --fix xmin --force zmax 0,0,-1000\n```",
+  "answered_by": "model",
+  "checks": [
+   {
+    "metric": "buckling_factor_1",
+    "expected": 6.90872308076255,
+    "ok": false,
+    "detail": "no such result"
+   }
+  ],
+  "outcome": "FAIL",
+  "detail": "buckling_factor_1: no such result"
+ },
+ {
+  "case": "004-cantilever-frequency",
+  "source": "Euler-Bernoulli beam, clamped-free, first mode",
+  "seconds": 11.825278759002686,
+  "request": "The request is for a natural frequency, but the current template does not support frequency analysis. Please specify if you want to perform a strength/stiffness analysis or if you need additional information.",
+  "answered_by": "model",
+  "outcome": "ASKED",
+  "detail": "The request is for a natural frequency, but the current template does not support frequency analysis. Please specify if you want to perform a strength/stiffness analysis or if you need additional info"
+ },
+ {
   "case": "005-hot-bar-convection",
   "source": "Incropera 3.1.3, thermal circuit",
-  "seconds": 47.92347979545593,
+  "seconds": 43.88744401931763,
   "request": "```bash\nea make beam length=100 --name \"beam\"\nea analyze last -m steel_generic -a thermal --temp xmin 100 --convect xmax 25 20\n```",
   "answered_by": "model",
   "checks": [
@@ -34,9 +77,56 @@
   "detail": "min_temperature: 96.19 (0.0 % off, tol 1 %)"
  },
  {
+  "case": "006-restrained-bar-heating",
+  "source": "sigma = E alpha dT (bar held axially at both ends)",
+  "seconds": 16.172919511795044,
+  "request": "To run the analysis I still need: where the part is held (bolted, clamped); the starting and final temperature. Please reply with those - I will not guess them.",
+  "answered_by": "model",
+  "outcome": "ASKED",
+  "detail": "To run the analysis I still need: where the part is held (bolted, clamped); the starting and final temperature. Please reply with those - I will not guess them."
+ },
+ {
+  "case": "007-bonded-bars",
+  "source": "series springs: P L1/(A E1) + P L2/(A E2)",
+  "seconds": 32.78329133987427,
+  "request": "```bash\nea make beam length=100 width=10 height=10 --name \"beam\"\nea analyze last -m steel_generic --fix xmin --force xmax 0,0,5000\n```",
+  "answered_by": "model",
+  "checks": [
+   {
+    "metric": "max_displacement",
+    "expected": 0.0481892321514963,
+    "ok": false,
+    "detail": "9.542 (19700.1 % off, tol 3 %)"
+   }
+  ],
+  "outcome": "FAIL",
+  "detail": "max_displacement: 9.542 (19700.1 % off, tol 3 %)"
+ },
+ {
+  "case": "008-printable-box",
+  "source": "dimensions as asked",
+  "seconds": 15.04529881477356,
+  "request": "```bash\nea make enclosure length=110 width=75 height=45 wall=2 --print petg --name \"enclosure\"\n```",
+  "answered_by": "model",
+  "checks": [
+   {
+    "metric": "cad.size",
+    "expected": [
+     110,
+     75,
+     45
+    ],
+    "ok": true,
+    "detail": "110x75x45"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "cad.size: 110x75x45"
+ },
+ {
   "case": "009-m5-spacer",
   "source": "dimensions as asked; ISO 273 medium clearance 5.5 mm",
-  "seconds": 13.761991500854492,
+  "seconds": 12.923123121261597,
   "request": "```bash\nea make standoff outer_diameter=12 hole=5 height=15 --print petg --name \"standoff\"\n```",
   "answered_by": "model",
   "checks": [
@@ -55,9 +145,26 @@
   "detail": "cad.size: 12x12x15"
  },
  {
+  "case": "010-cable-clip",
+  "source": "custom shape: a valid printable solid; fit judged by eye",
+  "seconds": 19.59187078475952,
+  "request": "```bash\nea make standoff outer_diameter=10 hole=6 height=20 base_diameter=0 base_height=0 --name \"standoff\"\n```",
+  "answered_by": "model",
+  "checks": [
+   {
+    "metric": "cad.valid",
+    "expected": true,
+    "ok": true,
+    "detail": "True"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "cad.valid: True"
+ },
+ {
   "case": "011-shaft-torsion",
   "source": "Shigley 10th ed. Eq. 4-5: phi = T L / (G J); surface displacement r phi",
-  "seconds": 29.22540020942688,
+  "seconds": 27.48604154586792,
   "request": "```bash\nea make beam length=200 width=20 height=20 section=round --name \"beam\"\nea analyze last -m steel_generic --fix xmin --moment xmax 100,0,0\n```",
   "answered_by": "model",
   "checks": [
@@ -72,26 +179,87 @@
   "detail": "max_displacement: 0.1577 (0.0 % off, tol 5 %)"
  },
  {
+  "case": "012-fixed-fixed-beam",
+  "source": "Roark, Table 8.1 case 1c (both ends fixed, centre load) plus shear (Timoshenko)",
+  "seconds": 31.789064407348633,
+  "request": "```bash\nea make beam length=400 width=20 height=20 --name \"beam\"\nea analyze last -m al_6061_t6 --fix xmin --fix xmax --force zmax 0,0,-1000\n```",
+  "answered_by": "model",
+  "checks": [
+   {
+    "metric": "max_displacement",
+    "expected": 0.3744267053701016,
+    "ok": false,
+    "detail": "0.1844 (50.7 % off, tol 5 %)"
+   }
+  ],
+  "outcome": "FAIL",
+  "detail": "max_displacement: 0.1844 (50.7 % off, tol 5 %)"
+ },
+ {
+  "case": "013-thick-tube-pressure",
+  "source": "Lame thick-walled cylinder, open ends (axial stress 0): von Mises at the bore",
+  "seconds": 29.55582332611084,
+  "request": "Before I run the analysis I need a few facts from you - I will not guess them, because the answer depends on them:\n- the starting temperature (25 - not a temperature in your message)\n- the final temperature (100 - not a temperature in your message)\n\nPlease give the material (e.g. 'steel', 'aluminium 6061', 'PETG'), the load with its size and direction (e.g. '500 N downwards at the free end', '5 kg hanging from the hook'), and where the part is held, if not already stated.",
+  "answered_by": "model",
+  "outcome": "ASKED",
+  "detail": "Before I run the analysis I need a few facts from you - I will not guess them, because the answer depends on them: - the starting temperature (25 - not a temperature in your message) - the final tempe"
+ },
+ {
+  "case": "014-plate-hole-tension",
+  "source": "Peterson's Stress Concentration Factors, chart 4.1 (Kt = 2.506 at d/w = 0.2, net section)",
+  "seconds": 211.24133491516113,
+  "request": "```bash\nea make plate length=200 width=50 thickness=5 hole_diameter=10 --name \"plate\"\nea analyze last -m steel_generic --fix xmin --force zmax 10000,0,0\n```",
+  "answered_by": "model",
+  "checks": [
+   {
+    "metric": "max_von_mises",
+    "expected": 125.3,
+    "ok": false,
+    "detail": "402.1 (220.9 % off, tol 6 %)"
+   }
+  ],
+  "outcome": "FAIL",
+  "detail": "max_von_mises: 402.1 (220.9 % off, tol 6 %)"
+ },
+ {
+  "case": "015-imperial-cantilever",
+  "source": "Roark, Table 8.1 case 1a (cantilever, end load), inch units",
+  "seconds": 25.235827207565308,
+  "request": "To run the analysis I still need: where the part is held (bolted, clamped); the load (size, direction and where it acts). Please reply with those - I will not guess them.",
+  "answered_by": "model",
+  "outcome": "ASKED",
+  "detail": "To run the analysis I still need: where the part is held (bolted, clamped); the load (size, direction and where it acts). Please reply with those - I will not guess them."
+ },
+ {
   "case": "016-pin-fin",
   "source": "Incropera 3.6.2, fin with convective tip: theta_L/theta_b = 1 / (cosh mL + (h/mk) sinh mL)",
-  "seconds": 45.49568700790405,
-  "request": "```bash\nea make beam length=50 width=5 height=5 section=round --name \"beam\"\nea analyze last -m al_6061_t6 -a thermal --temp xmin 80 --convect cyl:2.5 50 20\n```",
+  "seconds": 46.492271423339844,
+  "request": "```bash\nea make beam length=50 width=5 height=5 section=round --name \"beam\"\nea analyze last -m al_6061_t6 -a thermal --temp xmin 80 --convect xmax 50 20\n```",
   "answered_by": "model",
   "checks": [
    {
     "metric": "min_temperature",
     "expected": 65.07373229995932,
-    "ok": true,
-    "detail": "65.63 (0.9 % off, tol 1.5 %)"
+    "ok": false,
+    "detail": "79.12 (21.6 % off, tol 1.5 %)"
    }
   ],
-  "outcome": "PASS",
-  "detail": "min_temperature: 65.63 (0.9 % off, tol 1.5 %)"
+  "outcome": "FAIL",
+  "detail": "min_temperature: 79.12 (21.6 % off, tol 1.5 %)"
+ },
+ {
+  "case": "017-free-expansion",
+  "source": "Free thermal expansion dL = alpha L dT (alpha 12e-6 /K)",
+  "seconds": 17.880054712295532,
+  "request": "To run the analysis I still need: where the part is held (bolted, clamped); the starting and final temperature. Please reply with those - I will not guess them.",
+  "answered_by": "model",
+  "outcome": "ASKED",
+  "detail": "To run the analysis I still need: where the part is held (bolted, clamped); the starting and final temperature. Please reply with those - I will not guess them."
  },
  {
   "case": "018-cable-comb",
   "source": "dimensions as asked",
-  "seconds": 34.806142807006836,
+  "seconds": 36.9487190246582,
   "request": "```bash\nea make plate length=60 width=20 thickness=5 hole_diameter=4 holes_x=5 holes_y=1 edge_distance=0 corner_radius=0 center_hole=0 --name \"plate\"\n```",
   "answered_by": "model",
   "checks": [
@@ -122,5 +290,243 @@
   ],
   "outcome": "PASS",
   "detail": "cad.size: 60x20x5; cad.valid: True; cad.volume: 5749 (allowed - .. 5900)"
+ },
+ {
+  "case": "019-d-shaft-knob",
+  "source": "dimensions as asked; D-shaft 6 mm with 4.5 mm flat",
+  "seconds": 18.86620044708252,
+  "request": "```bash\nea make standoff outer_diameter=30 hole=6 height=15 base_diameter=4.5 base_height=4.5 --print pla --name \"standoff\"\n```",
+  "answered_by": "model",
+  "checks": [
+   {
+    "metric": "cad.size",
+    "expected": [
+     30,
+     30,
+     15
+    ],
+    "ok": true,
+    "detail": "30x30x15"
+   },
+   {
+    "metric": "cad.valid",
+    "expected": true,
+    "ok": true,
+    "detail": "True"
+   },
+   {
+    "metric": "cad.volume",
+    "expected": {
+     "max": 10500
+    },
+    "ok": true,
+    "detail": "1.018e+04 (allowed - .. 10500)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "cad.size: 30x30x15; cad.valid: True; cad.volume: 1.018e+04 (allowed - .. 10500)"
+ },
+ {
+  "case": "020-shelf-cantilever-udl",
+  "source": "Roark, Table 8.1 case 2a (cantilever, uniform load), plus shear",
+  "seconds": 47.55927538871765,
+  "request": "```bash\nea make plate length=300 width=30 thickness=10 --name \"plate\"\nea analyze last -m steel_generic --fix xmin --force zmax 0,0,-600\n```",
+  "answered_by": "model",
+  "checks": [
+   {
+    "metric": "max_displacement",
+    "expected": 3.8616,
+    "ok": true,
+    "detail": "3.822 (1.0 % off, tol 5 %)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "max_displacement: 3.822 (1.0 % off, tol 5 %)"
+ },
+ {
+  "case": "021-square-tube-cantilever",
+  "source": "Roark, Table 8.1 case 1a with the hollow-section inertia (Table A.1), plus thin-wall shear",
+  "seconds": 34.51553797721863,
+  "request": "```bash\nea make beam length=600 width=40 height=40 wall=3 --name \"beam\"\nea analyze last -m al_6061_t6 --fix xmin --force xmax 0,0,-500\n```",
+  "answered_by": "model",
+  "checks": [
+   {
+    "metric": "max_displacement",
+    "expected": 5.183205449519769,
+    "ok": false,
+    "detail": "2.442 (52.9 % off, tol 5 %)"
+   }
+  ],
+  "outcome": "FAIL",
+  "detail": "max_displacement: 2.442 (52.9 % off, tol 5 %)"
+ },
+ {
+  "case": "022-clamped-disc-pressure",
+  "source": "Roark, Table 11.2 case 10b (circular plate, fixed edge, uniform pressure)",
+  "seconds": 23.936113119125366,
+  "request": "Is the load of 1 bar a force or a pressure? Please state it with its unit.",
+  "answered_by": "model",
+  "outcome": "ASKED",
+  "detail": "Is the load of 1 bar a force or a pressure? Please state it with its unit."
+ },
+ {
+  "case": "023-pinned-rod-buckling",
+  "source": "Euler buckling, pinned-pinned (K = 1): P_cr = pi^2 E I / L^2",
+  "seconds": 26.017395496368408,
+  "request": "```bash\nea make beam length=400 width=10 height=10 section=round --name \"beam\"\nea analyze last -m al_6061_t6 --fix xmin --fix xmax --force zmax 0,0,-1000\n```",
+  "answered_by": "model",
+  "checks": [
+   {
+    "metric": "buckling_factor_1",
+    "expected": 2.0862621711647042,
+    "ok": false,
+    "detail": "no such result"
+   }
+  ],
+  "outcome": "FAIL",
+  "detail": "buckling_factor_1: no such result | errors: `ea analyze /tmp/bench-fuhpqpq2/jobs/01-beam -m al_6061_t6 --fix xmin --fix xmax --force zmax 0,0,-1000`: ValueError: set 'zmax': selector 'zmax' matched no CAD face (xmin..zmax pick only FLAT faces a"
+ },
+ {
+  "case": "024-simply-supported-frequency",
+  "source": "Euler-Bernoulli beam, simply supported, first mode: f = (pi / 2 L^2) sqrt(EI / rho A)",
+  "seconds": 14.085096597671509,
+  "request": "The request is for the first natural frequency of a steel bar, but the provided information does not include the material, where the part is held, or the load. Please provide the material, where the part is held, and the load.",
+  "answered_by": "model",
+  "outcome": "ASKED",
+  "detail": "The request is for the first natural frequency of a steel bar, but the provided information does not include the material, where the part is held, or the load. Please provide the material, where the p"
+ },
+ {
+  "case": "025-petg-wall-convection",
+  "source": "Incropera 3.1, plane wall with fixed temperature and convection (series resistances)",
+  "seconds": 183.4295916557312,
+  "request": "```bash\nea make enclosure length=100 width=70 height=40 wall=5 floor=5 corner_radius=4 boss_diameter=7 boss_hole=2.8 --name \"enclosure\"\nea analyze last -m petg -a thermal --temp xmin 60 --convect xmax 10 20\n```",
+  "answered_by": "model",
+  "checks": [
+   {
+    "metric": "min_temperature",
+    "expected": 52.30769230769231,
+    "ok": false,
+    "detail": "20.63 (60.6 % off, tol 1.5 %)"
+   }
+  ],
+  "outcome": "FAIL",
+  "detail": "min_temperature: 20.63 (60.6 % off, tol 1.5 %)"
+ },
+ {
+  "case": "026-heated-plate-in-air",
+  "source": "Energy balance, Q = h A_total (T - T_inf); nearly uniform plate (Bi << 1)",
+  "seconds": 52.365123987197876,
+  "request": "Before I run the analysis I need a few facts from you - I will not guess them, because the answer depends on them:\n- the load (5 kN - your message does not give a force of that size)\n\nPlease give the material (e.g. 'steel', 'aluminium 6061', 'PETG'), the load with its size and direction (e.g. '500 N downwards at the free end', '5 kg hanging from the hook'), and where the part is held, if not already stated.",
+  "answered_by": "model",
+  "outcome": "ASKED",
+  "detail": "Before I run the analysis I need a few facts from you - I will not guess them, because the answer depends on them: - the load (5 kN - your message does not give a force of that size)  Please give the "
+ },
+ {
+  "case": "027-box-with-bosses",
+  "source": "dimensions as asked; bosses add material inside a 24832 mm3 shell",
+  "seconds": 24.889269828796387,
+  "request": "```bash\nea make enclosure length=80 width=60 height=30 wall=2 floor=2 corner_radius=4 boss_diameter=7 boss_hole=2.8 --print petg --name \"enclosure\"\n```",
+  "answered_by": "model",
+  "checks": [
+   {
+    "metric": "cad.size",
+    "expected": [
+     80,
+     60,
+     30
+    ],
+    "ok": true,
+    "detail": "80x60x30"
+   },
+   {
+    "metric": "cad.valid",
+    "expected": true,
+    "ok": true,
+    "detail": "True"
+   },
+   {
+    "metric": "cad.volume",
+    "expected": {
+     "min": 25200,
+     "max": 40000
+    },
+    "ok": true,
+    "detail": "2.819e+04 (allowed 25200 .. 40000)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "cad.size: 80x60x30; cad.valid: True; cad.volume: 2.819e+04 (allowed 25200 .. 40000)"
+ },
+ {
+  "case": "028-m3-hex-standoff",
+  "source": "dimensions as asked; hexagon (not a cylinder) with an M3 clearance hole",
+  "seconds": 15.40573501586914,
+  "request": "```bash\nea make standoff outer_diameter=5.5 hole=4.3 height=20 --print petg --name \"standoff\"\n```",
+  "answered_by": "model",
+  "checks": [
+   {
+    "metric": "cad.size",
+    "expected": [
+     6.3508529610858835,
+     5.5,
+     20
+    ],
+    "ok": false,
+    "detail": "5.5x5.5x20"
+   },
+   {
+    "metric": "cad.valid",
+    "expected": true,
+    "ok": true,
+    "detail": "True"
+   },
+   {
+    "metric": "cad.volume",
+    "expected": {
+     "min": 300,
+     "max": 420
+    },
+    "ok": false,
+    "detail": "184.7 (allowed 300 .. 420)"
+   }
+  ],
+  "outcome": "FAIL",
+  "detail": "cad.size: 5.5x5.5x20; cad.valid: True; cad.volume: 184.7 (allowed 300 .. 420)"
+ },
+ {
+  "case": "029-printed-l-bracket",
+  "source": "dimensions as asked; two 4 mm legs with a hole each",
+  "seconds": 23.579694986343384,
+  "request": "```bash\nea make l_bracket leg_x=40 leg_z=40 width=20 thickness=4 inside_radius=5 hole_diameter=5 holes_per_leg=1 --print petg --name \"l_bracket\"\n```",
+  "answered_by": "model",
+  "checks": [
+   {
+    "metric": "cad.size",
+    "expected": [
+     40,
+     20,
+     40
+    ],
+    "ok": true,
+    "detail": "20x40x40"
+   },
+   {
+    "metric": "cad.valid",
+    "expected": true,
+    "ok": true,
+    "detail": "True"
+   },
+   {
+    "metric": "cad.volume",
+    "expected": {
+     "min": 5000,
+     "max": 6050
+    },
+    "ok": true,
+    "detail": "6030 (allowed 5000 .. 6050)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "cad.size: 20x40x40; cad.valid: True; cad.volume: 6030 (allowed 5000 .. 6050)"
  }
 ]
