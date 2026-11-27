@@ -144,12 +144,15 @@ def enclosure(length, width, height, wall, floor, corner_radius, boss_diameter, 
     return p
 
 
-@template("standoff", "Round standoff / spacer with a through hole, axis along Z",
-          outer_diameter=10.0, hole=4.3, height=20.0, base_diameter=0.0, base_height=0.0)
-def standoff(outer_diameter, hole, height, base_diameter, base_height):
-    from build123d import Align, Cylinder, Pos
+@template("standoff", "Round (or hex: hex_af = size across flats) standoff / spacer with a through hole, axis along Z",
+          outer_diameter=10.0, hole=4.3, height=20.0, base_diameter=0.0, base_height=0.0, hex_af=0.0)
+def standoff(outer_diameter, hole, height, base_diameter, base_height, hex_af):
+    from build123d import Align, Cylinder, Plane, Pos, RegularPolygon, extrude
     a = (Align.CENTER, Align.CENTER, Align.MIN)
-    p = Cylinder(outer_diameter / 2, height, align=a)
+    if hex_af > 0:                                   # a hex standoff: flats parallel to X, corners on Y... size AF
+        p = extrude(Plane.XY * RegularPolygon(hex_af / 2, 6, major_radius=False), height)
+    else:
+        p = Cylinder(outer_diameter / 2, height, align=a)
     if base_diameter > 0 and base_height > 0:
         p += Cylinder(base_diameter / 2, base_height, align=a)
     if hole > 0:

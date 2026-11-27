@@ -109,7 +109,11 @@ def dimensions(t: str, tmpl: str) -> dict:
               or re.search(r"\b(?:diameter|dia)\s*(?:of|=|:)?\s*" + NUM + LEN_UNIT, t))
         if od:
             out["outer_diameter"] = _mm(float(od.group(1)), od.group(2))
-        metric = re.search(r"\bfor (?:an? )?m(\d+)\b", t)
+        af = re.search(NUM + LEN_UNIT + r"\s*across\s*(?:the\s*)?flats", t)
+        if af and re.search(r"\bhex", t):
+            out["hex_af"] = _mm(float(af.group(1)), af.group(2))
+        metric = re.search(r"\b(?:for )?(?:an? )?m(\d+)\b", t) if re.search(r"\bhex", t) else \
+            re.search(r"\bfor (?:an? )?m(\d+)\b", t)
         bore = (re.search(NUM + LEN_UNIT + r"\s*(?:inner|inside|i\.?d\.?|id|hole|bore)\b", t)
                 or re.search(r"\b(?:id|i\.d\.|inner diameter|inside diameter|hole|bore)\s*(?:of|=|:)?\s*" + NUM + LEN_UNIT, t))
         if bore:
@@ -720,7 +724,11 @@ def form_from_words(user_text: str, first: str | None = None) -> dict | None:
     tmpl = template_of(" " + first.lower().replace("×", "x") + " ") if first else template_of(t)
     if not tmpl:
         return None
-    if re.search(CUSTOM_RX, (" " + (first or user_text).lower() + " ")):
+    whole = " " + (first or user_text).lower() + " "
+    customs = {m.group(0) for m in re.finditer(CUSTOM_RX, whole)}
+    hex_spacer = tmpl == "standoff" and customs and all(c.startswith("hex") for c in customs) and \
+        re.search(r"across\s*(?:the\s*)?flats|\bA/?F\b", whole, re.I)
+    if customs and not hex_spacer:
         return None                                      # a feature no template has: the model designs it
     word = re.search(dict(TEMPLATE_WORDS)[tmpl], t)
     name = word.group(0).strip() if word and tmpl in ("standoff", "plate", "enclosure", "beam") else tmpl.replace("_", " ")

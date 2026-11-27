@@ -142,3 +142,6 @@ toolkit absorbing the slips any AI makes, not a different answer.
   load (internal pressure) touching a supported face - nodal loads on supported nodes are counted per node
   in one place and per held direction in another. Proposed fix: compare the imbalance with the gross load
   when the net load is ~0, and count the loads on supported nodes per held direction consistently.
+- Hex standoffs: the standoff template gained `hex_af` (size across flats; 0 = round), and the rules use it for
+  "hex standoff ... across flats" (case 028: 6.35 x 5.5 x 20, 342 mm3). Rules + local Qwen before this: 28 / 29,
+  the only miss being 028.

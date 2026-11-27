@@ -69,8 +69,8 @@ TEMPLATES (dimensions in mm; defaults shown)
       outer_diameter=120 bore=40 thickness=12 bolt_circle=90 bolt_hole=9 bolt_count=6 hub_diameter=0 hub_height=0
   enclosure: Open-top box enclosure with wall thickness, corner radius and screw bosses
       length=100 width=70 height=40 wall=2.4 floor=2.4 corner_radius=4 boss_diameter=7 boss_hole=2.8
-  standoff: Round standoff / spacer with a through hole, axis along Z
-      outer_diameter=10 hole=4.3 height=20 base_diameter=0 base_height=0
+  standoff: Round (or hex: hex_af = size across flats) standoff / spacer with a through hole, axis along Z
+      outer_diameter=10 hole=4.3 height=20 base_diameter=0 base_height=0 hex_af=0
   curved_laminate: Curved laminate section (bend of a formed part): arc about the Y axis from the +X direction through arc_deg, with optional straight flanges
       inner_radius=6 thickness=2.24 arc_deg=90 width=20 flange=0
   lid: Lid for the enclosure template: plate with a locating lip that fits inside the walls, and screw holes over the bosses

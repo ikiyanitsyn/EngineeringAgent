@@ -268,7 +268,8 @@ def test_a_load_spread_along_a_cantilever_is_a_pressure_not_a_tip_load():
 
 
 def test_a_hex_part_is_not_the_round_standoff_template():
-    assert form_from_words("Make a printable M3 hex standoff, 5.5 mm across flats and 20 mm long") is None
+    f = form_from_words("Make a printable M3 hex standoff, 5.5 mm across flats and 20 mm long")
+    assert f["params"].get("hex_af") == 5.5                     # hex, not round (template gained a hex option)
 
 
 def test_tube_cantilevers_are_hollow_beams():
@@ -392,3 +393,10 @@ def test_a_pressurised_tube_is_lame_and_cannot_spin():
     # three tangential holds: two alone (x at one point, y at another) leave a spin about where they cross
     assert "--slide point:50,0,0 y --slide point:-50,0,0 y --slide point:0,50,0 x" in r
     assert "--pressure cyl:30 100" in r and "pressure.thick_cylinder p=100 ri=30 ro=50" in r
+
+
+def test_hex_standoffs_use_the_standoff_template():
+    f = form_from_words("Make a printable M3 hex standoff, 5.5 mm across flats and 20 mm long, with a clearance hole "
+                        "all the way through.")
+    assert f["template"] == "standoff" and f["params"]["hex_af"] == 5.5 and f["params"]["hole"] == 3.4
+    assert form_from_words("print a hexagonal lamp shade 100 mm tall") is None      # other hex shapes: the model
