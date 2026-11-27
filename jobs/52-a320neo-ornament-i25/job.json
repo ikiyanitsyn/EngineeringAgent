@@ -1,0 +1,13 @@
+{
+ "name": "52-a320neo-ornament-i25",
+ "units": "metric",
+ "title": "geometry (defaults)",
+ "geometry": {
+  "script": "geometry.py"
+ },
+ "material": "pla",
+ "print": {
+  "process": "fdm",
+  "material": "pla"
+ }
+}
