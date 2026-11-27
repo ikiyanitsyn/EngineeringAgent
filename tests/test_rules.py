@@ -372,3 +372,15 @@ def test_the_air_temperature_is_not_a_held_face():
     req, _ = structured.build_request(g, "Aluminium 6061 pin, 5 mm diameter and 50 mm long, sticking out of a wall at "
                                          "80 C. The air is at 20 C with h = 50 W/m2K. Tip temperature?")
     assert "--temp xmax" not in req and "--temp xmin 80" in req
+
+
+def test_plate_hole_pin_fin_and_free_expansion_rules():
+    p = form_from_words("Steel plate 200 x 50 x 5 mm with a 10 mm hole drilled through its centre. It is pulled "
+                        "lengthwise with 10 kN. What is the peak stress at the hole?")["request"]
+    assert "center_hole=10" in p and "--force xmax 10000,0,0" in p and "kt.plate_hole_tension" in p
+    f = form_from_words("Aluminium 6061 pin, 5 mm diameter and 50 mm long, sticking out of a wall that is held at 80 C. "
+                        "The surrounding air is at 20 C with h = 50 W/m2K. What temperature is the tip of the pin?")["request"]
+    assert "--temp xmin 80 --convect cyl:2.5+xmax 50 20" in f and "thermal.fin_straight" in f
+    e = form_from_words("Steel bar 500 x 20 x 20 mm, one end resting against a wall, free to grow otherwise. It is "
+                        "heated evenly from 20 C to 100 C. How much does the free end move?")["request"]
+    assert "--t0 20 --dT 100" in e and "free_expansion L=500 cte=12 dT=80" in e

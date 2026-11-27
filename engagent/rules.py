@@ -347,6 +347,97 @@ def _heated_plate(t: str) -> dict | None:
                     "which holds when the plate conducts well._"}
 
 
+def _tri(t: str):
+    m = re.search(NUM + r"\s*(?:mm)?\s*[x×*]\s*" + NUM + r"\s*(?:mm)?\s*[x×*]\s*" + NUM + r"\s*mm", t)
+    return tuple(float(m.group(i)) for i in (1, 2, 3)) if m else None
+
+
+def _plate_hole_tension(t: str) -> dict | None:
+    """A plate with one central hole pulled lengthwise: Peterson's Kt for a hole in a finite-width plate. The
+    peak at the hole edge is smooth (not a singularity), so the FEA reproduces it."""
+    if not re.search(r"\bplate|strip|bar\b", t) or not re.search(r"\b(pulled|tension|tensile|stretched)\b", t):
+        return None
+    tri = _tri(t)
+    hole = re.search(NUM + r"\s*mm\s*(?:diameter\s*)?(?:hole|bore)", t)
+    forces = re.findall(FORCE_RX, t)
+    mat = material_from_words(t)
+    if not (tri and hole and len(forces) == 1 and mat) or not re.search(r"\b(centre|center|middle)\b", t):
+        return None
+    L, W, T = tri
+    d = float(hole.group(1))
+    from .structured import TO_N
+    mag, unit = forces[0]
+    unit = {"n": "N", "newton": "N", "newtons": "N", "kn": "kN", "lbf": "lbf", "lb": "lb", "lbs": "lb",
+            "pound": "lb", "pounds": "lb"}.get(unit, "kg")
+    P = float(mag) * TO_N[unit]
+    req = (f'ea make plate length={L:g} width={W:g} thickness={T:g} center_hole={d:g} --name "plate with hole"\n'
+           f'ea analyze last -m {mat} --slide xmin x --fix point:0,0,0 --slide point:0,{W:g},0 z '
+           f'--force xmax {P:g},0,0 --check "kt.plate_hole_tension P={P:g} w={W:g} d={d:g} t={T:g}"')
+    return {"action": "raw", "request": req,
+            "plan": f"_The plate is pulled along its length with {P:g} N; the far end slides (held only along "
+                    "the pull, plus two points against rigid motion), and the peak at the hole is checked against "
+                    "Peterson's stress concentration factor._"}
+
+
+def _pin_fin(t: str) -> dict | None:
+    """A pin / rod sticking out of a hot (or cold) wall into air: a round fin, its base at the wall temperature,
+    its sides and tip cooled by air (Incropera 3.6; the check uses the insulated-tip formula as a close bound)."""
+    if not re.search(r"\b(pin|rod|fin|stud)\b", t) or not re.search(r"\b(sticking out|sticks out|protrud\w*|out of a wall|from a wall)\b", t):
+        return None
+    d = re.search(NUM + r"\s*mm\s*(?:in\s*)?(?:diameter|dia\b)", t)
+    L = re.search(NUM + r"\s*mm\s*long", t)
+    h = re.search(r"\bh\s*(?:=|of|is)?\s*" + NUM, t)
+    temps = list(re.finditer(TEMP_RX, t))
+    mat = material_from_words(t)
+    if not (d and L and h and mat) or len(temps) != 2:
+        return None
+    air_at = re.search(r"\b(air|fluid|water|ambient|surround\w*)\b", t)
+    if not air_at:
+        return None
+    wall = [m for m in temps if m.start() < air_at.start()]
+    air = [m for m in temps if m.start() > air_at.start()]
+    if len(wall) != 1 or len(air) != 1:
+        return None
+    c = lambda m: (float(m.group(1)) - 32) * 5 / 9 if m.group(2) == "f" else float(m.group(1))   # noqa: E731
+    Tb, Ta = c(wall[0]), c(air[0])
+    D, Lv, hv = float(d.group(1)), float(L.group(1)), float(h.group(1))
+    from . import materials
+    k = materials.get(mat).props.get("k")
+    import math
+    req = (f'ea make beam length={Lv:g} section=round width={D:g} height={D:g} --name "pin fin"\n'
+           f'ea analyze last -a thermal -m {mat} --temp xmin {Tb:g} --convect cyl:{D / 2:g}+xmax {hv:g} {Ta:g} '
+           f'--check "thermal.fin_straight k={k:g} h={hv:g} P={math.pi * D:.6g} A={math.pi * D * D / 4:.6g} L={Lv:g} '
+           f'T_base={Tb:g} T_ambient={Ta:g} -> T_tip@min_temperature tol=0.03"')
+    return {"action": "raw", "request": req, "derived": [math.pi * D, math.pi * D * D / 4],
+            "plan": "_A round fin: its base at the wall temperature, its sides and tip cooled by the air. Checked "
+                    "against the straight-fin formula (Incropera 3.6, insulated tip - a close estimate, the small "
+                    "tip area is also cooled in the model)._"}
+
+
+def _free_expansion(t: str) -> dict | None:
+    """A bar against a wall, otherwise free, heated evenly: it grows alpha L dT and stays stress free."""
+    if not re.search(r"\b(against a wall|free to (?:grow|expand)|free end|freely)\b", t) or \
+            not re.search(r"\b(heated|cooled|warmed)\b", t):
+        return None
+    tri = _tri(t)
+    temps = re.findall(TEMP_RX, t)
+    mat = material_from_words(t)
+    if not (tri and mat) or len(temps) != 2 or re.search(r"\bboth ends\b|\beach end\b", t):
+        return None
+    c = lambda v, u: (float(v) - 32) * 5 / 9 if u == "f" else float(v)          # noqa: E731
+    T0, T1 = c(*temps[0]), c(*temps[1])
+    L, W, H = tri
+    from . import materials
+    cte = materials.get(mat).props.get("cte") * 1e6
+    req = (f'ea make beam length={L:g} width={W:g} height={H:g} --name "bar"\n'
+           f'ea analyze last -a thermal_stress -m {mat} --slide xmin x --fix point:0,0,0 --slide point:0,{W / 2:g},0 z '
+           f'--t0 {T0:g} --dT {T1:g} --check "thermal.free_expansion L={L:g} cte={cte:g} dT={T1 - T0:g} '
+           f'-> growth@max_displacement tol=0.03"')
+    return {"action": "raw", "request": req,
+            "plan": "_The bar rests against the wall at one end (held only along its length there, plus two points "
+                    "against rigid motion) and is otherwise free, so it grows alpha L dT without stress._"}
+
+
 def _round_plate(t: str) -> dict | None:
     """A flat round plate (disc, cover, diaphragm) under uniform pressure, its edge clamped or simply supported:
     Roark Table 11.2 cases 10a / 10b. None (-> the model) when anything is unclear."""
@@ -586,7 +677,7 @@ def form_from_words(user_text: str, first: str | None = None) -> dict | None:
         if joined:
             return joined
     if analysis_intent(user_text):
-        wall = _wall_convection(t) or _heated_plate(t)
+        wall = _wall_convection(t) or _heated_plate(t) or _plate_hole_tension(t) or _pin_fin(t) or _free_expansion(t)
         if wall:
             return wall
     if analysis_intent(user_text) and re.findall(PRESSURE_RX, t) and re.search(
