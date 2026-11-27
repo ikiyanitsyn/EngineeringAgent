@@ -2,7 +2,7 @@
  {
   "case": "001-cantilever-mass",
   "source": "Roark's Formulas, Table 8.1 case 1a (cantilever, end load), with shear",
-  "seconds": 11.749096393585205,
+  "seconds": 12.619383335113525,
   "request": "```bash\nea make beam length=200 width=10 height=20 --name \"bar\"\nea analyze last -m steel_generic --fix xmin --force xmax 0,0,-490.332\n```",
   "answered_by": "rules",
   "checks": [
@@ -19,7 +19,7 @@
  {
   "case": "002-simply-supported",
   "source": "Roark, Table 8.1 case 1e (simply supported, centre load)",
-  "seconds": 5.074712038040161,
+  "seconds": 4.705546855926514,
   "request": "```bash\nea make beam length=500 width=40 height=80 --name \"simply supported beam (half, symmetry)\"\nea analyze last -m steel_generic --slide xmin z --slide xmax x --slide xmax y --force xmax 0,0,-1000 --check \"beam.simply_supported_center_load P=2000 L=1000 E=210000MPa b=40 h=80\"\n```",
   "answered_by": "rules",
   "checks": [
@@ -36,7 +36,7 @@
  {
   "case": "003-column-buckling",
   "source": "Euler buckling, fixed-free (K = 2)",
-  "seconds": 12.154261589050293,
+  "seconds": 11.416144371032715,
   "request": "```bash\nea make beam length=1000 width=20 height=20 --name \"column\"\nea analyze last -m steel_generic -a buckling --fix xmin --force xmax -1000,0,0 --check \"column.euler_buckling L=1000 E=210000MPa b=20 h=20 ends=fixed_free\"\n```",
   "answered_by": "rules",
   "checks": [
@@ -53,9 +53,9 @@
  {
   "case": "004-cantilever-frequency",
   "source": "Euler-Bernoulli beam, clamped-free, first mode",
-  "seconds": 383.0437910556793,
-  "request": "I will build a 300 \u00d7 20 \u00d7 5 mm prismatic beam template and run a modal FEA on it using `al_6061_t6`, fixed at the origin (`xmin`). The fundamental natural frequency will be checked against the theoretical Euler-Bernoulli cantilever beam calculation.\n\n```bash\nea make beam length=300 width=20 height=5 --name \"aluminium cantilever\"\nea analyze last -m al_6061_t6 -a modal --fix xmin --check \"beam.natural_frequency L=300 E=69GPa b=20 h=5 density=2700\"\n```",
-  "answered_by": "gemini-3.5-flash",
+  "seconds": 79.03528618812561,
+  "request": "```bash\nea make beam length=300 width=20 height=5 --name \"cantilever\"\nea analyze last -a modal -m al_6061_t6 --fix xmin --check \"beam.natural_frequency L=300 E=68900MPa b=20 h=5 density=2700 support=cantilever\"\n```",
+  "answered_by": "rules",
   "checks": [
    {
     "metric": "frequency_1",
@@ -70,7 +70,7 @@
  {
   "case": "005-hot-bar-convection",
   "source": "Incropera 3.1.3, thermal circuit",
-  "seconds": 2.347188711166382,
+  "seconds": 2.2466163635253906,
   "request": "```bash\nea make beam length=100 --name \"bar\"\nea analyze last -m steel_generic -a thermal --temp xmin 100 --convect xmax 25 20\n```",
   "answered_by": "rules",
   "checks": [
@@ -87,7 +87,7 @@
  {
   "case": "006-restrained-bar-heating",
   "source": "sigma = E alpha dT (bar held axially at both ends)",
-  "seconds": 4.4164345264434814,
+  "seconds": 3.8751187324523926,
   "request": "```bash\nea make beam length=100 width=10 height=10 --name \"restrained bar\"\nea analyze last -m steel_generic -a thermal_stress --slide xmin x --slide xmax x --fix point:0,0,0 --fix point:100,0,0 --slide point:0,10,0 z --t0 20 --dT 70 --check \"thermal.restrained_bar E=210000MPa cte=12 dT=50 -> stress@max_von_mises tol=0.03\"\n```",
   "answered_by": "rules",
   "checks": [
@@ -104,7 +104,7 @@
  {
   "case": "007-bonded-bars",
   "source": "series springs: P L1/(A E1) + P L2/(A E2)",
-  "seconds": 44.28855919837952,
+  "seconds": 43.4863498210907,
   "request": "```json\n{\n \"name\": \"joined-bars\",\n \"units\": \"metric\",\n \"analysis\": \"static\",\n \"title\": \"steel_generic and al_6061_t6 bars joined end to end\",\n \"parts\": [\n  {\n   \"name\": \"steel\",\n   \"material\": \"steel_generic\",\n   \"geometry\": {\n    \"template\": \"beam\",\n    \"params\": {\n     \"length\": 50.0,\n     \"width\": 10.0,\n     \"height\": 10.0\n    },\n    \"step\": \"steel.step\"\n   }\n  },\n  {\n   \"name\": \"al\",\n   \"material\": \"al_6061_t6\",\n   \"geometry\": {\n    \"template\": \"beam\",\n    \"params\": {\n     \"length\": 50.0,\n     \"width\": 10.0,\n     \"height\": 10.0\n    },\n    \"position\": [\n     50.0,\n     0,\n     0\n    ],\n    \"step\": \"al.step\"\n   }\n  }\n ],\n \"sets\": {\n  \"fixed\": {\n   \"part\": \"steel\",\n   \"plane\": \"x\",\n   \"at\": 0\n  },\n  \"joint_a\": {\n   \"part\": \"steel\",\n   \"plane\": \"x\",\n   \"at\": 50.0\n  },\n  \"joint_b\": {\n   \"part\": \"al\",\n   \"plane\": \"x\",\n   \"at\": 50.0\n  },\n  \"tip\": {\n   \"part\": \"al\",\n   \"plane\": \"x\",\n   \"at\": 100.0\n  }\n },\n \"interactions\": [\n  {\n   \"type\": \"tie\",\n   \"master\": \"joint_a\",\n   \"slave\": \"joint_b\"\n  }\n ],\n \"constraints\": [\n  {\n   \"type\": \"fixed\",\n   \"on\": \"fixed\"\n  }\n ],\n \"loads\": [\n  {\n   \"type\": \"force\",\n   \"on\": \"tip\",\n   \"value\": [\n    5000.0,\n    0,\n    0\n   ]\n  }\n ],\n \"probes\": {\n  \"tip\": {\n   \"set\": \"tip\"\n  }\n },\n \"hand_calcs\": [\n  {\n   \"name\": \"Series elongation P L1/(A E1) + P L2/(A E2)\",\n   \"expected\": \"0.0481892 mm\",\n   \"kind\": \"length\",\n   \"formula\": \"delta = P L1 / (A E1) + P L2 / (A E2)\",\n   \"metric\": \"probe.tip.ux\",\n   \"tol\": 0.03\n  }\n ]\n}\n```",
   "answered_by": "rules",
   "checks": [
@@ -121,7 +121,7 @@
  {
   "case": "008-printable-box",
   "source": "dimensions as asked",
-  "seconds": 0.949730396270752,
+  "seconds": 0.7783210277557373,
   "request": "```bash\nea make enclosure length=110 width=75 height=45 wall=2 --print petg --name \"box\"\n```",
   "answered_by": "rules",
   "checks": [
@@ -142,7 +142,7 @@
  {
   "case": "009-m5-spacer",
   "source": "dimensions as asked; ISO 273 medium clearance 5.5 mm",
-  "seconds": 0.1614995002746582,
+  "seconds": 0.14035654067993164,
   "request": "```bash\nea make standoff outer_diameter=12 hole=5.5 height=15 --print petg --name \"spacer\"\n```",
   "answered_by": "rules",
   "checks": [
@@ -163,8 +163,8 @@
  {
   "case": "010-cable-clip",
   "source": "custom shape: a valid printable solid; fit judged by eye",
-  "seconds": 684.5908229351044,
-  "request": "I will fix the script by removing the broad vertical edge fillet selection that caused topological failure, replacing it with a clean geometry construction and safe edge treatment.\n\n```python\nfrom build123d import *\nfrom engagent.cad import params, save\n\nP = params(\n    width=54.0,\n    depth=22.0,\n    height=10.0,\n    cable_d=6.2,\n    snap_w=4.6,\n    screw_d=4.5,\n    cbore_d=8.0,\n    cbore_h=3.5,\n)\n\n# Base block starting at origin, aligned MIN in all axes\npart = Box(P.width, P.depth, P.height, align=(Align.MIN, Align.MIN, Align.MIN))\n\n# Cable channel X positions\ncable_x = [9.0, 27.0, 45.0]\ny_center = 14.0\n\n# Cut 3 cable channels and snap slots\nfor x in cable_x:\n    # Through hole for cable along Y axis\n    cyl = Pos(x, y_center, P.height / 2) * Rot(90, 0, 0) * Cylinder(P.cable_d / 2, P.depth + 4)\n    part -= cyl\n    # Snap entry slot opening at the top (+Z face)\n    slot = Pos(x - P.snap_w / 2, 0, P.height / 2) * Box(\n        P.snap_w, P.depth, P.height / 2 + 1, align=(Align.MIN, Align.MIN, Align.MIN)\n    )\n    part -= slot\n\n# M4 mounting screw clearance hole and counterbore between cable channels (at x = 18 and x = 36 area, or centered at front tab)\n# Put mounting screw hole at x = 27 (middle) or offset front tab:\n# Let's add a front mounting tab extending along +Y (from Y=0 down to Y=-10 or similar), or put the mounting hole on a dedicated tab in front (Y=4 mm)\nscrew_x = P.width / 2\nscrew_y = 4.0\n\nscrew = Pos(screw_x, screw_y, -1) * Cylinder(P.screw_d / 2, P.height + 2)\npart -= screw\n\ncbore = Pos(screw_x, screw_y, P.height - P.cbore_h) * Cylinder(P.cbore_d / 2, P.cbore_h + 2)\npart -= cbore\n\nsave(part)\n```\n\n```bash\nea make geometry.py --print petg --process fdm --name \"desk cable organizer clip\"\n```",
+  "seconds": 132.13776540756226,
+  "request": "I will fix the fillet issue by removing the problematic edge filleting on complex cut boundaries to ensure robust CAD generation.\n\n```python\nfrom build123d import *\nfrom engagent.cad import params, save\n\nP = params(\n    cable_d=6.0,\n    num_cables=3,\n    spacing=11.0,\n    clip_height=10.0,\n    clip_length=15.0,\n    screw_d=4.5,\n    screw_head_d=8.5,\n)\n\nmargin = 7.0\nhousing_width = margin * 2 + (P.num_cables - 1) * P.spacing\ntab_length = 14.0\n\n# Base housing block and mounting tab\nhousing = Box(housing_width, P.clip_length, P.clip_height, align=(Align.MIN, Align.MIN, Align.MIN))\ntab = Pos(housing_width - 1.0, 0, 0) * Box(tab_length + 1.0, P.clip_length, 4.0, align=(Align.MIN, Align.MIN, Align.MIN))\npart = housing + tab\n\n# Cable cutouts with snap slots along Y\nr = P.cable_d / 2.0 + 0.15\nfor i in range(int(P.num_cables)):\n    cx = margin + i * P.spacing\n    cy = P.clip_length / 2.0\n    cz = P.clip_height - r - 1.2\n    \n    cable_hole = Pos(cx, cy, cz) * Rot(90, 0, 0) * Cylinder(r, P.clip_length + 2.0)\n    slot_w = P.cable_d * 0.78\n    slot = Pos(cx, cy, P.clip_height - 1.0) * Box(slot_w, P.clip_length + 2.0, 5.0)\n    part = part - cable_hole - slot\n\n# M4 clearance hole with counterbore on mounting tab\nscrew_x = housing_width + tab_length / 2.0 - 0.5\nscrew_y = P.clip_length / 2.0\npart -= Pos(screw_x, screw_y, -1) * Cylinder(P.screw_d / 2.0, 10.0)\npart -= Pos(screw_x, screw_y, 2.5) * Cylinder(P.screw_head_d / 2.0, 5.0)\n\nsave(part)\n```\n\n```bash\nea make geometry.py --print petg --process fdm --name \"3-cable organizer clip\"\n```",
   "answered_by": "gemini-3.5-flash",
   "checks": [
    {
@@ -180,8 +180,8 @@
  {
   "case": "011-shaft-torsion",
   "source": "Shigley 10th ed. Eq. 4-5: phi = T L / (G J); surface displacement r phi",
-  "seconds": 483.7135887145996,
-  "request": "I will create a 20 mm diameter by 200 mm long solid cylinder along +X using `BuildPart` on the YZ plane, clamp the `xmin` face, apply 100 N\u00b7m torque about X at `xmax`, and check the resulting twist angle against standard round shaft torsion theory.\n\n```python\nfrom build123d import *\nfrom engagent.cad import params, save\n\nP = params(length=200.0, diameter=20.0)\nwith BuildPart() as p:\n    with BuildSketch(Plane.YZ):\n        Circle(P.diameter / 2)\n    extrude(amount=P.length)\n\nsave(p.part)\n```\n\n```bash\nea make geometry.py --name \"steel shaft\"\nea analyze last -m steel_generic --fix xmin --moment xmax 100N*m,0,0 --check \"torsion.round_shaft T=100N*m L=200 D=20 E=210GPa nu=0.3 -> twist\"\n```",
+  "seconds": 15.386703729629517,
+  "request": "I will update the moment parameter to explicitly use `100N*m` to match the torque units given in your request.\n\n```bash\nea make beam length=200 width=20 section=round --name \"torsion shaft\"\nea analyze last -m steel_generic --fix xmin --moment xmax 100N*m,0,0 --check \"torsion.round_shaft T=100N*m L=200 D=20 E=210GPa nu=0.3 -> twist\"\n```",
   "answered_by": "gemini-3.5-flash",
   "checks": [
    {
@@ -197,7 +197,7 @@
  {
   "case": "012-fixed-fixed-beam",
   "source": "Roark, Table 8.1 case 1c (both ends fixed, centre load) plus shear (Timoshenko)",
-  "seconds": 4.371873378753662,
+  "seconds": 3.837800979614258,
   "request": "```bash\nea make beam length=200 width=20 height=20 --name \"fixed-fixed beam (half, symmetry)\"\nea analyze last -m al_6061_t6 --fix xmin --slide xmax x --force xmax 0,0,-500 --check \"beam.fixed_fixed_center_load P=1000 L=400 E=68900MPa nu=0.33 b=20 h=20\"\n```",
   "answered_by": "rules",
   "checks": [
@@ -214,16 +214,26 @@
  {
   "case": "013-thick-tube-pressure",
   "source": "Lame thick-walled cylinder, open ends (axial stress 0): von Mises at the bore",
-  "outcome": "ERROR",
-  "detail": "TypeError: expected string or bytes-like object, got 'NoneType'",
-  "seconds": 100.26311755180359
+  "seconds": 46.47347569465637,
+  "request": "```python\nfrom build123d import *\nfrom engagent.cad import save\na = (Align.CENTER, Align.CENTER, Align.MIN)\nsave(Cylinder(50, 200, align=a) - Cylinder(30, 200, align=a))\n```\n```bash\nea make geometry.py --name \"pressurised tube\"\nea analyze last -m steel_generic --slide zmin z --slide point:50,0,0 y --slide point:-50,0,0 y --slide point:0,50,0 x --pressure cyl:30 100 --check \"pressure.thick_cylinder p=100 ri=30 ro=50 -> von_mises_inner@max_von_mises\"\n```",
+  "answered_by": "rules",
+  "checks": [
+   {
+    "metric": "max_von_mises",
+    "expected": 276.41680484369977,
+    "ok": true,
+    "detail": "280.1 (1.3 % off, tol 5 %)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "max_von_mises: 280.1 (1.3 % off, tol 5 %)"
  },
  {
   "case": "014-plate-hole-tension",
   "source": "Peterson's Stress Concentration Factors, chart 4.1 (Kt = 2.506 at d/w = 0.2, net section)",
-  "seconds": 141.89905428886414,
-  "request": "I will create the 200 x 50 x 5 mm plate with a 10 mm center hole, apply a 10 kN tensile force along its length, and evaluate the peak stress at the hole concentration against standard stress-concentration theory (`kt.plate_hole_tension`).\n\n```bash\nea make plate length=200 width=50 thickness=5 center_hole=10 --name \"perforated plate\"\nea analyze last -m steel_generic --fix xmin --force xmax 10000,0,0 --check \"kt.plate_hole_tension P=10000 w=50 d=10 t=5 -> peak_stress\"\n```",
-  "answered_by": "gemini-3.5-flash",
+  "seconds": 134.55860257148743,
+  "request": "```bash\nea make plate length=200 width=50 thickness=5 center_hole=10 --name \"plate with hole\"\nea analyze last -m steel_generic --slide xmin x --fix point:0,0,0 --slide point:0,50,0 z --force xmax 10000,0,0 --check \"kt.plate_hole_tension P=10000 w=50 d=10 t=5\"\n```",
+  "answered_by": "rules",
   "checks": [
    {
     "metric": "max_von_mises",
@@ -238,7 +248,7 @@
  {
   "case": "015-imperial-cantilever",
   "source": "Roark, Table 8.1 case 1a (cantilever, end load), inch units",
-  "seconds": 26.601449012756348,
+  "seconds": 25.834850788116455,
   "request": "```bash\nea make beam length=203.2 width=25.4 height=6.35 --name \"bar\"\nea analyze last -m al_6061_t6 --fix xmin --force xmax 0,0,-88.9644\n```",
   "answered_by": "rules",
   "checks": [
@@ -255,29 +265,332 @@
  {
   "case": "016-pin-fin",
   "source": "Incropera 3.6.2, fin with convective tip: theta_L/theta_b = 1 / (cosh mL + (h/mk) sinh mL)",
-  "outcome": "ERROR",
-  "detail": "LLMError: the free daily quota of the AI model (Gemini) is used up; it resets at midnight Pacific time. Meanwhile requests the built-in rules understand still work, and for anything else you can paste docs/CHAT",
-  "seconds": 240.71083426475525
+  "seconds": 1.965590000152588,
+  "request": "```bash\nea make beam length=50 section=round width=5 height=5 --name \"pin fin\"\nea analyze last -a thermal -m al_6061_t6 --temp xmin 80 --convect cyl:2.5+xmax 50 20 --check \"thermal.fin_straight k=167 h=50 P=15.708 A=19.635 L=50 T_base=80 T_ambient=20 -> T_tip@min_temperature tol=0.03\"\n```",
+  "answered_by": "rules",
+  "checks": [
+   {
+    "metric": "min_temperature",
+    "expected": 65.07373229995932,
+    "ok": true,
+    "detail": "65.07 (0.0 % off, tol 1.5 %)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "min_temperature: 65.07 (0.0 % off, tol 1.5 %)"
  },
  {
   "case": "017-free-expansion",
   "source": "Free thermal expansion dL = alpha L dT (alpha 12e-6 /K)",
-  "outcome": "ERROR",
-  "detail": "LLMError: the free daily quota of the AI model (Gemini) is used up; it resets at midnight Pacific time. Meanwhile requests the built-in rules understand still work, and for anything else you can paste docs/CHAT",
-  "seconds": 0.2855367660522461
+  "seconds": 4.549850940704346,
+  "request": "```bash\nea make beam length=500 width=20 height=20 --name \"bar\"\nea analyze last -a thermal_stress -m steel_generic --slide xmin x --fix point:0,0,0 --slide point:0,10,0 z --t0 20 --dT 100 --check \"thermal.free_expansion L=500 cte=12 dT=80 -> growth@max_displacement tol=0.03\"\n```",
+  "answered_by": "rules",
+  "checks": [
+   {
+    "metric": "max_displacement",
+    "expected": 0.48,
+    "ok": true,
+    "detail": "0.4802 (0.0 % off, tol 3 %)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "max_displacement: 0.4802 (0.0 % off, tol 3 %)"
  },
  {
   "case": "018-cable-comb",
   "source": "dimensions as asked",
-  "outcome": "ERROR",
-  "detail": "LLMError: the free daily quota of the AI model (Gemini) is used up; it resets at midnight Pacific time. Meanwhile requests the built-in rules understand still work, and for anything else you can paste docs/CHAT",
-  "seconds": 0.3127717971801758
+  "seconds": 115.66991782188416,
+  "request": "I will generate the custom CAD geometry for the cable comb using a 60 x 20 x 5 mm plate with five 4 mm wide rounded slots along one edge, spaced evenly at 10 mm intervals, and apply a 1 mm corner fillet for smooth printing. Then, I'll run the 3D-print checks using PLA.\n\n```python\nfrom build123d import *\nfrom engagent.cad import params, save\n\nP = params(\n    length=60.0,\n    width=20.0,\n    height=5.0,\n    slot_w=4.0,\n    slot_depth=12.0,\n    num_slots=5\n)\n\n# Base plate at origin\npart = Box(P.length, P.width, P.height, align=(Align.MIN, Align.MIN, Align.MIN))\n\n# Cut 5 slots into the long edge at Y = P.width\npitch = P.length / (P.num_slots + 1)\nr = P.slot_w / 2.0\n\nfor i in range(1, P.num_slots + 1):\n    cx = i * pitch\n    cy = P.width - P.slot_depth + r\n    cutter_cyl = Pos(cx, cy, P.height / 2.0) * Cylinder(r, P.height + 2.0)\n    box_len = P.slot_depth - r + 2.0\n    cutter_box = Pos(cx, cy + box_len / 2.0, P.height / 2.0) * Box(P.slot_w, box_len, P.height + 2.0)\n    part -= (cutter_cyl + cutter_box)\n\n# Fillet vertical edges for clean printing\npart = fillet(part.edges().filter_by(Axis.Z), 1.0)\n\nsave(part)\n```\n\n```bash\nea make geometry.py --print pla --process fdm --name \"cable comb\"\n```",
+  "answered_by": "gemini-3.5-flash",
+  "checks": [
+   {
+    "metric": "cad.size",
+    "expected": [
+     60,
+     20,
+     5
+    ],
+    "ok": true,
+    "detail": "60x20x5"
+   },
+   {
+    "metric": "cad.valid",
+    "expected": true,
+    "ok": true,
+    "detail": "True"
+   },
+   {
+    "metric": "cad.volume",
+    "expected": {
+     "max": 5900
+    },
+    "ok": true,
+    "detail": "4828 (allowed - .. 5900)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "cad.size: 60x20x5; cad.valid: True; cad.volume: 4828 (allowed - .. 5900)"
  },
  {
   "case": "019-d-shaft-knob",
   "source": "dimensions as asked; D-shaft 6 mm with 4.5 mm flat",
-  "outcome": "ERROR",
-  "detail": "LLMError: the free daily quota of the AI model (Gemini) is used up; it resets at midnight Pacific time. Meanwhile requests the built-in rules understand still work, and for anything else you can paste docs/CHAT",
-  "seconds": 0.26848530769348145
+  "seconds": 19.187236070632935,
+  "request": "I will create a custom 3D-printable control knob script using build123d with 12 side grip flutes, top fillet, and a 6 mm D-shaped shaft hole (depth 12 mm). Default material: PETG.\n\n```python\nfrom build123d import *\nfrom engagent.cad import params, save\n\nP = params(\n    diameter=30.0,\n    height=15.0,\n    shaft_d=6.0,\n    shaft_flat=4.5,\n    hole_depth=12.0\n)\n\n# Main knob body\nknob = Cylinder(P.diameter / 2.0, P.height, align=(Align.CENTER, Align.CENTER, Align.MIN))\n\n# Fillet top edge\ntop_edge = knob.edges().filter_by(GeomType.CIRCLE).group_by(Axis.Z)[-1]\nknob = fillet(top_edge, 1.5)\n\n# Cut 12 ergonomic grip flutes on the side\nfor i in range(12):\n    angle = i * (360.0 / 12.0)\n    flute = Rot(0, 0, angle) * Pos(P.diameter / 2.0, 0, P.height / 2.0) * Cylinder(1.2, P.height + 2.0)\n    knob -= flute\n\n# Create 6 mm D-shaft hole (flat depth at 4.5 mm)\nshaft_r = P.shaft_d / 2.0\nflat_y = P.shaft_flat - shaft_r\nshaft_cyl = Cylinder(shaft_r, P.hole_depth, align=(Align.CENTER, Align.CENTER, Align.MIN))\nflat_box = Pos(0, flat_y + 5.0, P.hole_depth / 2.0) * Box(10.0, 10.0, P.hole_depth + 2.0)\nd_hole = shaft_cyl - flat_box\n\nknob -= d_hole\n\nsave(knob)\n```\n\n```bash\nea make geometry.py --print petg --process fdm --name \"control knob\"\n```",
+  "answered_by": "gemini-3.5-flash",
+  "checks": [
+   {
+    "metric": "cad.size",
+    "expected": [
+     30,
+     30,
+     15
+    ],
+    "ok": false,
+    "detail": "29.9x29.9x15"
+   },
+   {
+    "metric": "cad.valid",
+    "expected": true,
+    "ok": true,
+    "detail": "True"
+   },
+   {
+    "metric": "cad.volume",
+    "expected": {
+     "max": 10500
+    },
+    "ok": true,
+    "detail": "9898 (allowed - .. 10500)"
+   }
+  ],
+  "outcome": "FAIL",
+  "detail": "cad.size: 29.9x29.9x15; cad.valid: True; cad.volume: 9898 (allowed - .. 10500)"
+ },
+ {
+  "case": "020-shelf-cantilever-udl",
+  "source": "Roark, Table 8.1 case 2a (cantilever, uniform load), plus shear",
+  "seconds": 16.73541021347046,
+  "request": "```bash\nea make beam length=300 width=30 height=10 --name \"cantilever, spread load\"\nea analyze last -m steel_generic --fix xmin --pressure zmax 0.0666667 --check \"beam.cantilever_udl w=2 L=300 E=210000MPa nu=0.3 b=30 h=10\"\n```",
+  "answered_by": "rules",
+  "checks": [
+   {
+    "metric": "max_displacement",
+    "expected": 3.8616,
+    "ok": true,
+    "detail": "3.822 (1.0 % off, tol 5 %)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "max_displacement: 3.822 (1.0 % off, tol 5 %)"
+ },
+ {
+  "case": "021-square-tube-cantilever",
+  "source": "Roark, Table 8.1 case 1a with the hollow-section inertia (Table A.1), plus thin-wall shear",
+  "seconds": 86.15568923950195,
+  "request": "```bash\nea make beam length=600 section=rect_tube width=40 height=40 wall=3 --name \"tube cantilever\"\nea analyze last -m al_6061_t6 --fix xmin --force xmax 0,0,-500 --check \"beam.cantilever_end_load P=500 L=600 E=68900MPa nu=0.33 b=40 h=40 t=3\"\n```",
+  "answered_by": "rules",
+  "checks": [
+   {
+    "metric": "max_displacement",
+    "expected": 5.183205449519769,
+    "ok": true,
+    "detail": "5.187 (0.1 % off, tol 5 %)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "max_displacement: 5.187 (0.1 % off, tol 5 %)"
+ },
+ {
+  "case": "022-clamped-disc-pressure",
+  "source": "Roark, Table 11.2 case 10b (circular plate, fixed edge, uniform pressure)",
+  "seconds": 411.24929022789,
+  "request": "```python\nfrom build123d import *\nfrom engagent.cad import save\nsave(Cylinder(100, 5, align=(Align.CENTER, Align.CENTER, Align.MIN)))\n```\n```bash\nea make geometry.py --name \"round plate\"\nea analyze last -m steel_generic --fix cyl:100 --pressure zmax 0.1 --check \"plate.circular_uniform q=0.1 r=100 t=5 E=210000MPa nu=0.3 edges=clamped -> deflection@max_displacement\"\n```",
+  "answered_by": "rules",
+  "checks": [
+   {
+    "metric": "max_displacement",
+    "expected": 0.065,
+    "ok": true,
+    "detail": "0.06544 (0.7 % off, tol 7 %)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "max_displacement: 0.06544 (0.7 % off, tol 7 %)"
+ },
+ {
+  "case": "023-pinned-rod-buckling",
+  "source": "Euler buckling, pinned-pinned (K = 1): P_cr = pi^2 E I / L^2",
+  "seconds": 11.51737642288208,
+  "request": "```bash\nea make beam length=400 section=round width=10 height=10 --name \"column\"\nea analyze last -m al_6061_t6 -a buckling --pin point:0,0,0 --slide point:400,0,0 y --slide point:400,0,0 z --slide point:0,5,0 z --force xmax -1000,0,0 --check \"column.euler_buckling L=400 E=68900MPa D=10 ends=pinned_pinned\"\n```",
+  "answered_by": "rules",
+  "checks": [
+   {
+    "metric": "buckling_factor_1",
+    "expected": 2.0862621711647042,
+    "ok": true,
+    "detail": "2.083 (0.2 % off, tol 6 %)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "buckling_factor_1: 2.083 (0.2 % off, tol 6 %)"
+ },
+ {
+  "case": "024-simply-supported-frequency",
+  "source": "Euler-Bernoulli beam, simply supported, first mode: f = (pi / 2 L^2) sqrt(EI / rho A)",
+  "seconds": 13.031689167022705,
+  "request": "```bash\nea make beam length=250 width=20 height=10 --name \"simply supported bar (half)\"\nea analyze last -a modal -m steel_generic --slide xmin z --slide point:0,0,0 y --slide xmax x --check \"beam.natural_frequency L=500 E=210000MPa b=20 h=10 density=7850 support=simply_supported\"\n```",
+  "answered_by": "rules",
+  "checks": [
+   {
+    "metric": "frequency_1",
+    "expected": 93.81322466470552,
+    "ok": true,
+    "detail": "93.76 (0.1 % off, tol 5 %)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "frequency_1: 93.76 (0.1 % off, tol 5 %)"
+ },
+ {
+  "case": "025-petg-wall-convection",
+  "source": "Incropera 3.1, plane wall with fixed temperature and convection (series resistances)",
+  "seconds": 10.04350209236145,
+  "request": "```bash\nea make plate length=50 width=50 thickness=5 --name \"wall (patch)\"\nea analyze last -a thermal -m petg --temp zmin 60 --convect zmax 10 20 --check \"thermal.wall_conduction_convection k=0.21 L=5 h=10 T_fixed=60 T_ambient=20\"\n```",
+  "answered_by": "rules",
+  "checks": [
+   {
+    "metric": "min_temperature",
+    "expected": 52.30769230769231,
+    "ok": true,
+    "detail": "52.31 (0.0 % off, tol 1.5 %)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "min_temperature: 52.31 (0.0 % off, tol 1.5 %)"
+ },
+ {
+  "case": "026-heated-plate-in-air",
+  "source": "Energy balance, Q = h A_total (T - T_inf); nearly uniform plate (Bi << 1)",
+  "seconds": 113.39841914176941,
+  "request": "```bash\nea make plate length=100 width=100 thickness=3 --name \"heated plate\"\nea analyze last -a thermal -m al_6061_t6 --heat zmin 5 --convect xmin+xmax+ymin+ymax+zmin+zmax 10 20 --check \"thermal.convection h=10 A=21200 T_ambient=20 heat_flow=5 -> T_surface\"\n```",
+  "answered_by": "rules",
+  "checks": [
+   {
+    "metric": "max_temperature",
+    "expected": 43.58490566037736,
+    "ok": true,
+    "detail": "43.61 (0.1 % off, tol 2 %)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "max_temperature: 43.61 (0.1 % off, tol 2 %)"
+ },
+ {
+  "case": "027-box-with-bosses",
+  "source": "dimensions as asked; bosses add material inside a 24832 mm3 shell",
+  "seconds": 0.7759931087493896,
+  "request": "```bash\nea make enclosure length=80 width=60 height=30 wall=2 --print petg --name \"box\"\n```",
+  "answered_by": "rules",
+  "checks": [
+   {
+    "metric": "cad.size",
+    "expected": [
+     80,
+     60,
+     30
+    ],
+    "ok": true,
+    "detail": "80x60x30"
+   },
+   {
+    "metric": "cad.valid",
+    "expected": true,
+    "ok": true,
+    "detail": "True"
+   },
+   {
+    "metric": "cad.volume",
+    "expected": {
+     "min": 25200,
+     "max": 40000
+    },
+    "ok": true,
+    "detail": "2.984e+04 (allowed 25200 .. 40000)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "cad.size: 80x60x30; cad.valid: True; cad.volume: 2.984e+04 (allowed 25200 .. 40000)"
+ },
+ {
+  "case": "028-m3-hex-standoff",
+  "source": "dimensions as asked; hexagon (not a cylinder) with an M3 clearance hole",
+  "seconds": 0.1639540195465088,
+  "request": "```bash\nea make standoff outer_diameter=5.5 hex_af=5.5 hole=3.4 height=20 --print petg --name \"standoff\"\n```",
+  "answered_by": "rules",
+  "checks": [
+   {
+    "metric": "cad.size",
+    "expected": [
+     6.3508529610858835,
+     5.5,
+     20
+    ],
+    "ok": true,
+    "detail": "5.5x6.351x20"
+   },
+   {
+    "metric": "cad.valid",
+    "expected": true,
+    "ok": true,
+    "detail": "True"
+   },
+   {
+    "metric": "cad.volume",
+    "expected": {
+     "min": 300,
+     "max": 420
+    },
+    "ok": true,
+    "detail": "342.4 (allowed 300 .. 420)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "cad.size: 5.5x6.351x20; cad.valid: True; cad.volume: 342.4 (allowed 300 .. 420)"
+ },
+ {
+  "case": "029-printed-l-bracket",
+  "source": "dimensions as asked; two 4 mm legs with a hole each",
+  "seconds": 0.22154712677001953,
+  "request": "```bash\nea make l_bracket width=20 thickness=4 leg_x=40 leg_z=40 hole_diameter=5 holes_per_leg=1 --print petg --name \"l bracket\"\n```",
+  "answered_by": "rules",
+  "checks": [
+   {
+    "metric": "cad.size",
+    "expected": [
+     40,
+     20,
+     40
+    ],
+    "ok": true,
+    "detail": "20x40x40"
+   },
+   {
+    "metric": "cad.valid",
+    "expected": true,
+    "ok": true,
+    "detail": "True"
+   },
+   {
+    "metric": "cad.volume",
+    "expected": {
+     "min": 5000,
+     "max": 6050
+    },
+    "ok": true,
+    "detail": "6030 (allowed 5000 .. 6050)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "cad.size: 20x40x40; cad.valid: True; cad.volume: 6030 (allowed 5000 .. 6050)"
  }
 ]
