@@ -22,10 +22,16 @@ def project_root() -> Path:
     return Path(__file__).resolve().parent.parent
 
 
+# a short mixed set for testing a model on a PC: 2 structures, 2 thermal, 2 3D-print, model-dependent ones
+QUICK = ["001-", "011-", "005-", "016-", "009-", "018-"]
+
+
 def cases(root: Path | None = None, only: str | None = None) -> list[Path]:
+    """Benchmark case folders; ``only`` = a substring, or several separated by commas."""
     base = Path(root or project_root()) / "benchmarks"
     out = sorted(p for p in base.iterdir() if (p / "prompt.md").exists() and (p / "expected.json").exists())
-    return [p for p in out if not only or only in p.name]
+    keys = [k for k in (only or "").split(",") if k]
+    return [p for p in out if not keys or any(k in p.name for k in keys)]
 
 
 def _metric(job_folder: Path, name: str):

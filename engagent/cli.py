@@ -244,7 +244,16 @@ def cmd_bench(a):
         return _out(a, [str(f) for f in files], [f"Wrote {len(files)} prompts (no answers) to {a.export_prompts}"])
     slug = re.sub(r"[^A-Za-z0-9]+", "-", a.solver or "replies").strip("-").lower()
     name = "SCOREBOARD.md" if not a.replies else f"SCOREBOARD-{slug}.md"
-    out = None if a.no_write or a.only else bench.project_root() / "benchmarks" / name
+    if getattr(a, "model_only", False):
+        from . import assistant
+        os.environ["ENGAGENT_NO_RULES"] = "1"           # every case goes to the model
+        model = assistant.settings().get("model") or "model"
+        name = "SCOREBOARD-model-" + re.sub(r"[^A-Za-z0-9]+", "-", model).strip("-").lower() + ".md"
+        print(f"Testing the AI model '{model}' on its own (built-in rules off)", flush=True)
+    if getattr(a, "quick", False) and not a.only:
+        a.only = ",".join(bench.QUICK)
+    keep = getattr(a, "model_only", False)            # a model test is worth keeping even on the quick set
+    out = None if a.no_write or (a.only and not keep) else bench.project_root() / "benchmarks" / name
     rows = bench.run(only=a.only, out_md=out, replies=Path(a.replies) if a.replies else None, solver=a.solver)
     _out(a, rows, [bench.scoreboard(rows)] + ([f"Wrote {out}"] if out else []))
 
@@ -690,6 +699,11 @@ def build_parser() -> argparse.ArgumentParser:
     q.add_argument("--replies", help="score replies another solver wrote: a folder of <case>.md files")
     q.add_argument("--solver", help="name of that solver for the scoreboard (e.g. claude-code-sonnet)")
     q.add_argument("--export-prompts", dest="export_prompts", help="write only the prompts (no answers) here")
+    q.add_argument("--model-only", dest="model_only", action="store_true",
+                   help="test YOUR AI model (e.g. a local Qwen in Ollama): built-in rules off, so every case goes "
+                        "to the model; scoreboard SCOREBOARD-model-<name>.md")
+    q.add_argument("--quick", action="store_true",
+                   help="a short mixed set (6 cases: structures, thermal, 3D print) - minutes on a PC, not hours")
 
     q = add(sub, "ask", cmd_ask, "PLAIN ENGLISH: describe a part or analysis; an AI model writes and runs the request")
     q.add_argument("text", nargs="*", help='e.g. "printable PETG box 100x70x40 with 2.4 mm walls"')

@@ -54,3 +54,9 @@ def test_a_check_without_an_output_name_never_crashes_the_run():
     assert out.get("metric") == "max_von_mises" and out.get("output") == "von_mises_inner"   # picked, not crashed
     bad = _safe_link("column.euler_buckling", job, None)                                       # a broken check
     assert "setup_error" in bad
+
+
+def test_several_case_filters_and_the_quick_set():
+    names = [c.name for c in bench.cases(only=",".join(bench.QUICK))]
+    assert len(names) == 6 and any(n.startswith("018-") for n in names)
+    assert [c.name for c in bench.cases(only="001-,005-")] == ["001-cantilever-mass", "005-hot-bar-convection"]

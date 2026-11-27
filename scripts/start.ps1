@@ -138,6 +138,7 @@ while ($true) {
     Write-Host "  7  Change the free AI used by option 1"
     Write-Host "  8  Check / repair the installation"
     Write-Host "  9  Update EngineeringAgent"
+    Write-Host "  T  Test my AI model (e.g. local Qwen): 6 benchmark cases, a few minutes"
     Write-Host "  0  Exit"
     $c = Read-Host "`nChoose"
     switch ($c) {
@@ -165,6 +166,12 @@ while ($true) {
         "9" {
             if (Get-Command git -ErrorAction SilentlyContinue) { git pull; & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "setup.ps1") -NoShortcut }
             else { Write-Host "Download the latest ZIP from GitHub (Code > Download ZIP) and extract it over this folder." }
+            Pause-Key
+        }
+        { $_ -in "t", "T" } {
+            Write-Host "Testing the AI model chosen in option 7 on 6 cases with known answers (rules off)..."
+            & $ea bench --model-only --quick
+            Write-Host "The scoreboard is in benchmarks\SCOREBOARD-model-*.md (share it in an issue to compare)."
             Pause-Key
         }
         "0" { exit 0 }
