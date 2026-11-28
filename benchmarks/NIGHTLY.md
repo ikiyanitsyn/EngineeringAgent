@@ -158,3 +158,27 @@ toolkit absorbing the slips any AI makes, not a different answer.
   (2) the load-balance check now judges the imbalance against the gross load (the total of all loads however
   directed), not the net: the pressurised tube's false FAIL ('imbalance 4.9e13 %') is gone; one-way loads
   (tip loads, gravity) are judged exactly as before (gross = net).
+
+## 2026-11-27 -> 28 (owner: "Start, target ... large format additive manufacturing ... glass filled ... FEA ... tools")
+
+### Large-format additive manufacturing (LFAM)
+- New material `petg_gf30_lfam` from the Polymaker PolyCore PETG-1013 TDS V2.1 (30 % glass PETG pellets, printed
+  specimens, 8 mm nozzle / 3 mm layers): E 7414 MPa along the bead, 2492 MPa through the layers; UTS 73.3 / 26.3
+  MPa; density 1.44; Tg 76 C; HDT 73 C. Orthotropic (1 = bead / X, 3 = layers / Z). Across-bead stiffness = Z
+  (usual LFAM model); Poisson / shear moduli labelled estimates. The TDS gives no CTE or conductivity, so none
+  is invented. Glass-filled PC: no published printed XY/Z data found (Jabil PC20GF is moulded-bar data), so no
+  PC grade was added - a glass-filled PC request asks for its properties instead of using unfilled PC.
+- Cases 030-033 (LFAM tooling: a tool panel under 1 bar, a support block crushed through its layers, a fixture
+  arm printed flat vs upright - a 3x stiffness difference from print orientation alone) and 034 (steel I-beam).
+  Toolkit check: all five within 0.5-2.2 %.
+- Blind chat solver: round 5 - FEA 4 / 5 but its hand checks FAILed on guessed moduli and one support was put
+  mid-height (the sheet never said a beam's section is centred); after the fixes round 6 - **5 / 5**.
+
+### Improvements merged
+1. Material words: glass-filled PETG maps to the LFAM grade only in a large-format context; other filled grades
+   (PC-GF, desktop GF-PETG) are asked for, never the 3-4x softer unfilled values; carbon fibre nylon -> PA6-CF.
+2. Rules: an I-beam is an I-section (it was modelled as a solid bar!); other profiles and orthotropic prints go
+   to the model; 'shorten' is an analysis word.
+3. A hand check's guessed E on an orthotropic print snaps to the bead or layer modulus, and the check says so.
+4. Instruction sheet: LFAM moduli; model large-format parts as printed (layers along +Z, beads along X);
+   every template's coordinates (a beam's section is centred on the X axis).

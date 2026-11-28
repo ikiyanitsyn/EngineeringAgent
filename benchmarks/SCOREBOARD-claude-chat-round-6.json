@@ -1,0 +1,87 @@
+[
+ {
+  "case": "030-lfam-tool-panel-pressure",
+  "source": "Euler-Bernoulli beam, simply supported, uniform load: 5 w L^4 / (384 E1 I) + shear w L^2 / (8 k G A); E1 (bead direction) 7414 MPa, PolyCore PETG-1013 TDS",
+  "seconds": 24.174679279327393,
+  "request": "Plan: the panel is printed flat, so beads run along X (E = 7414 MPa) and layers stack along Z. It rests on both end supports, so I model half the panel (200 mm) with the mid-span face as a symmetry plane. The end is held vertically only, so it can rotate. 1 bar = 0.1 MPa on the top face (zmax) pushes it down.\nNo exact textbook case matches a uniform pressure, so I add a --bound: a simply supported beam with the same total load (0.1 MPa x 400 x 100 = 4000 N). A centre point load of 5/8 x 4000 = 2500 N gives the same beam-theory deflection. It only checks that the FEA is on the expected side, and the real plate is a bit stiffer or more flexible because of width and shear effects.\n\n```bash\nea make plate length=200 width=100 thickness=20 --name \"LFAM tool panel (half)\"\nea analyze last -m petg_gf30_lfam --slide xmin z --slide xmax x --slide xmax y --pressure zmax 0.1 --bound \"beam.simply_supported_center_load P=2500 L=400 E=7414MPa b=100 h=20\"\n```\n",
+  "answered_by": "Claude chat round 6",
+  "checks": [
+   {
+    "metric": "max_displacement",
+    "expected": 6.863997841920691,
+    "ok": true,
+    "detail": "6.805 (0.9 % off, tol 7 %)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "max_displacement: 6.805 (0.9 % off, tol 7 %)"
+ },
+ {
+  "case": "031-lfam-block-z-compression",
+  "source": "Axial bar through the layers: P L / (A E3), E3 (Z) 2492 MPa, PolyCore PETG-1013 TDS",
+  "seconds": 329.4154703617096,
+  "request": "Plan: printed standing up, so the layers are horizontal and the 200 mm height runs along Z, through the layers (E = 2492 MPa). I model it AS PRINTED as a 100 x 100 x 200 block. The flat rigid floor lets the base slide sideways, so I hold it only in Z, plus two small point holds to stop sliding and spinning. 20 kN presses straight down on the top face. This is a plain axial bar, so I check against it.\n\n```bash\nea make plate length=100 width=100 thickness=200 --name \"LFAM support block\"\nea analyze last -m petg_gf30_lfam --slide zmin z --fix point:0,0,0 --slide point:100,0,0 y --force zmax 0,0,-20000 --check \"axial.bar P=20000 L=200 A=10000 E=2492MPa\"\n```\n",
+  "answered_by": "Claude chat round 6",
+  "checks": [
+   {
+    "metric": "max_displacement",
+    "expected": 0.16051364365971107,
+    "ok": true,
+    "detail": "0.164 (2.2 % off, tol 5 %)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "max_displacement: 0.164 (2.2 % off, tol 5 %)"
+ },
+ {
+  "case": "032-lfam-arm-printed-flat",
+  "source": "Cantilever, end load, E1 (bead direction) 7414 MPa: P L^3 / (3 E I) + P L / (k G A)",
+  "seconds": 6.79964804649353,
+  "request": "Plan: printed flat, so beads run along the 300 mm length (X) and E = 7414 MPa. Beam template: 300 long, 40 wide (Y), 20 thick (Z). Clamped at x = 0, 200 N down at the free end, so it bends through the 20 mm thickness (b = 40, h = 20). It is a textbook cantilever, so I check against it.\n\n```bash\nea make beam length=300 width=40 height=20 --name \"flat printed arm\"\nea analyze last -m petg_gf30_lfam --fix xmin --force xmax 0,0,-200 --check \"beam.cantilever_end_load P=200 L=300 E=7414MPa b=40 h=20 nu=0.3\"\n```\n",
+  "answered_by": "Claude chat round 6",
+  "checks": [
+   {
+    "metric": "max_displacement",
+    "expected": 9.194397086592932,
+    "ok": true,
+    "detail": "9.146 (0.5 % off, tol 5 %)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "max_displacement: 9.146 (0.5 % off, tol 5 %)"
+ },
+ {
+  "case": "033-lfam-arm-printed-upright",
+  "source": "Cantilever, end load, E3 (through the layers) 2492 MPa: P L^3 / (3 E I) + P L / (k G A)",
+  "seconds": 6.705132484436035,
+  "request": "Plan: printed standing up, so the layers stack along the arm's length. I model it AS PRINTED, with the arm along Z: 20 mm in X, 40 mm in Y, 300 mm in Z (a plate template with thickness 300). The bending stress runs along the layers, so E = 2492 MPa. Clamped at the bottom (zmin), 50 N sideways in +X at the top, so it bends through the 20 mm direction (b = 40, h = 20). It is a textbook cantilever, so I check against it.\n\n```bash\nea make plate length=20 width=40 thickness=300 --name \"upright printed arm\"\nea analyze last -m petg_gf30_lfam --fix zmin --force zmax 50,0,0 --check \"beam.cantilever_end_load P=50 L=300 E=2492MPa b=40 h=20 nu=0.3\"\n```\n",
+  "answered_by": "Claude chat round 6",
+  "checks": [
+   {
+    "metric": "max_displacement",
+    "expected": 6.794169341894061,
+    "ok": true,
+    "detail": "6.703 (1.3 % off, tol 6 %)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "max_displacement: 6.703 (1.3 % off, tol 6 %)"
+ },
+ {
+  "case": "034-steel-i-beam-cantilever",
+  "source": "Roark Table 8.1 case 1a with the I-section inertia (Table A.1); web shear P L / (G h tw)",
+  "seconds": 138.41945695877075,
+  "request": "Plan: I-beam template, 1000 mm long, 100 mm deep (Z), 50 mm flanges 6 mm thick, 4 mm web. I use generic steel since no grade was given. Built into the wall at x = 0 (fixed), 2 kN down at the free end, bending about the strong axis.\nNo exact textbook calc for an I-section is in the list, so I add a --bound using a rectangle with the same second moment of area. I = (50 x 100^3 - 46 x 88^3)/12 = about 1.554e6 mm^4, which matches b = 50, h = 72. It only checks that the FEA is on the expected side, since shear deflection and the wall restraint add flexibility.\n\n```bash\nea make beam length=1000 width=50 height=100 section=i flange=6 web=4 --name \"I-beam cantilever\"\nea analyze last -m steel_generic --fix xmin --force xmax 0,0,-2000 --bound \"beam.cantilever_end_load P=2000 L=1000 E=210GPa b=50 h=72\"\n```\n",
+  "answered_by": "Claude chat round 6",
+  "checks": [
+   {
+    "metric": "max_displacement",
+    "expected": 2.104294311928764,
+    "ok": true,
+    "detail": "2.117 (0.6 % off, tol 6 %)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "max_displacement: 2.117 (0.6 % off, tol 6 %)"
+ }
+]
