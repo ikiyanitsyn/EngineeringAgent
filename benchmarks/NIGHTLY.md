@@ -186,3 +186,5 @@ toolkit absorbing the slips any AI makes, not a different answer.
   the right modulus for each print orientation). The miss: the tool panel 2.2x too stiff because Gemini wrote
   `--slide near:0,50,10 x` meaning one point, but near: selects the whole end face, which clamps that end
   (fixed-pinned). The sheet never listed `point:`; it now lists it and warns what near: does.
+- After the point:/near: fix, Gemini re-run on the tool panel: **PASS** (6.805 mm, 0.9 % off). Gemini on the LFAM
+  cases is now 4 / 4.
