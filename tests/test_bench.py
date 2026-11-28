@@ -60,3 +60,11 @@ def test_several_case_filters_and_the_quick_set():
     names = [c.name for c in bench.cases(only=",".join(bench.QUICK))]
     assert len(names) == 6 and any(n.startswith("018-") for n in names)
     assert [c.name for c in bench.cases(only="001-,005-")] == ["001-cantilever-mass", "005-hot-bar-convection"]
+
+
+def test_a_guessed_E_on_an_orthotropic_print_is_snapped_and_said():
+    from engagent.quick import link_check
+    job = {"loads": [{"on": "xmax", "type": "force"}], "constraints": [], "analysis": "static",
+           "material": "petg_gf30_lfam", "probes": {}}
+    hc = link_check("beam.cantilever_end_load P=50 L=300 E=2GPa b=40 h=20", job, None)
+    assert "through-layer modulus 2492" in hc["name"] and hc["inputs"]["E"] == "2492 MPa"

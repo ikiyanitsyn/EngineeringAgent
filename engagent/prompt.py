@@ -92,6 +92,9 @@ save(part)                                                    # must be the last
   Sketch shapes: Rectangle(w,h) Circle(r) Polygon((x,y),...) SlotOverall(w,h) RegularPolygon(r,n)
   Then use it:  ea make geometry.py --print petg   (and/or)   ea analyze last -m ... --fix ...
   Keep the part in the +X/+Y/+Z region starting at the origin so faces are easy to select.
+  Template coordinates: plate, enclosure, lid, l_bracket start at the origin (x, y, z >= 0); a BEAM runs
+  along +X from x=0 with its section CENTRED on the X axis (y = -width/2..width/2, z = -height/2..height/2);
+  standoff / flange are centred on the Z axis. Write point: selectors in these coordinates.
   Shapes are CENTRED on their Pos unless align= is given: a cutter for a through hole must span the
   whole thickness (centre it at mid-thickness and make it longer than the part is thick).
 
@@ -141,8 +144,8 @@ Request: "aluminium rod 250 x 20 x 20 mm, held rigidly at both ends, cooled even
  (--slide FACE AXIS, symmetry planes), not single points, in the direction the part bends: a point hold
  adds a false low "mode" that changes with the mesh. A beam on two supports: model half of it, with
  --slide xmax x on the mid-span face.)
-Large-format prints (petg_gf30_lfam, 30 % glass PETG pellets) are ~3x stiffer along the bead than through
-the layers. Model the part AS PRINTED: build plate = XY, layers stacked along +Z, beads along X (a part
+Large-format prints (petg_gf30_lfam, 30 % glass PETG pellets): E = 7414 MPa along the bead (X), 2492 MPa
+through the layers (Z) and across beads; strength 73.3 / 26.3 MPa. Use these in --check / --bound. Model the part AS PRINTED: build plate = XY, layers stacked along +Z, beads along X (a part
 printed standing up stands along Z). The material directions follow X, Y, Z automatically.
 ```bash
 ea make beam length=250 width=20 height=20 --name "restrained rod"

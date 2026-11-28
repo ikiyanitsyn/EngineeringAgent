@@ -432,6 +432,26 @@ def _auto_beam_check(source, params, mat, cons, loads, analysis, system) -> str 
 
 
 # hand-calc output -> how to find the matching FEA result
+def _snap_orthotropic_E(inputs: dict, job: dict, system: str | None) -> str | None:
+    """An orthotropic part (a large-format print): a hand check's E that matches neither the bead-direction nor
+    the through-layer modulus was guessed - use the nearer real one, and say so in the check's name."""
+    if "E" not in inputs or not job.get("material"):
+        return None
+    try:
+        from . import materials
+        m = materials.get(job["material"], "metric")
+        if not (m.orthotropic and m.get("E1") and m.get("E3")):
+            return None
+        given = U.to_internal(inputs["E"], "pressure", system)
+    except Exception:
+        return None
+    best = min((m.get("E1"), m.get("E3")), key=lambda e: abs(e - given) / e)
+    if abs(best - given) / best <= 0.02:
+        return None
+    inputs["E"] = f"{best:g} MPa"
+    return f"{'bead-direction' if best == m.get('E1') else 'through-layer'} modulus {best:g} MPa, not {given:g}"
+
+
 def link_check(spec: str, job: dict, system: str | None = None) -> dict:
     """``"beam.cantilever_end_load P=500 L=200 E=210GPa b=10 h=20"`` -> a linked hand_calcs entry.
 
@@ -454,6 +474,7 @@ def link_check(spec: str, job: dict, system: str | None = None) -> dict:
     if not toks:
         raise ValueError("--check needs a calculation name, e.g. beam.cantilever_end_load P=100 L=100 ...")
     name, inputs = toks[0], kv_params(toks[1:])
+    snapped = _snap_orthotropic_E(inputs, job, system)
     res = handcalc.run(name, inputs, system)
     out_name, metric = None, None
     if target.strip():
@@ -462,7 +483,8 @@ def link_check(spec: str, job: dict, system: str | None = None) -> dict:
     load_sets = [l["on"] for l in job["loads"] if l.get("on")]
     temp_sets = [c["on"] for c in job["constraints"] if c["type"] == "temperature"]
     a = job["analysis"]
-    entry: dict = {"name": f"Hand check: {res.title}", "calc": name, "inputs": inputs}
+    entry: dict = {"name": f"Hand check: {res.title}" + (f" (E set to the material's {snapped})" if snapped else ""),
+                   "calc": name, "inputs": inputs}
     outs = res.outputs
     if out_name is None:
         for cand in ("deflection", "f1", "P_cr", "heat_flow", "T_surface", "T_at_x", "T_tip", "elongation",

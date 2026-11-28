@@ -1,0 +1,87 @@
+[
+ {
+  "case": "030-lfam-tool-panel-pressure",
+  "source": "Euler-Bernoulli beam, simply supported, uniform load: 5 w L^4 / (384 E1 I) + shear w L^2 / (8 k G A); E1 (bead direction) 7414 MPa, PolyCore PETG-1013 TDS",
+  "seconds": 24.489534616470337,
+  "request": "Plan: model half the panel (200 mm of the 400 mm, x = 0 is the support end, x = 200 is the mid-span symmetry plane). Printed flat so layers stack along Z (20 mm thickness) and beads run along X. The end is held vertically only (simply supported), the mid-span face is slid in X. Pressure 1 bar = 0.1 MPa on the top face (zmax). The check is a bound: a uniform load equals a centre point load of 5/8 of the total (2500 N of 4000 N), using approximate LFAM bead-direction E of about 6 GPa (not certified), so the check is only a rough bound.\n\n```bash\nea make beam length=200 width=100 height=20 --name \"LFAM tool panel (half)\"\nea analyze last -m petg_gf30_lfam --slide xmin z --slide xmax x --slide xmax y --pressure zmax 0.1 --bound \"beam.simply_supported_center_load P=2500 L=400 E=6GPa b=100 h=20\"\n```\n",
+  "answered_by": "Claude chat round 5",
+  "checks": [
+   {
+    "metric": "max_displacement",
+    "expected": 6.863997841920691,
+    "ok": true,
+    "detail": "6.805 (0.9 % off, tol 7 %)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "max_displacement: 6.805 (0.9 % off, tol 7 %)"
+ },
+ {
+  "case": "031-lfam-block-z-compression",
+  "source": "Axial bar through the layers: P L / (A E3), E3 (Z) 2492 MPa, PolyCore PETG-1013 TDS",
+  "seconds": 346.6028861999512,
+  "request": "Plan: block 100 x 100 x 200 mm standing along Z, layers horizontal, so the load goes through the layers (the soft direction). The floor is modelled as frictionless on the bottom face (slid in Z) with a corner point pinned and a second point stopping rotation about Z, so the base can expand sideways. 20 kN down on the top face. Check is axial bar P/A with an approximate through-layer E of about 2 GPa (not certified).\n\n```bash\nea make beam length=100 width=100 height=200 --name \"LFAM support block\"\nea analyze last -m petg_gf30_lfam --slide zmin z --fix point:0,0,0 --slide point:100,0,0 y --force zmax 0,0,-20000 --check \"axial.bar P=20000 L=200 A=10000 E=2GPa\"\n```\n",
+  "answered_by": "Claude chat round 5",
+  "checks": [
+   {
+    "metric": "max_displacement",
+    "expected": 0.16051364365971107,
+    "ok": false,
+    "detail": "0.1705 (6.2 % off, tol 5 %)"
+   }
+  ],
+  "outcome": "FAIL",
+  "detail": "max_displacement: 0.1705 (6.2 % off, tol 5 %)"
+ },
+ {
+  "case": "032-lfam-arm-printed-flat",
+  "source": "Cantilever, end load, E1 (bead direction) 7414 MPa: P L^3 / (3 E I) + P L / (k G A)",
+  "seconds": 6.736974716186523,
+  "request": "Plan: arm printed flat, so beads along X, layers stacked along Z (the 20 mm thickness, which is the bending direction). Clamped at x = 0, 200 N down (-Z) on the free end face. Check is the cantilever formula with an approximate bead-direction E of about 6 GPa (not certified).\n\n```bash\nea make beam length=300 width=40 height=20 --name \"LFAM fixture arm flat\"\nea analyze last -m petg_gf30_lfam --fix xmin --force xmax 0,0,-200 --check \"beam.cantilever_end_load P=200 L=300 E=6GPa b=40 h=20\"\n```\n",
+  "answered_by": "Claude chat round 5",
+  "checks": [
+   {
+    "metric": "max_displacement",
+    "expected": 9.194397086592932,
+    "ok": true,
+    "detail": "9.146 (0.5 % off, tol 5 %)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "max_displacement: 9.146 (0.5 % off, tol 5 %)"
+ },
+ {
+  "case": "033-lfam-arm-printed-upright",
+  "source": "Cantilever, end load, E3 (through the layers) 2492 MPa: P L^3 / (3 E I) + P L / (k G A)",
+  "seconds": 9.031904697418213,
+  "request": "Plan: arm printed standing up, so it stands along Z (300 mm) with layers stacked along its length, 40 mm along X and 20 mm along Y. The beam template lies along X, so I use a custom shape. Clamped at the bottom (zmin), 50 N sideways in +Y on the top end face, bending through the 20 mm direction. Check is the cantilever formula with an approximate through-layer E of about 2 GPa (the stiffness along the length is the soft one here; not certified).\n\n```python\nfrom build123d import *\nfrom engagent.cad import params, save\nP = params(height=300.0, width_x=40.0, thick_y=20.0)\npart = Box(P.width_x, P.thick_y, P.height, align=(Align.MIN, Align.MIN, Align.MIN))\nsave(part)\n```\n\n```bash\nea make geometry.py --name \"LFAM fixture arm upright\"\nea analyze last -m petg_gf30_lfam --fix zmin --force zmax 0,50,0 --check \"beam.cantilever_end_load P=50 L=300 E=2GPa b=40 h=20\"\n```\n",
+  "answered_by": "Claude chat round 5",
+  "checks": [
+   {
+    "metric": "max_displacement",
+    "expected": 6.794169341894061,
+    "ok": true,
+    "detail": "6.759 (0.5 % off, tol 6 %)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "max_displacement: 6.759 (0.5 % off, tol 6 %)"
+ },
+ {
+  "case": "034-steel-i-beam-cantilever",
+  "source": "Roark Table 8.1 case 1a with the I-section inertia (Table A.1); web shear P L / (G h tw)",
+  "seconds": 142.7861089706421,
+  "request": "Plan: I-section beam, 1000 mm long along X, 50 mm flanges, 100 mm deep, 6 mm flanges, 4 mm web. Built in at x = 0 (fixed), 2 kN down (-Z) on the free end. Material: generic steel (steel_generic). The bound uses a solid rectangle with the same bending stiffness as the I-section (I about 1.55e6 mm^4, so b=50, h=72), which is only a simplified estimate: the real I-beam also has shear deflection, so FEA should be at or above it.\n\n```bash\nea make beam length=1000 width=50 height=100 section=i flange=6 web=4 --name \"I-beam cantilever\"\nea analyze last -m steel_generic --fix xmin --force xmax 0,0,-2000 --bound \"beam.cantilever_end_load P=2000 L=1000 E=210GPa b=50 h=72\"\n```\n",
+  "answered_by": "Claude chat round 5",
+  "checks": [
+   {
+    "metric": "max_displacement",
+    "expected": 2.104294311928764,
+    "ok": true,
+    "detail": "2.117 (0.6 % off, tol 6 %)"
+   }
+  ],
+  "outcome": "PASS",
+  "detail": "max_displacement: 2.117 (0.6 % off, tol 6 %)"
+ }
+]

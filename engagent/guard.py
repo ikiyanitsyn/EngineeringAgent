@@ -308,7 +308,19 @@ def _fix_check(spec: str, material: str | None, force: float | None) -> str:
         try:
             from . import materials
             m = materials.get(material, "metric")
-            if m.get("E"):
+            if m.orthotropic and m.get("E1") and m.get("E3"):
+                # an orthotropic print: snap a guessed E to the nearer real one (along the bead or through layers)
+                mE = re.search(r"(?<![\w.])E=(\"[^\"]*\"|'[^']*'|\S+)", spec)
+                if mE:
+                    from . import units as U
+                    try:
+                        given = U.to_internal(mE.group(1).strip("\"'"), "pressure", "metric")
+                    except Exception:
+                        given = None
+                    if given:
+                        best = min((m.get("E1"), m.get("E3")), key=lambda e: abs(e - given) / e)
+                        spec = spec[:mE.start()] + f'E="{best:g} MPa"' + spec[mE.end():]
+            elif m.get("E"):
                 spec = re.sub(r"(?<![\w.])E=(\"[^\"]*\"|'[^']*'|\S+)", f'E="{m.get("E"):g} MPa"', spec)
             if m.get("nu"):
                 spec = re.sub(r"(?<![\w.])nu=\S+", f"nu={m.get('nu'):g}", spec)
