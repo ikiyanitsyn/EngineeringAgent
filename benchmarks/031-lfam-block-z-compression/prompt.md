@@ -1,0 +1,1 @@
+A tooling support block was 3D printed on a large-format printer in 30 % glass-filled PETG, standing up: 100 x 100 mm footprint and 200 mm tall, layers horizontal. It sits on a flat rigid floor and 20 kN presses straight down on its top. How much does it shorten?

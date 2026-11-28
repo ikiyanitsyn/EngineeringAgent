@@ -400,3 +400,20 @@ def test_hex_standoffs_use_the_standoff_template():
                         "all the way through.")
     assert f["template"] == "standoff" and f["params"]["hex_af"] == 5.5 and f["params"]["hole"] == 3.4
     assert form_from_words("print a hexagonal lamp shade 100 mm tall") is None      # other hex shapes: the model
+
+
+def test_filled_polymers_never_fall_back_to_the_unfilled_grade():
+    from engagent.guard import material_from_words as m
+    assert m("30 % glass-filled PETG (LFAM pellets)") == "petg_gf30_lfam"
+    assert m("glass-filled PETG bracket printed on my desktop printer") is None    # no data: ask
+    assert m("glass-filled polycarbonate jig") is None and m("PETG bracket") == "petg"
+    assert m("carbon fibre nylon clip") == "pa6_cf_fdm"
+
+
+def test_i_beams_use_the_i_section_and_orthotropic_prints_go_to_the_model():
+    r = form_from_words("A steel I-beam 1 m long, 100 mm deep with 50 mm wide, 6 mm thick flanges and a 4 mm web, is "
+                        "built into a wall at one end. A 2 kN load hangs from the free end. Tip deflection?")["request"]
+    assert "section=i width=50 height=100 flange=6 web=4" in r and "tf=6 tw=4" in r
+    assert form_from_words("A steel channel 1 m long clamped at one end, 2 kN at the free end. Deflection?") is None
+    assert form_from_words("A fixture arm in 30 % glass-filled PETG printed large-format, 300 mm long 40 x 20 mm, "
+                           "clamped at one end, 200 N down at the free end. Tip deflection?") is None

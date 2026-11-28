@@ -234,6 +234,47 @@ HOLLOW_RX = (r"\b(?:(square|rectangular|rect|box)[- ]?(?:tube|tubing|section|hol
 WALL_RX = r"(\d+(?:\.\d+)?)\s*mm\s*(?:thick\s*)?wall|wall(?:\s*thickness)?(?:\s*of)?\s*(\d+(?:\.\d+)?)\s*mm"
 
 
+PROFILE_RX = r"\b(i[- ]?beam|i[- ]?section|h[- ]?beam|universal beam|wide[- ]flange|ipe|hea|heb|w\d+x\d+|channel|" \
+             r"c[- ]?section|u[- ]?channel|angle section|angle iron|l[- ]?section|t[- ]?section|tee section)\b"
+
+
+def _i_beam_cantilever(t: str, forces) -> dict | None:
+    """A symmetric I-beam clamped at one end with a load at the free end: the I-section's own inertia and web
+    shear (Roark Table 8.1 case 1a, Table A.1). Other profiles, or anything unclear, go to the model."""
+    if not re.search(r"\b(i[- ]?beam|i[- ]?section|h[- ]?beam|universal beam|wide[- ]flange)\b", t) or len(forces) != 1:
+        return None
+    if not re.search(r"\b(one end|built into|clamped at|fixed at|to a wall|cantilever|welded at|bolted at)\b", t) or \
+            not re.search(r"\b(free end|the end|other end|its end|the tip|end of)\b", t):
+        return None
+    L = re.search(NUM + r"\s*(m|mm)\s*long", t)
+    h = re.search(NUM + r"\s*mm\s*(?:deep|tall|high)", t)
+    b = re.search(NUM + r"\s*mm\s*wide", t)
+    tf = re.search(NUM + r"\s*mm\s*thick\s*flanges?|flanges?[^.,;]*?" + NUM + r"\s*mm\s*thick", t)
+    tw = re.search(NUM + r"\s*mm\s*(?:thick\s*)?web|web\s*(?:of\s*|is\s*)?" + NUM + r"\s*mm", t)
+    mat = material_from_words(t)
+    if not (L and h and b and tf and tw and mat):
+        return None
+    Lv = float(L.group(1)) * (1000 if L.group(2) == "m" else 1)
+    hv, bv = float(h.group(1)), float(b.group(1))
+    tfv = float(tf.group(1) or tf.group(2))
+    twv = float(tw.group(1) or tw.group(2))
+    mag, unit = forces[0]
+    from .structured import TO_N
+    unit = {"n": "N", "newton": "N", "newtons": "N", "kn": "kN", "lbf": "lbf", "lb": "lb", "lbs": "lb",
+            "pound": "lb", "pounds": "lb"}.get(unit, "kg")
+    if (_direction(t) or ("-z" if unit in ("kg", "lb") else None)) != "-z":
+        return None
+    P = float(mag) * TO_N[unit]
+    from . import materials
+    nu = materials.get(mat).props.get("nu", 0.3)
+    req = (f'ea make beam length={Lv:g} section=i width={bv:g} height={hv:g} flange={tfv:g} web={twv:g} --name "I-beam"\n'
+           f'ea analyze last -m {mat} --fix xmin --force xmax 0,0,{-P:g} '
+           f'--check "beam.cantilever_end_load P={P:g} L={Lv:g} E={_E(mat)} nu={nu:g} b={bv:g} h={hv:g} tf={tfv:g} tw={twv:g}"')
+    return {"action": "raw", "request": req,
+            "plan": "_An I-beam built in at one end with the load at the free end, checked against the cantilever "
+                    "formula with the I-section's own inertia (Roark Table 8.1 case 1a, Table A.1)._"}
+
+
 def _hollow_cantilever(t: str, forces) -> dict | None:
     """A square / rectangular / round tube clamped at one end with a load at the free end, as a hollow beam
     with the tube's own section in the hand check (the round standoff template is not a tube beam)."""
@@ -714,6 +755,11 @@ def form_from_words(user_text: str, first: str | None = None) -> dict | None:
         joined = _joined_bars(user_text, t)
         if joined:
             return joined
+    _mo = material_from_words(user_text)
+    if _mo:
+        from . import materials as _mats
+        if _mats.get(_mo).orthotropic and analysis_intent(user_text):
+            return None                                  # orthotropic (e.g. a large-format print): not a rules case
     if analysis_intent(user_text):
         wall = _wall_convection(t) or _heated_plate(t) or _plate_hole_tension(t) or _pin_fin(t) or _free_expansion(t) or _pressurised_tube(t)
         if wall:
@@ -736,6 +782,14 @@ def form_from_words(user_text: str, first: str | None = None) -> dict | None:
     loaded = re.search(FORCE_RX, t) or re.search(PRESSURE_RX, t)
     wants_fea = analysis_intent(user_text) or bool(loaded and material_from_words(user_text) and re.search(
         r"\b(run|loaded|load|simulat\w*|check|calculate|what happens)\b", t))
+    if wants_fea:
+        _m = material_from_words(user_text)
+        if _m:
+            from . import materials as _mats
+            if _mats.get(_m).orthotropic:
+                return None                              # direction-dependent stiffness: the model sets it up
+    if re.search(PROFILE_RX, t):                         # an I / H / channel / angle section, never a solid bar
+        return _i_beam_cantilever(t, re.findall(FORCE_RX, t)) if wants_fea else None
     if wants_fea and tmpl in ("standoff", "beam") and re.search(HOLLOW_RX, t) and re.search(WALL_RX, t):
         tube = _hollow_cantilever(t, re.findall(FORCE_RX, t))
         if tube:

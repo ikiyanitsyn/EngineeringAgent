@@ -1,0 +1,1 @@
+The same 300 mm long, 40 x 20 mm fixture arm in 30 % glass-filled PETG, but 3D printed standing up on a large-format printer, so its layers are stacked along its length. It is clamped at the bottom and 50 N pushes sideways on its top end, bending it through the 20 mm direction. Tip deflection?

@@ -1,0 +1,11 @@
+{
+ "source": "Cantilever, end load, E1 (bead direction) 7414 MPa: P L^3 / (3 E I) + P L / (k G A)",
+ "expect": [
+  {
+   "metric": "max_displacement",
+   "expected": 9.194397086592932,
+   "unit": "mm",
+   "tol": 0.05
+  }
+ ]
+}

@@ -1,0 +1,1 @@
+A large-format 3D-printed tool panel in 30 % glass-filled PETG (LFAM pellets), 400 mm long, 100 mm wide and 20 mm thick, printed flat with the beads running along its length. It rests on supports at both ends and carries 1 bar of pressure on its top face. How much does the middle deflect?

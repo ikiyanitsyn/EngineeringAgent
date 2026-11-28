@@ -1,0 +1,11 @@
+{
+ "source": "Roark Table 8.1 case 1a with the I-section inertia (Table A.1); web shear P L / (G h tw)",
+ "expect": [
+  {
+   "metric": "max_displacement",
+   "expected": 2.104294311928764,
+   "unit": "mm",
+   "tol": 0.06
+  }
+ ]
+}

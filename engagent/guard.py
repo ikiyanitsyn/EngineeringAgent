@@ -169,7 +169,7 @@ INTENT = ("bend", "deflect", "sag", "stress", "strength", "strong", "will it hol
           "safe", "carry", "support the", "vibrat", "frequency", "resonan", "buckl", "temperature", "how hot",
           "heat", "cool", "thermal", "fatigue", "analy", "fea", "stiff", "deform", "crack", "stretch", "elongat",
           "compress", "twist", "torsion", "displace", "move under", "yield", "load capacity",
-          "how far", " drop", "droop", " sink")
+          "how far", " drop", "droop", " sink", "shorten", "squash", "how much does it")
 LOAD_UNITS = r"(n|kn|kg|g|lb|lbs|lbf|kip|psi|ksi|mpa|kpa|bar|pa|w|kw|nm|n\.?m|n\*m|°c|°f|degc|degf|c|f|k|newtons?|kilos?|pounds?)\b"
 SUPPORT_WORDS = ("fix", "bolt", "clamp", "held", "hold", "mount", "support", "wall", "weld", "screw", "rest",
                  "sits", "attached", "cantilever", "pinned", "both ends", "one end")
@@ -254,13 +254,26 @@ MATERIAL_MAP = [
     (("6061", "aluminium", "aluminum", "alu "), "al_6061_t6"),
     (("titanium", "ti-6", "ti6"), "ti_6al4v"), (("brass",), "brass_c360"), (("copper",), "copper_c110"),
     (("petg", "pet-g"), "petg"), ((" pla",), "pla"), ((" abs",), "abs"), ((" asa",), "asa"),
+    (("carbon fibre nylon", "carbon fiber nylon", "cf nylon", "nylon-cf", "nylon cf", "pa6-cf", "pa6 cf", "pa6cf",
+      "carbon-fibre nylon", "carbon-fiber nylon", "carbon filled nylon"), "pa6_cf_fdm"),
     (("pa12", "nylon"), "pa12_sls"), (("polycarbonate",), "pc"), (("peek",), "peek"), (("pekk",), "pekk"),
     (("ultem", " pei"), "pei"), (("polypropylene",), "pp"),
 ]
 
 
+FILLED_RX = r"glass[- ]?(?:fib(?:re|er)[- ]?)?(?:filled|reinforced)?|\bgf\d*\b|\bgf[- ]|[- ]gf\b|carbon[- ]?(?:fib(?:re|er)[- ]?)?(?:filled|reinforced)|\bcf\d*\b"
+LFAM_RX = r"large[- ]?format|\blfam\b|\bbaam\b|big[- ]area|pellet"
+
+
 def material_from_words(user_text: str) -> str | None:
     t = " " + user_text.lower() + " "
+    filled = re.search(FILLED_RX, t)
+    if filled and re.search(r"\bpet-?g\b", t) and re.search(r"glass|gf", filled.group(0)):
+        # 30 % glass-filled PETG printed large-format: the one filled grade with published XY and Z data
+        return "petg_gf30_lfam" if re.search(LFAM_RX, t) else None
+    if filled and re.search(r"polycarbonate|\bpc\b|\babs\b|\basa\b|\bpla\b|\bpetg\b", t) and \
+            not re.search(r"\bpa6\b|nylon", t):
+        return None          # a filled grade we have no data for: never the unfilled values (3-4x too soft)
     for words, key in MATERIAL_MAP:
         if any(w in t for w in words):
             return key

@@ -1,0 +1,11 @@
+{
+ "source": "Euler-Bernoulli beam, simply supported, uniform load: 5 w L^4 / (384 E1 I) + shear w L^2 / (8 k G A); E1 (bead direction) 7414 MPa, PolyCore PETG-1013 TDS",
+ "expect": [
+  {
+   "metric": "max_displacement",
+   "expected": 6.863997841920691,
+   "unit": "mm",
+   "tol": 0.07
+  }
+ ]
+}

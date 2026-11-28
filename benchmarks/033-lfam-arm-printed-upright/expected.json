@@ -1,0 +1,11 @@
+{
+ "source": "Cantilever, end load, E3 (through the layers) 2492 MPa: P L^3 / (3 E I) + P L / (k G A)",
+ "expect": [
+  {
+   "metric": "max_displacement",
+   "expected": 6.794169341894061,
+   "unit": "mm",
+   "tol": 0.06
+  }
+ ]
+}

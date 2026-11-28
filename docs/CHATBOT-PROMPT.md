@@ -89,7 +89,7 @@ MATERIALS (-m or --print)
   aluminium: al_6061_t6, al_7075_t6, al_5052_h32
   titanium: ti_6al4v
   copper: brass_c360, copper_c110
-  print_polymer: pla, petg, abs, asa, pa12_sls, pa6_cf_fdm, pc, resin_tough_sla
+  print_polymer: pla, petg, abs, asa, pa12_sls, pa6_cf_fdm, pc, resin_tough_sla, petg_gf30_lfam
   thermoplastic: peek, pekk, lmpaek, pps, pei, pp
   tp_composite: cf_peek_ud, cf_pekk_ud, cf_lmpaek_ud, cf_pps_fabric, gf_pp_ud
   Or properties: -m '{"E": "70GPa", "nu": 0.33, "density": 2700, "yield": 270}'
@@ -160,6 +160,9 @@ Request: "aluminium rod 250 x 20 x 20 mm, held rigidly at both ends, cooled even
  (--slide FACE AXIS, symmetry planes), not single points, in the direction the part bends: a point hold
  adds a false low "mode" that changes with the mesh. A beam on two supports: model half of it, with
  --slide xmax x on the mid-span face.)
+Large-format prints (petg_gf30_lfam, 30 % glass PETG pellets) are ~3x stiffer along the bead than through
+the layers. Model the part AS PRINTED: build plate = XY, layers stacked along +Z, beads along X (a part
+printed standing up stands along Z). The material directions follow X, Y, Z automatically.
 ```bash
 ea make beam length=250 width=20 height=20 --name "restrained rod"
 ea analyze last -m al_6061_t6 -a thermal_stress --slide xmin x --slide xmax x --fix point:0,0,0 --fix point:250,0,0 --slide point:0,20,0 z --t0 90 --dT 15 --check "thermal.restrained_bar E=69GPa cte=23.6 dT=-75 -> stress@max_von_mises"

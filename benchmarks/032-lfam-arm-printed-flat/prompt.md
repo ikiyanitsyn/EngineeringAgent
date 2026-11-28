@@ -1,0 +1,1 @@
+A fixture arm 3D printed flat on a large-format printer in 30 % glass-filled PETG: 300 mm long, 40 mm wide, 20 mm thick, beads along its length. It is clamped at one end and a 200 N load pushes down on the free end, through the 20 mm thickness. Tip deflection?

@@ -1,0 +1,11 @@
+{
+ "source": "Axial bar through the layers: P L / (A E3), E3 (Z) 2492 MPa, PolyCore PETG-1013 TDS",
+ "expect": [
+  {
+   "metric": "max_displacement",
+   "expected": 0.16051364365971107,
+   "unit": "mm",
+   "tol": 0.05
+  }
+ ]
+}

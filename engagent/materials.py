@@ -167,6 +167,21 @@ LIBRARY: dict[str, dict[str, Any]] = {
                         cte2=2.8, cte3=45.0, k1=2.5, k2=2.5, k3=0.45, cp=1000, Xt=750,
                         Xc=640, Yt=750, Yc=640, S12=120, Tg=90, Tm=280, T_process=320,
                         T_stress_free=230, ply_thickness_mm=0.31),
+    # Large-format additive manufacturing (LFAM / BAAM) pellet prints: 1 = along the printed bead, 2 = across the
+    # beads in the layer, 3 = through the layers (Z). Measured values: Polymaker PolyCore PETG-1013 TDS V2.1
+    # (30 % GF; 8 mm nozzle, 10 mm bead, 3 mm layers; ASTM D638 / D790 on printed specimens): E_XY 7414 MPa,
+    # E_Z 2492 MPa, UTS_XY 73.3 MPa, UTS_Z 26.3 MPa, density 1.44, Tg 76 C, HDT 73 C (1.8 MPa).
+    # Assumed: E2 = E3 (bead-to-bead bond like the layer bond - the usual transversely isotropic LFAM model);
+    # Poisson's ratios and shear moduli are typical estimates (not on the TDS). CTE and conductivity are NOT
+    # published for this grade, so they are left out: a thermal analysis asks for them instead of guessing.
+    "petg_gf30_lfam": _M(name="PETG 30 % glass fibre, large-format print (LFAM, PolyCore PETG-1013)",
+                         family="print_polymer", orthotropic=True, E1=7414, E2=2492, E3=2492,
+                         nu12=0.38, nu13=0.38, nu23=0.40, G12=1000, G13=1000, G23=890, density=1440,
+                         Xt=73.3, Yt=26.3, **{"yield": 26.3}, uts=73.3, Tg=76, T_max_service=65,
+                         process="LFAM pellet extrusion",
+                         note="Orthotropic: 1 = bead direction, 3 = layer (Z) direction. Safety factor uses the "
+                              "Z strength (26.3 MPa) - conservative. CTE / conductivity not published: supply them "
+                              "for thermal work. Values are the supplier's typical, not certified."),
     "gf_pp_ud": _M(name="GF/PP UD tape (~45 % Vf)", family="tp_composite", orthotropic=True,
                    E1=34000, E2=4000, E3=4000, nu12=0.30, nu13=0.30, nu23=0.45, G12=1500,
                    G13=1500, G23=1300, density=1650, cte1=7.0, cte2=60.0, cte3=60.0, k1=0.6,
