@@ -63,7 +63,8 @@ FACES (selectors)
   plane:z=12.5                      flat face(s) at that coordinate
   hole:6.6   hole:6.6@40,20,0       holes/cylinders of that DIAMETER (the one nearest the point)
   cyl:5                             cylinders of that RADIUS
-  near:10,0,5                       the single face closest to a point
+  near:10,0,5                       the WHOLE face closest to a point (holding it in x clamps that end!)
+  point:10,0,5                      ONE node, the nearest to the point - for 3-2-1 / anti-spin holds
   normal:0,0,1                      flat faces facing +Z
   faces:3,7                         face numbers
   a+b                               several, e.g. xmin+xmax

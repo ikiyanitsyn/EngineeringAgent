@@ -182,3 +182,7 @@ toolkit absorbing the slips any AI makes, not a different answer.
 3. A hand check's guessed E on an orthotropic print snaps to the bead or layer modulus, and the check says so.
 4. Instruction sheet: LFAM moduli; model large-format parts as printed (layers along +Z, beads along X);
    every template's coordinates (a beam's section is centred on the X axis).
+- Gemini after midnight on the LFAM cases: **3 / 4** (block 0.9 %, flat arm 0.5 %, upright arm 0.5 % - it picked
+  the right modulus for each print orientation). The miss: the tool panel 2.2x too stiff because Gemini wrote
+  `--slide near:0,50,10 x` meaning one point, but near: selects the whole end face, which clamps that end
+  (fixed-pinned). The sheet never listed `point:`; it now lists it and warns what near: does.
